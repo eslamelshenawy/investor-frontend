@@ -917,6 +917,75 @@ const AppContent = () => {
   );
 };
 
+// --- Guest Mobile Bottom Navigation ---
+const GuestMobileBottomNav = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,20px)] bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 lg:hidden flex justify-around items-center pt-3 px-4 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] transition-all">
+      <div
+        onClick={() => navigate('/')}
+        className="flex flex-col items-center justify-center space-y-1 cursor-pointer text-blue-600"
+      >
+        <Compass size={24} strokeWidth={2.5} />
+        <span className="text-[10px] font-bold">الرئيسية</span>
+      </div>
+
+      <div
+        onClick={() => navigate('/login')}
+        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30"
+      >
+        <UserIcon size={18} />
+        تسجيل الدخول
+      </div>
+
+      <div
+        onClick={() => navigate('/register')}
+        className="flex flex-col items-center justify-center space-y-1 cursor-pointer text-gray-400 hover:text-blue-600"
+      >
+        <Plus size={24} strokeWidth={2} />
+        <span className="text-[10px] font-bold">حساب جديد</span>
+      </div>
+    </div>
+  );
+};
+
+// --- Public Home Page Layout (for guests) ---
+const PublicHomeLayout = () => {
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans" dir="rtl">
+      {/* Simple Header for Guests */}
+      <header className="h-[60px] lg:h-[72px] sticky top-0 z-40 w-full backdrop-blur-xl bg-white/90 border-b border-gray-200/80">
+        <div className="px-4 lg:px-8 h-full flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Activity size={24} className="text-white" />
+            </div>
+            <div>
+              <h1 className="font-black text-lg text-gray-900">رادار المستثمر</h1>
+              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Investor Radar</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="#/login" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-blue-600 transition-colors hidden sm:block">
+              تسجيل الدخول
+            </a>
+            <a href="#/register" className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+              إنشاء حساب
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="animate-fadeIn pb-24 lg:pb-0">
+        <HomeFeedWrapper />
+      </main>
+
+      <GuestMobileBottomNav />
+    </div>
+  );
+};
+
 // --- Auth Aware App Wrapper ---
 const AppWithAuth = () => {
   const { isAuthenticated } = useAuth();
@@ -925,6 +994,7 @@ const AppWithAuth = () => {
   const publicPaths = ['/login', '/register'];
   const isPublicPath = publicPaths.includes(location.pathname);
 
+  // Redirect authenticated users from login/register to home
   if (isAuthenticated && isPublicPath) {
     return <Navigate to="/" replace />;
   }
@@ -933,6 +1003,17 @@ const AppWithAuth = () => {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      {/* Public Home - accessible without login */}
+      <Route path="/" element={
+        isAuthenticated ? (
+          <ProtectedRoute>
+            <AppContent />
+          </ProtectedRoute>
+        ) : (
+          <PublicHomeLayout />
+        )
+      } />
+      {/* All other routes require authentication */}
       <Route
         path="/*"
         element={

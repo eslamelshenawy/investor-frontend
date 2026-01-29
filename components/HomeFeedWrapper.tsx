@@ -11,7 +11,7 @@ import HomeFeed from './HomeFeed';
 import { FEED_ITEMS } from '../constants';
 
 interface HomeFeedWrapperProps {
-  user: User;
+  user?: User;
   onOpenWizard?: () => void;
 }
 

@@ -28,7 +28,7 @@ import {
 
 interface HomeFeedProps {
     feedItems: FeedItem[];
-    user: User;
+    user?: User;
     onOpenWizard?: () => void;
 }
 
@@ -352,38 +352,58 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
 
                 {/* Enhanced Right Sidebar */}
                 <div className="hidden lg:block w-80 shrink-0 space-y-6 pt-2">
-                    {/* User Profile Card */}
-                    <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
+                    {/* User Profile Card - Only show if user is logged in */}
+                    {user ? (
+                        <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
 
-                        <div className="relative z-10">
-                            <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mx-auto mb-3 border-4 border-white/30 shadow-lg overflow-hidden relative">
-                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/20 hidden group-hover:flex items-center justify-center backdrop-blur-[1px] cursor-pointer">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">تعديل</span>
+                            <div className="relative z-10">
+                                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mx-auto mb-3 border-4 border-white/30 shadow-lg overflow-hidden relative">
+                                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/20 hidden group-hover:flex items-center justify-center backdrop-blur-[1px] cursor-pointer">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">تعديل</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <h3 className="font-bold text-white text-center mb-1 text-lg">{user.name}</h3>
-                            <p className="text-xs text-white/80 font-medium text-center mb-4 bg-white/10 inline-block px-3 py-1 rounded-full mx-auto">{user.role}</p>
+                                <h3 className="font-bold text-white text-center mb-1 text-lg">{user.name}</h3>
+                                <p className="text-xs text-white/80 font-medium text-center mb-4 bg-white/10 inline-block px-3 py-1 rounded-full mx-auto">{user.role}</p>
 
-                            {/* Quick Stats */}
-                            <div className="grid grid-cols-3 gap-2 mt-6">
-                                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
-                                    <p className="text-xl font-black">12</p>
-                                    <p className="text-[10px] text-white/70 font-bold uppercase">اشتراك</p>
-                                </div>
-                                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
-                                    <p className="text-xl font-black">48</p>
-                                    <p className="text-[10px] text-white/70 font-bold uppercase">محفوظ</p>
-                                </div>
-                                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
-                                    <p className="text-xl font-black">156</p>
-                                    <p className="text-[10px] text-white/70 font-bold uppercase">إعجاب</p>
+                                {/* Quick Stats */}
+                                <div className="grid grid-cols-3 gap-2 mt-6">
+                                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+                                        <p className="text-xl font-black">12</p>
+                                        <p className="text-[10px] text-white/70 font-bold uppercase">اشتراك</p>
+                                    </div>
+                                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+                                        <p className="text-xl font-black">48</p>
+                                        <p className="text-[10px] text-white/70 font-bold uppercase">محفوظ</p>
+                                    </div>
+                                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+                                        <p className="text-xl font-black">156</p>
+                                        <p className="text-[10px] text-white/70 font-bold uppercase">إعجاب</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        /* Guest Welcome Card */
+                        <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                            <div className="relative z-10 text-center">
+                                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm mx-auto mb-3 flex items-center justify-center">
+                                    <Sparkles size={32} className="text-white" />
+                                </div>
+                                <h3 className="font-bold text-white mb-2 text-lg">مرحباً بك في رادار المستثمر</h3>
+                                <p className="text-xs text-white/80 mb-4">سجل دخولك للوصول لكامل الميزات</p>
+                                <a href="#/login" className="block w-full bg-white text-blue-600 font-bold py-2.5 rounded-xl hover:bg-blue-50 transition-colors">
+                                    تسجيل الدخول
+                                </a>
+                                <a href="#/register" className="block w-full mt-2 bg-white/10 text-white font-bold py-2.5 rounded-xl hover:bg-white/20 transition-colors border border-white/20">
+                                    إنشاء حساب جديد
+                                </a>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Trending Topics Enhanced */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
