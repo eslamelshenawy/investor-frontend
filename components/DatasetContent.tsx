@@ -1,19 +1,26 @@
 
-import React, { useState } from 'react';
-import { 
-  FileText, 
-  Download, 
-  Eye, 
-  Clock, 
-  Database, 
-  Share2, 
+import React, { useState, useEffect } from 'react';
+import {
+  FileText,
+  Download,
+  Eye,
+  Clock,
+  Database,
+  Share2,
   MoreHorizontal,
   ChevronRight,
   Calendar,
   ShieldCheck,
   Tag,
-  BarChart3
+  BarChart3,
+  Table,
+  Cloud,
+  RefreshCw,
+  Loader2,
+  Zap,
+  AlertCircle
 } from 'lucide-react';
+import { api } from '../src/services/api';
 import { 
   AreaChart, 
   Area, 
@@ -35,8 +42,46 @@ interface DatasetContentProps {
 
 const DatasetContent: React.FC<DatasetContentProps> = ({ dataset, onBack, role }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([]);
+  const [previewColumns, setPreviewColumns] = useState<string[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<'api' | 'cache' | null>(null);
+  const [totalRecords, setTotalRecords] = useState<number>(0);
+
   const canViewComments = role === UserRole.ADMIN || role === UserRole.EDITOR || role === UserRole.CONTENT_MANAGER || role === UserRole.SUPER_ADMIN || role === UserRole.CURBTRON;
+
+  // Fetch preview data on-demand
+  const fetchPreviewData = async () => {
+    if (!dataset.id) return;
+
+    setLoadingPreview(true);
+    setPreviewError(null);
+
+    try {
+      const response = await api.getDatasetPreview(dataset.id, 20);
+      if (response.success && response.data) {
+        setPreviewData(response.data.preview || []);
+        setPreviewColumns(response.data.columns || []);
+        setTotalRecords(response.data.totalRecords || 0);
+        setDataSource('api');
+      } else {
+        setPreviewError(response.errorAr || 'تعذر جلب البيانات');
+      }
+    } catch (err) {
+      console.error('Error fetching preview:', err);
+      setPreviewError('تعذر الاتصال بالمصدر');
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  // Fetch preview when tab changes to data
+  useEffect(() => {
+    if (activeTab === 'data' && previewData.length === 0 && !loadingPreview) {
+      fetchPreviewData();
+    }
+  }, [activeTab]);
 
   const activityData = [
     { name: 'يناير', views: 400, downloads: 240 },
@@ -102,6 +147,7 @@ const DatasetContent: React.FC<DatasetContentProps> = ({ dataset, onBack, role }
           <div className="flex border-b border-gray-200 sticky top-[72px] bg-slate-50/80 backdrop-blur-md z-10 pt-2 h-14 items-end">
             {[
                 { id: 'overview', label: 'نظرة عامة', icon: FileText },
+                { id: 'data', label: 'عرض البيانات', icon: Table },
                 { id: 'analytics', label: 'نشاط البيانات', icon: BarChart3 },
                 { id: 'dictonary', label: 'قاموس البيانات', icon: Database }
             ].map(tab => (
@@ -192,6 +238,102 @@ const DatasetContent: React.FC<DatasetContentProps> = ({ dataset, onBack, role }
                       <p className="text-gray-500 text-sm">قسم النقاش متاح فقط للأدوار الإشرافية والتحليلية المتقدمة.</p>
                   </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'data' && (
+            <div className="animate-fadeIn space-y-6">
+              {/* On-Demand Info Banner */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                  <Cloud size={20} className="text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-emerald-800">البيانات تُجلب عند الطلب (On-Demand)</p>
+                  <p className="text-xs text-emerald-600">يتم جلب البيانات مباشرة من البوابة الوطنية للبيانات المفتوحة</p>
+                </div>
+                {dataSource && (
+                  <span className={`text-xs px-3 py-1 rounded-full font-bold ${
+                    dataSource === 'api' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                  }`}>
+                    {dataSource === 'api' ? '🌐 من API' : '⚡ من Cache'}
+                  </span>
+                )}
+                <button
+                  onClick={fetchPreviewData}
+                  disabled={loadingPreview}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={loadingPreview ? 'animate-spin' : ''} />
+                  تحديث
+                </button>
+              </div>
+
+              {/* Data Table */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Table size={18} className="text-blue-600" />
+                    معاينة البيانات
+                  </h3>
+                  {totalRecords > 0 && (
+                    <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">
+                      {totalRecords.toLocaleString('ar-SA')} سجل
+                    </span>
+                  )}
+                </div>
+
+                {loadingPreview ? (
+                  <div className="p-12 text-center">
+                    <Loader2 size={40} className="mx-auto text-blue-500 animate-spin mb-4" />
+                    <p className="text-gray-600 font-medium">جاري جلب البيانات من المصدر...</p>
+                    <p className="text-xs text-gray-400 mt-1">On-Demand Data Loading</p>
+                  </div>
+                ) : previewError ? (
+                  <div className="p-12 text-center">
+                    <AlertCircle size={40} className="mx-auto text-red-400 mb-4" />
+                    <p className="text-red-600 font-medium">{previewError}</p>
+                    <button
+                      onClick={fetchPreviewData}
+                      className="mt-4 px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-200"
+                    >
+                      إعادة المحاولة
+                    </button>
+                  </div>
+                ) : previewData.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="p-3 text-right font-bold text-gray-600 w-12">#</th>
+                          {previewColumns.map((col, idx) => (
+                            <th key={idx} className="p-3 text-right font-bold text-gray-600 whitespace-nowrap">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {previewData.slice(0, 20).map((row, rowIdx) => (
+                          <tr key={rowIdx} className="hover:bg-blue-50/50 transition-colors">
+                            <td className="p-3 text-gray-400 font-medium">{rowIdx + 1}</td>
+                            {previewColumns.map((col, colIdx) => (
+                              <td key={colIdx} className="p-3 text-gray-700 whitespace-nowrap">
+                                {String(row[col] ?? '-')}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <Database size={40} className="mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500">لا توجد بيانات متاحة</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

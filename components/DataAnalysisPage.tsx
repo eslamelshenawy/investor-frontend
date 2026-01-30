@@ -15,7 +15,10 @@ import {
     Zap,
     FileText,
     ArrowRight,
-    Filter
+    Filter,
+    Cloud,
+    Globe,
+    CheckCircle2
 } from 'lucide-react';
 import { api } from '../src/services/api';
 
@@ -31,11 +34,24 @@ interface ContentStats {
     byType: Record<string, number>;
 }
 
+interface SyncStatus {
+    architecture?: string;
+    stats: {
+        total: number;
+        SUCCESS?: number;
+        PENDING?: number;
+        FAILED?: number;
+        estimatedTotalRecords?: number;
+    };
+    note?: string;
+}
+
 const DataAnalysisPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [signalStats, setSignalStats] = useState<SignalStats | null>(null);
     const [contentStats, setContentStats] = useState<ContentStats | null>(null);
     const [datasets, setDatasets] = useState<any[]>([]);
+    const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -79,6 +95,12 @@ const DataAnalysisPage: React.FC = () => {
             const datasetsRes = await api.getDatasets({ limit: 20 });
             if (datasetsRes.success && datasetsRes.data) {
                 setDatasets(datasetsRes.data as any[]);
+            }
+
+            // Fetch sync status
+            const syncRes = await api.getSyncStatus();
+            if (syncRes.success && syncRes.data) {
+                setSyncStatus(syncRes.data as SyncStatus);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -138,6 +160,34 @@ const DataAnalysisPage: React.FC = () => {
                     تحديث
                 </button>
             </div>
+
+            {/* On-Demand Architecture Banner */}
+            {syncStatus?.architecture === 'on-demand' && (
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                        <Cloud size={24} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-emerald-800">المعمارية: On-Demand</h4>
+                            <span className="text-xs bg-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full font-bold">نشط</span>
+                        </div>
+                        <p className="text-sm text-emerald-600">
+                            {syncStatus.note || 'البيانات تُجلب عند الطلب من API - توفير 95% من مساحة التخزين'}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-6 shrink-0">
+                        <div className="text-center">
+                            <div className="text-2xl font-black text-emerald-700">{syncStatus.stats.total || 0}</div>
+                            <div className="text-xs text-emerald-600">مجموعة بيانات</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-black text-emerald-700">38</div>
+                            <div className="text-xs text-emerald-600">قسم متاح</div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -255,22 +305,38 @@ const DataAnalysisPage: React.FC = () => {
 
                 {/* Datasets */}
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Database size={20} className="text-amber-600" />
-                        مجموعات البيانات المتاحة
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Database size={20} className="text-amber-600" />
+                            مجموعات البيانات المتاحة
+                        </div>
+                        {syncStatus?.architecture === 'on-demand' && (
+                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                                <Cloud size={12} />
+                                On-Demand
+                            </span>
+                        )}
                     </h2>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {datasets.map(ds => (
-                            <div key={ds.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                <div>
-                                    <p className="font-medium text-gray-700 text-sm">{ds.nameAr || ds.name}</p>
-                                    <p className="text-xs text-gray-400">{ds.category}</p>
+                            <div key={ds.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer">
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-700 text-sm truncate">{ds.nameAr || ds.name}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-xs text-gray-400">{ds.category}</span>
+                                        {ds.recordCount > 0 && (
+                                            <span className="text-xs text-gray-400">• ~{ds.recordCount.toLocaleString('ar-SA')} سجل</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                    ds.syncStatus === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                    {ds.syncStatus === 'SUCCESS' ? 'متزامن' : ds.syncStatus}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
+                                        ds.syncStatus === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                    }`}>
+                                        {ds.syncStatus === 'SUCCESS' && <CheckCircle2 size={10} />}
+                                        {ds.syncStatus === 'SUCCESS' ? 'جاهز' : ds.syncStatus}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                         {datasets.length === 0 && (

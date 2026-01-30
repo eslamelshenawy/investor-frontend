@@ -163,15 +163,44 @@ class ApiService {
     return this.get<Dataset>(`/datasets/${id}`);
   }
 
-  async getDatasetData(id: string, params?: { page?: number; limit?: number }) {
+  async getDatasetData(id: string, params?: { page?: number; limit?: number; refresh?: boolean }) {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', String(params.page));
     if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.refresh) query.append('refresh', 'true');
 
     const queryString = query.toString();
-    return this.get<{ dataset: Dataset; records: unknown[]; meta: unknown }>(
-      `/datasets/${id}/data${queryString ? `?${queryString}` : ''}`
-    );
+    return this.get<{
+      dataset: { id: string; externalId: string; name: string; nameAr: string };
+      records: Record<string, unknown>[];
+      columns: string[];
+      meta: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        fetchedAt: string;
+        source: 'api' | 'cache';
+      };
+    }>(`/datasets/${id}/data${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getDatasetPreview(id: string, count: number = 10) {
+    return this.get<{
+      dataset: { id: string; name: string; nameAr: string };
+      preview: Record<string, unknown>[];
+      columns: string[];
+      totalRecords: number;
+    }>(`/datasets/${id}/preview?count=${count}`);
+  }
+
+  async refreshDatasetCache(id: string) {
+    return this.post<{
+      message: string;
+      messageAr: string;
+      dataset: string;
+      recordsFetched: number;
+    }>(`/datasets/${id}/refresh`);
   }
 
   async getCategories() {

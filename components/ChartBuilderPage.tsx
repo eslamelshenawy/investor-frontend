@@ -33,7 +33,9 @@ import {
     FileText,
     Table,
     Loader2,
-    AlertTriangle
+    AlertTriangle,
+    Zap,
+    Cloud
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import {
@@ -80,6 +82,7 @@ interface DataSource {
     category: string;
     fields: string[];
     sampleData: Record<string, unknown>[];
+    recordCount?: number;
 }
 
 interface APIDataset {
@@ -118,6 +121,7 @@ const ChartBuilderPage: React.FC = () => {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [dataSources, setDataSources] = useState<DataSource[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingData, setLoadingData] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedDataSource, setSelectedDataSource] = useState<DataSource | null>(null);
     const [selectedChartType, setSelectedChartType] = useState<ChartType>('bar');
@@ -128,46 +132,33 @@ const ChartBuilderPage: React.FC = () => {
     const [showLegend, setShowLegend] = useState(true);
     const [showGrid, setShowGrid] = useState(true);
     const [savedCharts, setSavedCharts] = useState<ChartConfig[]>([]);
+    const [dataSource, setDataSource] = useState<'api' | 'cache' | null>(null);
 
-    // Fetch datasets from API
+    // Fetch datasets metadata from API (On-Demand Architecture)
     useEffect(() => {
         const fetchDatasets = async () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await api.getDatasets({ limit: 50 });
+                const response = await api.getDatasets({ limit: 100 });
                 if (response.success && response.data) {
                     const datasets = response.data as APIDataset[];
-                    const sources: DataSource[] = datasets
-                        .filter(d => d.columns && d.dataPreview)
-                        .map(d => {
-                            let fields: string[] = [];
-                            let sampleData: Record<string, unknown>[] = [];
-
-                            try {
-                                fields = JSON.parse(d.columns || '[]');
-                                sampleData = JSON.parse(d.dataPreview || '[]');
-                            } catch {
-                                fields = [];
-                                sampleData = [];
-                            }
-
-                            return {
-                                id: d.id,
-                                name: d.name,
-                                nameAr: d.nameAr || d.name,
-                                category: d.category,
-                                fields,
-                                sampleData,
-                            };
-                        })
-                        .filter(d => d.fields.length > 0 && d.sampleData.length > 0);
+                    // With On-Demand architecture, we load all datasets
+                    // Data will be fetched when user selects one
+                    const sources: DataSource[] = datasets.map(d => ({
+                        id: d.externalId || d.id,
+                        name: d.name,
+                        nameAr: d.nameAr || d.name,
+                        category: d.category,
+                        fields: [], // Will be fetched on-demand
+                        sampleData: [], // Will be fetched on-demand
+                        recordCount: d.recordCount,
+                    }));
 
                     setDataSources(sources);
 
                     if (sources.length === 0) {
-                        setError('لا توجد بيانات متاحة للعرض. جاري استخدام بيانات تجريبية.');
-                        // Fallback to sample data
+                        setError('لا توجد مجموعات بيانات. جاري استخدام بيانات تجريبية.');
                         setDataSources(getSampleDataSources());
                     }
                 } else {
@@ -185,6 +176,39 @@ const ChartBuilderPage: React.FC = () => {
 
         fetchDatasets();
     }, []);
+
+    // Fetch dataset data on-demand when selected
+    const fetchDatasetData = async (datasetId: string) => {
+        setLoadingData(true);
+        setDataSource(null);
+        try {
+            const response = await api.getDatasetPreview(datasetId, 50);
+            if (response.success && response.data) {
+                const { preview, columns } = response.data;
+
+                if (preview && preview.length > 0 && columns && columns.length > 0) {
+                    setSelectedDataSource(prev => prev ? {
+                        ...prev,
+                        fields: columns,
+                        sampleData: preview,
+                    } : null);
+                    setXAxis(columns[0]);
+                    setYAxis(columns[1] || columns[0]);
+                    setDataSource('api');
+                    setStep(2);
+                } else {
+                    setError('لا توجد بيانات متاحة لهذا المصدر');
+                }
+            } else {
+                setError(response.errorAr || 'تعذر جلب البيانات');
+            }
+        } catch (err) {
+            console.error('Error fetching dataset data:', err);
+            setError('تعذر جلب البيانات من المصدر');
+        } finally {
+            setLoadingData(false);
+        }
+    };
 
     // Fallback sample data
     const getSampleDataSources = (): DataSource[] => [
@@ -225,7 +249,19 @@ const ChartBuilderPage: React.FC = () => {
 
     // Render Chart Preview
     const renderChart = () => {
-        if (!selectedDataSource || !xAxis || !yAxis) {
+        if (loadingData) {
+            return (
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                        <Loader2 size={48} className="mx-auto mb-3 animate-spin text-indigo-500" />
+                        <p className="text-indigo-600 font-medium">جاري جلب البيانات من المصدر...</p>
+                        <p className="text-xs text-gray-400 mt-1">On-Demand Data Loading</p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!selectedDataSource || !xAxis || !yAxis || selectedDataSource.sampleData.length === 0) {
             return (
                 <div className="h-64 flex items-center justify-center text-gray-400">
                     <div className="text-center">
@@ -385,6 +421,12 @@ const ChartBuilderPage: React.FC = () => {
                             </div>
                         )}
 
+                        {/* On-Demand Badge */}
+                        <div className="mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 text-emerald-700 text-xs">
+                            <Cloud size={14} />
+                            <span>البيانات تُجلب عند الطلب (On-Demand)</span>
+                        </div>
+
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="animate-spin text-indigo-600" size={32} />
@@ -395,20 +437,32 @@ const ChartBuilderPage: React.FC = () => {
                                     <button
                                         key={ds.id}
                                         onClick={() => {
-                                            setSelectedDataSource(ds);
-                                            setXAxis(ds.fields[0]);
-                                            setYAxis(ds.fields[1] || ds.fields[0]);
-                                            setStep(2);
+                                            // Set basic info first
+                                            setSelectedDataSource({
+                                                ...ds,
+                                                fields: [],
+                                                sampleData: [],
+                                            });
+                                            // Fetch data on-demand
+                                            fetchDatasetData(ds.id);
                                         }}
+                                        disabled={loadingData && selectedDataSource?.id === ds.id}
                                         className={`w-full text-right p-4 rounded-xl border-2 transition-all ${
                                             selectedDataSource?.id === ds.id
                                                 ? 'border-indigo-500 bg-indigo-50'
                                                 : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
-                                        }`}
+                                        } ${loadingData && selectedDataSource?.id === ds.id ? 'opacity-70' : ''}`}
                                     >
-                                        <p className="font-bold text-gray-900">{ds.nameAr}</p>
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-bold text-gray-900">{ds.nameAr}</p>
+                                            {loadingData && selectedDataSource?.id === ds.id && (
+                                                <Loader2 className="animate-spin text-indigo-600" size={16} />
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs text-gray-500">{ds.fields.length} حقول</span>
+                                            {ds.recordCount ? (
+                                                <span className="text-xs text-gray-500">~{ds.recordCount.toLocaleString('ar-SA')} سجل</span>
+                                            ) : null}
                                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{ds.category}</span>
                                         </div>
                                     </button>
@@ -547,6 +601,15 @@ const ChartBuilderPage: React.FC = () => {
                                 <span className="font-bold text-gray-900">
                                     {chartTitle || 'معاينة الرسم البياني'}
                                 </span>
+                                {dataSource && (
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                        dataSource === 'api'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-green-100 text-green-700'
+                                    }`}>
+                                        {dataSource === 'api' ? '🌐 من API' : '⚡ من Cache'}
+                                    </span>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
