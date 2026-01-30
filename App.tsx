@@ -291,39 +291,6 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         <NavGroup title="التطبيقات" open={sections.apps} onToggle={() => toggle('apps')}>
           <NavItem to="/profile" icon={UserIcon}>ملف المستخدم</NavItem>
         </NavGroup>
-
-        {(isWriter || isDesigner || isContentManager || isAdmin) && (
-          <div className="my-2 border-t border-slate-800/40 mx-2"></div>
-        )}
-
-        {isWriter && (
-          <NavGroup title="Authoring Center" open={sections.authoring} onToggle={() => toggle('authoring')}>
-            <NavItem to="/writer/create" icon={PenTool}>إنشاء منشور</NavItem>
-            <NavItem to="/writer/drafts" icon={BookOpen}>مسوداتي</NavItem>
-            <NavItem to="/writer/research" icon={Database}>المراجع</NavItem>
-          </NavGroup>
-        )}
-
-        {isDesigner && (
-          <NavGroup title="Creative Studio" open={sections.creative} onToggle={() => toggle('creative')}>
-            <NavItem to="/designer/assets" icon={ImageIcon}>Asset Manager</NavItem>
-            <NavItem to="/designer/upload" icon={Palette}>رفع تصاميم</NavItem>
-          </NavGroup>
-        )}
-
-        {isContentManager && (
-          <NavGroup title="Editorial Desk" open={sections.editorial} onToggle={() => toggle('editorial')}>
-            <NavItem to="/editorial/approvals" icon={ClipboardList}>مراجعة المحتوى</NavItem>
-            <NavItem to="/editorial/schedule" icon={Clock}>جدولة المنشورات</NavItem>
-          </NavGroup>
-        )}
-
-        {isAdmin && (
-          <NavGroup title="إدارة النظام" open={sections.admin} onToggle={() => toggle('admin')}>
-            <NavItem to="/admin/datasets" icon={Database}>قواعد البيانات</NavItem>
-            {isSuperAdmin && <NavItem to="/super/users" icon={Users}>المستخدمين</NavItem>}
-          </NavGroup>
-        )}
       </nav>
 
       {/* Footer */}
