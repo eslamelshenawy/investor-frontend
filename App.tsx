@@ -193,7 +193,11 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
       UserRole.SUPER_ADMIN,
       UserRole.CURBTRON
     ];
-    return hierarchy.indexOf(role as UserRole) >= hierarchy.indexOf(target);
+    // Handle backend role format (ADMIN) vs frontend format (Admin)
+    const normalizedRole = role?.toUpperCase();
+    const roleIndex = hierarchy.findIndex(r => r.toUpperCase() === normalizedRole || r === role);
+    const targetIndex = hierarchy.indexOf(target);
+    return roleIndex >= targetIndex;
   };
 
   const isAdmin = isAtLeast(UserRole.ADMIN);

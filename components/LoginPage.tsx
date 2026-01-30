@@ -31,7 +31,12 @@ const LoginPage = () => {
     setIsLoading(false);
 
     if (result.success) {
-      navigate('/');
+      // Redirect admin to admin dashboard, others to home
+      if (result.user?.role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } else {
       setError(result.error || 'حدث خطأ في تسجيل الدخول');
     }
