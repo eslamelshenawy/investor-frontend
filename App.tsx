@@ -244,6 +244,18 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+        {/* Admin Panel - Top Priority */}
+        {isAdmin && (
+          <>
+            <div className="mb-3">
+              <NavItem to="/admin" icon={Shield} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 hover:text-amber-300 hover:from-amber-500/30 hover:to-orange-500/30">
+                لوحة التحكم
+              </NavItem>
+            </div>
+            <div className="my-2 border-t border-slate-800/40 mx-2"></div>
+          </>
+        )}
+
         <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
           <NavItem to="/" icon={Compass} end>مركز الاكتشاف</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
@@ -307,11 +319,9 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         )}
 
         {isAdmin && (
-          <NavGroup title="System Admin" open={sections.admin} onToggle={() => toggle('admin')}>
-            <NavItem to="/admin" icon={Shield}>لوحة التحكم</NavItem>
+          <NavGroup title="إدارة النظام" open={sections.admin} onToggle={() => toggle('admin')}>
             <NavItem to="/admin/datasets" icon={Database}>قواعد البيانات</NavItem>
             {isSuperAdmin && <NavItem to="/super/users" icon={Users}>المستخدمين</NavItem>}
-            {isCurbTron && <NavItem to="/curbtron/core" icon={Cpu}>CurbTron Nexus</NavItem>}
           </NavGroup>
         )}
       </nav>
