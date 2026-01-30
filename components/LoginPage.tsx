@@ -32,7 +32,8 @@ const LoginPage = () => {
 
     if (result.success) {
       // Redirect admin to admin dashboard, others to home
-      if (result.user?.role === 'ADMIN') {
+      const role = result.user?.role?.toUpperCase();
+      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
         navigate('/admin');
       } else {
         navigate('/');
