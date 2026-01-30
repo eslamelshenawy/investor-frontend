@@ -58,14 +58,18 @@ interface SyncLog {
 }
 
 interface SyncStatus {
+    architecture?: string;
     latestSyncs: SyncLog[];
     stats: {
         total: number;
         SYNCED?: number;
+        SUCCESS?: number;
         PENDING?: number;
         FAILED?: number;
         SYNCING?: number;
+        estimatedTotalRecords?: number;
     };
+    note?: string;
 }
 
 interface SignalStats {
@@ -453,6 +457,11 @@ const AdminDashboardPage: React.FC = () => {
     const [syncingData, setSyncingData] = useState(false);
     const [generatingContent, setGeneratingContent] = useState(false);
     const [analyzingSignals, setAnalyzingSignals] = useState(false);
+    const [discoveringDatasets, setDiscoveringDatasets] = useState(false);
+
+    // Architecture info
+    const [architecture, setArchitecture] = useState<string>('');
+    const [architectureNote, setArchitectureNote] = useState<string>('');
 
     // API Status
     const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'loading'>('loading');
@@ -467,12 +476,15 @@ const AdminDashboardPage: React.FC = () => {
             // Fetch sync status
             const syncResponse = await api.getSyncStatus();
             if (syncResponse.success && syncResponse.data) {
-                setSyncStatus(syncResponse.data as SyncStatus);
-                const stats = (syncResponse.data as SyncStatus).stats;
+                const syncData = syncResponse.data as SyncStatus;
+                setSyncStatus(syncData);
+                setArchitecture(syncData.architecture || '');
+                setArchitectureNote(syncData.note || '');
+                const stats = syncData.stats;
                 setOverview(prev => ({
                     ...prev,
                     totalDatasets: stats.total || 0,
-                    syncedDatasets: stats.SYNCED || 0,
+                    syncedDatasets: stats.SYNCED || stats.SUCCESS || 0,
                     pendingDatasets: stats.PENDING || 0,
                     failedDatasets: stats.FAILED || 0,
                 }));
@@ -555,6 +567,19 @@ const AdminDashboardPage: React.FC = () => {
             console.error('Signal analysis error:', err);
         } finally {
             setAnalyzingSignals(false);
+        }
+    };
+
+    // Handle full discovery (all 38 categories)
+    const handleFullDiscovery = async () => {
+        setDiscoveringDatasets(true);
+        try {
+            await api.post('/discovery/full-discover-and-sync');
+            await fetchData();
+        } catch (err) {
+            console.error('Discovery error:', err);
+        } finally {
+            setDiscoveringDatasets(false);
         }
     };
 
@@ -671,6 +696,28 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
             )}
 
+            {/* Architecture Banner */}
+            {architecture === 'on-demand' && (
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                        <Zap size={24} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-emerald-800">المعمارية: On-Demand</h4>
+                            <span className="text-xs bg-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full font-bold">نشط</span>
+                        </div>
+                        <p className="text-sm text-emerald-600">
+                            {architectureNote || 'البيانات تُجلب عند الطلب من API - توفير 95% من مساحة التخزين'}
+                        </p>
+                    </div>
+                    <div className="text-left shrink-0">
+                        <div className="text-2xl font-black text-emerald-700">38</div>
+                        <div className="text-xs text-emerald-600">قسم متاح</div>
+                    </div>
+                </div>
+            )}
+
             {/* Overview Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
                 <StatsCard
@@ -772,11 +819,12 @@ const AdminDashboardPage: React.FC = () => {
                             loading={generatingContent}
                         />
                         <QuickActionButton
-                            title="إدارة المستخدمين"
-                            description="عرض وإدارة حسابات المستخدمين"
-                            icon={Users}
+                            title="اكتشاف شامل"
+                            description="اكتشاف Datasets من كل الـ 38 قسم"
+                            icon={Globe}
                             color="green"
-                            onClick={() => window.location.hash = '#/super/users'}
+                            onClick={handleFullDiscovery}
+                            loading={discoveringDatasets}
                         />
                     </div>
                 </div>

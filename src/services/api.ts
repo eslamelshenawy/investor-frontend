@@ -179,7 +179,49 @@ class ApiService {
   }
 
   async getSyncStatus() {
-    return this.get<{ latestSyncs: unknown[]; stats: unknown }>('/datasets/sync/status');
+    return this.get<{
+      architecture: string;
+      latestSyncs: unknown[];
+      stats: unknown;
+      note?: string;
+    }>('/datasets/sync/status');
+  }
+
+  // =====================
+  // Discovery Endpoints
+  // =====================
+
+  async getDiscoveryStats() {
+    return this.get<{
+      totalInDb: number;
+      lastDiscovery: string | null;
+      categoriesAvailable: number;
+    }>('/discovery/stats');
+  }
+
+  async getDiscoveryCategories() {
+    return this.get<Array<{
+      id: string;
+      nameAr: string;
+      nameEn: string;
+      slug: string;
+    }>>('/discovery/categories');
+  }
+
+  async triggerDiscovery() {
+    return this.post<{
+      message: string;
+      newDatasets: string[];
+      total: number;
+    }>('/discovery/discover-and-sync');
+  }
+
+  async triggerFullDiscovery() {
+    return this.post<{
+      message: string;
+      totalDiscovered: number;
+      categoriesScanned: number;
+    }>('/discovery/full-discover-and-sync');
   }
 
   // =====================
