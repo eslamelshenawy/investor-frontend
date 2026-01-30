@@ -1002,14 +1002,19 @@ const PublicHomeLayout = () => {
 
 // --- Auth Aware App Wrapper ---
 const AppWithAuth = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
   const publicPaths = ['/login', '/register'];
   const isPublicPath = publicPaths.includes(location.pathname);
 
-  // Redirect authenticated users from login/register to home
+  // Redirect authenticated users from login/register
   if (isAuthenticated && isPublicPath) {
+    // Admin goes to admin dashboard, others to home
+    const role = user?.role?.toUpperCase();
+    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
