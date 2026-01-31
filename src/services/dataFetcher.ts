@@ -56,10 +56,50 @@ export interface DatasetListResult {
 const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';
 const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
+// CORS proxy for when direct requests fail
+const CORS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+];
 const CACHE_PREFIX = 'dataset_cache_';
 const DATASETS_LIST_KEY = 'datasets_list_cache';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const LIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours for list cache
+
+// ═══════════════════════════════════════════════════════════════════
+// Helper: Fetch with CORS proxy fallback
+// ═══════════════════════════════════════════════════════════════════
+
+async function fetchWithCorsProxy(url: string): Promise<Response> {
+  // Try direct fetch first
+  try {
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      mode: 'cors',
+    });
+    if (response.ok) return response;
+  } catch (e) {
+    console.log(`   ⚠️ Direct fetch failed, trying proxy...`);
+  }
+
+  // Try CORS proxies
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy + encodeURIComponent(url);
+      const response = await fetch(proxyUrl, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (response.ok) {
+        console.log(`   ✅ Proxy worked: ${proxy.substring(0, 30)}...`);
+        return response;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+
+  throw new Error('All fetch attempts failed');
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // Cache Functions
@@ -240,18 +280,7 @@ export async function fetchDatasetsList(options: {
       try {
         console.log(`   🔍 Trying: ${endpoint.substring(0, 80)}...`);
 
-        const response = await fetch(endpoint, {
-          headers: {
-            'Accept': 'application/json',
-          },
-          mode: 'cors',
-        });
-
-        if (!response.ok) {
-          console.log(`   ❌ HTTP ${response.status}`);
-          continue;
-        }
-
+        const response = await fetchWithCorsProxy(endpoint);
         const data = await response.json();
 
         // CKAN API returns: { success: true, result: { results: [...], count: N } }
