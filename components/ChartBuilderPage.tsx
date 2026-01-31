@@ -50,7 +50,7 @@ import {
     Copy,
     CheckCircle2
 } from 'lucide-react';
-import { api } from '../src/services/api';
+// Frontend Fetch فقط - بدون Backend API
 import { fetchDatasetData as fetchDirectData, fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 import {
     BarChart,
@@ -118,17 +118,6 @@ interface DataSource {
     fields: string[];
     sampleData: Record<string, unknown>[];
     recordCount?: number;
-}
-
-interface APIDataset {
-    id: string;
-    externalId: string;
-    name: string;
-    nameAr: string;
-    category: string;
-    columns?: string;
-    dataPreview?: string;
-    recordCount: number;
 }
 
 const CHART_TYPES = [
@@ -212,15 +201,15 @@ const ChartBuilderPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const chartRef = React.useRef<HTMLDivElement>(null);
 
-    // Fetch datasets list - Frontend Fetch مباشرة من المصدر
+    // Fetch datasets list - Frontend Fetch مباشرة من المصدر (بدون Backend API)
     useEffect(() => {
         const fetchDatasets = async () => {
             setLoading(true);
             setError(null);
             try {
-                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets...');
+                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets مباشرة من البوابة...');
 
-                // Frontend Fetch مباشرة من منصة البيانات السعودية
+                // Frontend Fetch مباشرة من منصة البيانات السعودية (بدون Backend)
                 const result = await fetchDatasetsList({ limit: 500 });
 
                 if (result.datasets.length > 0) {
@@ -236,34 +225,15 @@ const ChartBuilderPage: React.FC = () => {
 
                     setDataSources(sources);
                     console.log(`✅ Frontend Fetch: تم جلب ${sources.length} dataset (${result.source})`);
-
-                    if (sources.length === 0) {
-                        setError('لا توجد مجموعات بيانات. جاري استخدام بيانات تجريبية.');
-                        setDataSources(getSampleDataSources());
-                    }
                 } else {
-                    // Fallback to backend API
-                    console.log('⚠️ Frontend Fetch فارغ، جاري استخدام Backend...');
-                    const response = await api.getDatasets({ limit: 1000 });
-                    if (response.success && response.data) {
-                        const datasets = response.data as APIDataset[];
-                        const sources: DataSource[] = datasets.map(d => ({
-                            id: d.externalId || d.id,
-                            name: d.name,
-                            nameAr: d.nameAr || d.name,
-                            category: d.category,
-                            fields: [],
-                            sampleData: [],
-                            recordCount: d.recordCount,
-                        }));
-                        setDataSources(sources);
-                    } else {
-                        setDataSources(getSampleDataSources());
-                    }
+                    // No backend fallback - use sample data directly
+                    console.log('⚠️ Frontend Fetch فارغ، جاري استخدام بيانات تجريبية...');
+                    setError('لا توجد مجموعات بيانات من المصدر. جاري استخدام بيانات تجريبية.');
+                    setDataSources(getSampleDataSources());
                 }
             } catch (err) {
                 console.error('Error fetching datasets:', err);
-                setError('تعذر الاتصال. جاري استخدام بيانات تجريبية.');
+                setError('تعذر الاتصال بالمصدر. جاري استخدام بيانات تجريبية.');
                 setDataSources(getSampleDataSources());
             } finally {
                 setLoading(false);
@@ -273,14 +243,14 @@ const ChartBuilderPage: React.FC = () => {
         fetchDatasets();
     }, []);
 
-    // Fetch dataset data on-demand when selected (Frontend Fetch - Direct from Source)
+    // Fetch dataset data on-demand when selected (Frontend Fetch فقط - بدون Backend API)
     const fetchDatasetData = async (datasetId: string) => {
         setLoadingData(true);
         setDataSource(null);
         setError(null);
         try {
-            // Use Frontend Fetch - جلب مباشر من المصدر (بدون Backend)
-            console.log(`🌐 Frontend Fetch: Fetching data for ${datasetId}`);
+            // Frontend Fetch فقط - جلب مباشر من المصدر (بدون Backend)
+            console.log(`🌐 Frontend Fetch: جلب البيانات مباشرة لـ ${datasetId}`);
             const result = await fetchDirectData(datasetId, { limit: 100 });
 
             if (result && result.records.length > 0) {
@@ -296,33 +266,15 @@ const ChartBuilderPage: React.FC = () => {
                 setYAxis(columns[1] || columns[0]);
                 setDataSource(result.source === 'cache' ? 'cache' : 'api');
                 setStep(2);
-                console.log(`✅ Frontend Fetch: Got ${result.records.length} records (${result.source})`);
+                console.log(`✅ Frontend Fetch: تم جلب ${result.records.length} سجل (${result.source})`);
             } else {
-                // Fallback to backend API if frontend fetch fails
-                console.log('⚠️ Frontend Fetch failed, trying backend API...');
-                const response = await api.getDatasetPreview(datasetId, 50);
-                if (response.success && response.data) {
-                    const { preview, columns } = response.data;
-                    if (preview && preview.length > 0 && columns && columns.length > 0) {
-                        setSelectedDataSource(prev => prev ? {
-                            ...prev,
-                            fields: columns,
-                            sampleData: preview,
-                        } : null);
-                        setXAxis(columns[0]);
-                        setYAxis(columns[1] || columns[0]);
-                        setDataSource('api');
-                        setStep(2);
-                    } else {
-                        setError('لا توجد بيانات متاحة لهذا المصدر');
-                    }
-                } else {
-                    setError('فشل في جلب البيانات - تأكد من وجود ملف CSV للمصدر');
-                }
+                // No backend fallback - show error directly
+                console.log('⚠️ Frontend Fetch: لا توجد بيانات متاحة');
+                setError('لا توجد بيانات متاحة لهذا المصدر. تأكد من وجود ملف CSV.');
             }
         } catch (err) {
             console.error('Error fetching dataset data:', err);
-            setError('تعذر جلب البيانات من المصدر');
+            setError('تعذر جلب البيانات من المصدر مباشرة');
         } finally {
             setLoadingData(false);
         }

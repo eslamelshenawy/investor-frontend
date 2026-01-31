@@ -56,10 +56,11 @@ export interface DatasetListResult {
 const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';
 const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
-// CORS proxy for when direct requests fail
+// CORS proxy for when direct requests fail (multiple options for reliability)
 const CORS_PROXIES = [
   'https://api.allorigins.win/raw?url=',
   'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
 ];
 const CACHE_PREFIX = 'dataset_cache_';
 const DATASETS_LIST_KEY = 'datasets_list_cache';
@@ -532,29 +533,59 @@ export async function fetchDatasetMetadata(datasetId: string): Promise<{
 }
 
 /**
- * جلب resources (روابط التحميل)
+ * جلب resources (روابط التحميل) - مع CORS proxy fallback
  */
 export async function fetchDatasetResources(datasetId: string): Promise<DatasetResource[]> {
-  try {
-    const response = await fetch(
-      `${API_BASE}/datasets/resources?version=-1&dataset=${datasetId}`,
-      {
-        headers: {
-          'Accept': 'application/json',
-        },
+  console.log(`🔍 Fetching resources for dataset: ${datasetId}`);
+
+  // Try multiple endpoints
+  const endpoints = [
+    // CKAN API - package_show (most reliable)
+    `${CKAN_BASE}/package_show?id=${datasetId}`,
+    // Custom API endpoints
+    `${API_BASE}/datasets/resources?version=-1&dataset=${datasetId}`,
+    `${API_BASE}/datasets?version=-1&dataset=${datasetId}`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`   🔗 Trying: ${endpoint.substring(0, 60)}...`);
+
+      const response = await fetchWithCorsProxy(endpoint);
+      const data = await response.json();
+
+      let resources: DatasetResource[] = [];
+
+      // CKAN API returns: { success: true, result: { resources: [...] } }
+      if (data.success && data.result?.resources) {
+        resources = data.result.resources.map((r: any) => ({
+          id: r.id,
+          name: r.name || r.description,
+          format: r.format,
+          downloadUrl: r.url,
+        }));
       }
-    );
+      // Custom API might return { resources: [...] }
+      else if (data.resources) {
+        resources = data.resources.map((r: any) => ({
+          id: r.id,
+          name: r.name || r.description,
+          format: r.format,
+          downloadUrl: r.url || r.downloadUrl,
+        }));
+      }
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      if (resources.length > 0) {
+        console.log(`   ✅ Found ${resources.length} resources`);
+        return resources;
+      }
+    } catch (error) {
+      console.warn(`   ⚠️ Endpoint failed:`, error);
     }
-
-    const data = await response.json();
-    return data?.resources || [];
-  } catch (error) {
-    console.error('Failed to fetch resources:', error);
-    return [];
   }
+
+  console.warn(`❌ No resources found for ${datasetId}`);
+  return [];
 }
 
 /**
@@ -615,20 +646,71 @@ export async function fetchDatasetData(
   console.log(`🌐 Fetching data for ${datasetId}`);
 
   try {
-    // 2. Get resources
+    // 2. Get resources from API
     const resources = await fetchDatasetResources(datasetId);
 
-    // 3. Find CSV resource
-    const csvResource = resources.find(
-      r => r.format?.toLowerCase() === 'csv' || r.downloadUrl?.endsWith('.csv')
+    // 3. Find CSV resource (try multiple formats)
+    let csvResource = resources.find(
+      r => r.format?.toLowerCase() === 'csv' || r.downloadUrl?.toLowerCase().includes('.csv')
     );
 
+    // Try JSON if no CSV
     if (!csvResource?.downloadUrl) {
-      console.warn(`No CSV resource for ${datasetId}`);
+      csvResource = resources.find(
+        r => r.format?.toLowerCase() === 'json' || r.downloadUrl?.toLowerCase().includes('.json')
+      );
+    }
+
+    // Try XLS/XLSX
+    if (!csvResource?.downloadUrl) {
+      csvResource = resources.find(
+        r => ['xls', 'xlsx'].includes(r.format?.toLowerCase() || '')
+      );
+    }
+
+    // 4. If still no resource, try direct CKAN datastore API
+    if (!csvResource?.downloadUrl) {
+      console.log('   🔄 Trying CKAN datastore dump...');
+      const datastoreUrl = `https://open.data.gov.sa/api/3/action/datastore_search?resource_id=${datasetId}&limit=100`;
+
+      try {
+        const response = await fetchWithCorsProxy(datastoreUrl);
+        const data = await response.json();
+
+        if (data.success && data.result?.records?.length > 0) {
+          console.log(`   ✅ Got ${data.result.records.length} records from datastore`);
+
+          const records = data.result.records;
+          const result: FetchedData = {
+            records,
+            columns: Object.keys(records[0] || {}).filter(k => k !== '_id'),
+            totalRecords: data.result.total || records.length,
+            fetchedAt: new Date().toISOString(),
+            source: 'api',
+          };
+
+          saveToCache(datasetId, result);
+
+          if (limit && result.records.length > limit) {
+            result.records = result.records.slice(0, limit);
+          }
+
+          return result;
+        }
+      } catch (e) {
+        console.warn('   ⚠️ Datastore API failed:', e);
+      }
+    }
+
+    if (!csvResource?.downloadUrl) {
+      console.warn(`❌ No downloadable resource found for ${datasetId}`);
+      console.log('   📋 Available resources:', resources.map(r => `${r.name || 'unnamed'} (${r.format || 'unknown'})`).join(', ') || 'none');
       return null;
     }
 
-    // 4. Fetch and parse CSV
+    console.log(`   📥 Downloading: ${csvResource.downloadUrl.substring(0, 60)}...`);
+
+    // 5. Fetch and parse CSV
     const records = await fetchAndParseCSV(csvResource.downloadUrl);
 
     if (!records || records.length === 0) {
@@ -636,7 +718,7 @@ export async function fetchDatasetData(
       return null;
     }
 
-    // 5. Prepare result
+    // 6. Prepare result
     const result: FetchedData = {
       records,
       columns: Object.keys(records[0] || {}),
@@ -645,12 +727,12 @@ export async function fetchDatasetData(
       source: 'api',
     };
 
-    // 6. Save to cache
+    // 7. Save to cache
     saveToCache(datasetId, result);
 
     console.log(`✅ Fetched ${records.length} records for ${datasetId}`);
 
-    // 7. Apply limit if specified
+    // 8. Apply limit if specified
     if (limit && result.records.length > limit) {
       result.records = result.records.slice(0, limit);
     }
