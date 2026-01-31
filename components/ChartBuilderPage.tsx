@@ -51,7 +51,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 // Frontend Fetch فقط - بدون Backend API
-import { fetchDatasetData as fetchDirectData, fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
+import { fetchDatasetData as fetchDirectData, fetchDatasetsList, fetchAllDatasets, DatasetInfo } from '../src/services/dataFetcher';
 import {
     BarChart,
     Bar,
@@ -181,6 +181,7 @@ const ChartBuilderPage: React.FC = () => {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [dataSources, setDataSources] = useState<DataSource[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [loadingData, setLoadingData] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedDataSource, setSelectedDataSource] = useState<DataSource | null>(null);
@@ -201,45 +202,134 @@ const ChartBuilderPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const chartRef = React.useRef<HTMLDivElement>(null);
 
-    // Fetch datasets list - Frontend Fetch مباشرة من البوابة الوطنية للبيانات المفتوحة
-    useEffect(() => {
-        const fetchDatasets = async () => {
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [totalLoaded, setTotalLoaded] = useState(0);
+    const [loadingAll, setLoadingAll] = useState(false);
+    const listContainerRef = React.useRef<HTMLDivElement>(null);
+    const PAGE_SIZE = 100; // جلب 100 dataset في كل صفحة
+
+    // Fetch datasets with pagination - Frontend Fetch من البوابة الوطنية
+    const fetchDatasetsPage = async (page: number, append: boolean = false) => {
+        if (page === 1) {
             setLoading(true);
-            setError(null);
-            try {
-                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets من البوابة الوطنية...');
+        } else {
+            setLoadingMore(true);
+        }
+        setError(null);
 
-                // Frontend Fetch مباشرة من منصة البيانات السعودية
-                const result = await fetchDatasetsList({ limit: 500 });
+        try {
+            console.log(`🌐 Frontend Fetch: جلب الصفحة ${page} من البوابة الوطنية...`);
 
-                if (result.datasets && result.datasets.length > 0) {
-                    const sources: DataSource[] = result.datasets
-                        .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
-                        .map((d: DatasetInfo) => ({
-                            id: d.id,
-                            name: d.titleEn || d.titleAr || 'بدون اسم',
-                            nameAr: d.titleAr || d.titleEn || 'بدون اسم',
-                            category: d.category || 'أخرى',
-                            fields: [],
-                            sampleData: [],
-                            recordCount: d.recordCount,
-                        }));
+            const result = await fetchDatasetsList({
+                page,
+                limit: PAGE_SIZE,
+                forceRefresh: page === 1
+            });
 
-                    setDataSources(sources);
-                    console.log(`✅ Frontend Fetch: تم جلب ${sources.length} dataset (${result.source})`);
+            if (result.datasets && result.datasets.length > 0) {
+                const newSources: DataSource[] = result.datasets
+                    .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
+                    .map((d: DatasetInfo) => ({
+                        id: d.id,
+                        name: d.titleEn || d.titleAr || 'بدون اسم',
+                        nameAr: d.titleAr || d.titleEn || 'بدون اسم',
+                        category: d.category || 'أخرى',
+                        fields: [],
+                        sampleData: [],
+                        recordCount: d.recordCount,
+                    }));
+
+                if (append) {
+                    setDataSources(prev => {
+                        // Filter duplicates
+                        const existingIds = new Set(prev.map(d => d.id));
+                        const uniqueNew = newSources.filter(d => !existingIds.has(d.id));
+                        return [...prev, ...uniqueNew];
+                    });
                 } else {
-                    setError('لا توجد مجموعات بيانات متاحة من المنصة');
+                    setDataSources(newSources);
                 }
-            } catch (err) {
-                console.error('Error fetching datasets:', err);
-                setError('تعذر الاتصال بالبوابة الوطنية للبيانات المفتوحة');
-            } finally {
-                setLoading(false);
-            }
-        };
 
-        fetchDatasets();
+                setTotalLoaded(prev => append ? prev + newSources.length : newSources.length);
+                setHasMore(result.hasMore && newSources.length === PAGE_SIZE);
+                setCurrentPage(page);
+
+                console.log(`✅ تم جلب ${newSources.length} dataset - المجموع: ${append ? totalLoaded + newSources.length : newSources.length}`);
+            } else {
+                if (page === 1) {
+                    setError('لا توجد مجموعات بيانات متاحة');
+                }
+                setHasMore(false);
+            }
+        } catch (err) {
+            console.error('Error fetching datasets:', err);
+            if (page === 1) {
+                setError('تعذر الاتصال بالبوابة الوطنية للبيانات المفتوحة');
+            }
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    // Initial fetch
+    useEffect(() => {
+        fetchDatasetsPage(1);
     }, []);
+
+    // Load more function
+    const loadMoreDatasets = () => {
+        if (!loadingMore && hasMore) {
+            fetchDatasetsPage(currentPage + 1, true);
+        }
+    };
+
+    // Infinite scroll handler
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        // Load more when scrolled to bottom (with 100px threshold)
+        if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
+            loadMoreDatasets();
+        }
+    };
+
+    // Load ALL datasets at once
+    const loadAllDatasetsHandler = async () => {
+        setLoadingAll(true);
+        setError(null);
+        try {
+            console.log('🚀 جاري تحميل جميع الـ Datasets...');
+
+            const allDatasets = await fetchAllDatasets((loaded) => {
+                setTotalLoaded(loaded);
+            });
+
+            if (allDatasets.length > 0) {
+                const sources: DataSource[] = allDatasets
+                    .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
+                    .map((d: DatasetInfo) => ({
+                        id: d.id,
+                        name: d.titleEn || d.titleAr || 'بدون اسم',
+                        nameAr: d.titleAr || d.titleEn || 'بدون اسم',
+                        category: d.category || 'أخرى',
+                        fields: [],
+                        sampleData: [],
+                        recordCount: d.recordCount,
+                    }));
+
+                setDataSources(sources);
+                setHasMore(false);
+                console.log(`✅ تم تحميل ${sources.length} dataset`);
+            }
+        } catch (err) {
+            console.error('Error loading all datasets:', err);
+            setError('تعذر تحميل جميع البيانات');
+        } finally {
+            setLoadingAll(false);
+        }
+    };
 
     // Fetch dataset data on-demand when selected (Frontend Fetch فقط - بدون Backend API)
     const fetchDatasetData = async (datasetId: string) => {
@@ -278,36 +368,6 @@ const ChartBuilderPage: React.FC = () => {
         }
     };
 
-    // Fallback sample data
-    const getSampleDataSources = (): DataSource[] => [
-        {
-            id: 'signals-data',
-            name: 'Market Signals',
-            nameAr: 'إشارات السوق',
-            category: 'تحليلات',
-            fields: ['القطاع', 'درجة التأثير', 'الثقة', 'الاتجاه'],
-            sampleData: [
-                { القطاع: 'العقارات', 'درجة التأثير': 78, 'الثقة': 85, 'الاتجاه': 15 },
-                { القطاع: 'السياحة', 'درجة التأثير': 82, 'الثقة': 90, 'الاتجاه': 28 },
-                { القطاع: 'الغذاء', 'درجة التأثير': 65, 'الثقة': 88, 'الاتجاه': -4 },
-                { القطاع: 'التجزئة', 'درجة التأثير': 70, 'الثقة': 95, 'الاتجاه': 8 },
-                { القطاع: 'الطاقة', 'درجة التأثير': 88, 'الثقة': 92, 'الاتجاه': 12 },
-            ]
-        },
-        {
-            id: 'content-stats',
-            name: 'Content Statistics',
-            nameAr: 'إحصائيات المحتوى',
-            category: 'محتوى',
-            fields: ['النوع', 'العدد', 'المشاهدات', 'التفاعل'],
-            sampleData: [
-                { النوع: 'مقالات', 'العدد': 45, 'المشاهدات': 12500, 'التفاعل': 850 },
-                { النوع: 'تقارير', 'العدد': 12, 'المشاهدات': 8200, 'التفاعل': 420 },
-                { النوع: 'أخبار', 'العدد': 156, 'المشاهدات': 45000, 'التفاعل': 2100 },
-                { النوع: 'تحليلات', 'العدد': 28, 'المشاهدات': 15800, 'التفاعل': 980 },
-            ]
-        }
-    ];
 
     // Get current data
     const chartData = useMemo(() => {
@@ -823,10 +883,39 @@ const ChartBuilderPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Frontend Fetch Badge */}
-                        <div className="mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 text-emerald-700 text-xs">
-                            <Zap size={14} />
-                            <span>جلب مباشر من المصدر (Frontend Fetch)</span>
+                        {/* Frontend Fetch Badge with Count & Load All */}
+                        <div className="mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-xs">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Zap size={14} />
+                                    <span>جلب مباشر من البوابة الوطنية</span>
+                                </div>
+                                {dataSources.length > 0 && (
+                                    <span className="bg-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                                        {dataSources.length} مصدر
+                                    </span>
+                                )}
+                            </div>
+                            {/* Load All Button */}
+                            {hasMore && !loading && (
+                                <button
+                                    onClick={loadAllDatasetsHandler}
+                                    disabled={loadingAll}
+                                    className="mt-2 w-full py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {loadingAll ? (
+                                        <>
+                                            <Loader2 size={12} className="animate-spin" />
+                                            <span>جاري التحميل... ({totalLoaded})</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <RefreshCw size={12} />
+                                            <span>تحميل جميع مصادر البيانات</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
                         {loading ? (
@@ -839,25 +928,27 @@ const ChartBuilderPage: React.FC = () => {
                                 <Database size={32} className="mx-auto mb-2 opacity-50" />
                                 <p>لا توجد مصادر بيانات متاحة</p>
                                 <button
-                                    onClick={() => window.location.reload()}
+                                    onClick={() => fetchDatasetsPage(1)}
                                     className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
                                 >
                                     إعادة المحاولة
                                 </button>
                             </div>
                         ) : (
-                            <div className="space-y-3 max-h-64 overflow-y-auto">
+                            <div
+                                ref={listContainerRef}
+                                className="space-y-3 max-h-80 overflow-y-auto"
+                                onScroll={handleScroll}
+                            >
                                 {dataSources.map(ds => (
                                     <button
                                         key={ds.id}
                                         onClick={() => {
-                                            // Set basic info first
                                             setSelectedDataSource({
                                                 ...ds,
                                                 fields: [],
                                                 sampleData: [],
                                             });
-                                            // Fetch data on-demand
                                             fetchDatasetData(ds.id);
                                         }}
                                         disabled={loadingData && selectedDataSource?.id === ds.id}
@@ -868,7 +959,7 @@ const ChartBuilderPage: React.FC = () => {
                                         } ${loadingData && selectedDataSource?.id === ds.id ? 'opacity-70' : ''}`}
                                     >
                                         <div className="flex items-center justify-between">
-                                            <p className="font-bold text-gray-900">{ds.nameAr}</p>
+                                            <p className="font-bold text-gray-900 text-sm">{ds.nameAr}</p>
                                             {loadingData && selectedDataSource?.id === ds.id && (
                                                 <Loader2 className="animate-spin text-indigo-600" size={16} />
                                             )}
@@ -881,6 +972,31 @@ const ChartBuilderPage: React.FC = () => {
                                         </div>
                                     </button>
                                 ))}
+
+                                {/* Load More Indicator */}
+                                {loadingMore && (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="animate-spin text-indigo-600 ml-2" size={20} />
+                                        <span className="text-sm text-gray-500">جاري تحميل المزيد...</span>
+                                    </div>
+                                )}
+
+                                {/* Load More Button */}
+                                {hasMore && !loadingMore && (
+                                    <button
+                                        onClick={loadMoreDatasets}
+                                        className="w-full py-3 text-center text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-bold border-2 border-dashed border-indigo-200"
+                                    >
+                                        تحميل المزيد...
+                                    </button>
+                                )}
+
+                                {/* End of List */}
+                                {!hasMore && dataSources.length > 0 && (
+                                    <p className="text-center text-xs text-gray-400 py-2">
+                                        تم تحميل جميع مصادر البيانات ({dataSources.length})
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

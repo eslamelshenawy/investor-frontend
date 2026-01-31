@@ -59,10 +59,11 @@ const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
 // Use Vercel API route as primary proxy (most reliable)
 const VERCEL_PROXY = '/api/proxy?url=';
 
-// Fallback CORS proxies (less reliable)
+// Fallback CORS proxies (multiple options for reliability)
 const CORS_PROXIES = [
-  'https://proxy.cors.sh/',
+  'https://corsproxy.io/?',
   'https://api.allorigins.win/raw?url=',
+  'https://thingproxy.freeboard.io/fetch/',
 ];
 const CACHE_PREFIX = 'dataset_cache_';
 const DATASETS_LIST_KEY = 'datasets_list_cache';
@@ -74,7 +75,21 @@ const LIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours for list cache
 // ═══════════════════════════════════════════════════════════════════
 
 async function fetchWithCorsProxy(url: string): Promise<any> {
-  // 1. Try Vercel API route first (most reliable - our own serverless proxy)
+  // 1. Try direct fetch FIRST (البوابة السعودية تسمح بطلبات Browser)
+  try {
+    console.log(`   🌐 Trying direct fetch...`);
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (response.ok) {
+      console.log(`   ✅ Direct fetch worked!`);
+      return response;
+    }
+  } catch (e) {
+    console.log(`   ⚠️ Direct fetch failed (CORS)`);
+  }
+
+  // 2. Try Vercel API route (serverless proxy)
   try {
     const proxyUrl = VERCEL_PROXY + encodeURIComponent(url);
     console.log(`   🔄 Trying Vercel proxy...`);
@@ -92,19 +107,6 @@ async function fetchWithCorsProxy(url: string): Promise<any> {
     }
   } catch (e: any) {
     console.log(`   ⚠️ Vercel proxy failed: ${e.message}`);
-  }
-
-  // 2. Try direct fetch (unlikely to work due to CORS)
-  try {
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
-    });
-    if (response.ok) {
-      console.log(`   ✅ Direct fetch worked!`);
-      return response;
-    }
-  } catch (e) {
-    console.log(`   ⚠️ Direct fetch failed`);
   }
 
   // 3. Try external CORS proxies as last resort

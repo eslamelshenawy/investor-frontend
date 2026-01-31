@@ -320,19 +320,21 @@ const DatasetsPage: React.FC = () => {
         },
     ];
 
-    // Fetch datasets - Frontend Fetch فقط
-    const fetchDatasets = async () => {
+    // Fetch datasets with pagination - Frontend Fetch فقط
+    const fetchDatasets = async (page: number = 1, search?: string, category?: string) => {
         setLoading(true);
         setError(null);
 
-        // Set default categories from Saudi Open Data
-        setCategories(SAUDI_CATEGORIES);
-        setTotalDatasets(15500);
-
         try {
-            console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets...');
+            console.log(`🌐 Frontend Fetch: جلب الصفحة ${page}...`);
 
-            const result = await fetchDatasetsList({ limit: 500, forceRefresh: false });
+            const result = await fetchDatasetsList({
+                page,
+                limit: ITEMS_PER_PAGE,
+                search: search || searchQuery || undefined,
+                category: category || selectedCategory || undefined,
+                forceRefresh: false,
+            });
 
             if (result.datasets.length > 0) {
                 // Convert to Dataset format
@@ -345,7 +347,7 @@ const DatasetsPage: React.FC = () => {
                     descriptionAr: d.descriptionAr || '',
                     category: d.category || 'أخرى',
                     source: 'open.data.gov.sa',
-                    sourceUrl: `https://open.data.gov.sa/ar/datasets/view/${d.id}`,
+                    sourceUrl: null,
                     recordCount: d.recordCount || 0,
                     columns: [],
                     lastSyncAt: d.updatedAt || '',
@@ -354,27 +356,16 @@ const DatasetsPage: React.FC = () => {
                 }));
 
                 setDatasets(data);
-                setTotalDatasets(data.length > 0 ? Math.max(data.length, 15500) : 15500);
+                setTotalDatasets(result.total || 15500);
+                setCurrentPage(page);
 
-                // Calculate categories from fetched data
-                const categoryMap = new Map<string, number>();
-                data.forEach(d => {
-                    const cat = d.category || 'أخرى';
-                    categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-                });
-
-                if (categoryMap.size > 0) {
-                    const cats: CategoryCount[] = Array.from(categoryMap.entries())
-                        .map(([name, count]) => ({ name, count }))
-                        .sort((a, b) => b.count - a.count);
-                    setCategories(cats);
-                }
-
-                console.log(`✅ Frontend Fetch: تم جلب ${data.length} dataset (${result.source})`);
+                console.log(`✅ تم جلب ${data.length} dataset (صفحة ${page})`);
             } else {
-                console.log('⚠️ Frontend Fetch returned 0 datasets');
-                setError('لم يتم العثور على بيانات - جرب إعادة المحاولة');
+                console.log('⚠️ لا توجد بيانات في هذه الصفحة');
                 setDatasets([]);
+                if (page === 1) {
+                    setError('لم يتم العثور على بيانات - جرب إعادة المحاولة');
+                }
             }
         } catch (err: any) {
             console.error('Frontend Fetch error:', err);
@@ -385,51 +376,41 @@ const DatasetsPage: React.FC = () => {
         }
     };
 
+    // Initial load
     useEffect(() => {
-        fetchDatasets();
+        fetchDatasets(1);
+        // Keep default categories
+        setCategories(SAUDI_CATEGORIES);
     }, []);
 
-    // Filtered datasets
-    const filteredDatasets = useMemo(() => {
-        let result = datasets;
+    // Handle page change
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || loading) return;
+        setCurrentPage(newPage);
+        fetchDatasets(newPage);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-        // Search filter
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(d =>
-                d.nameAr?.toLowerCase().includes(query) ||
-                d.name?.toLowerCase().includes(query) ||
-                d.descriptionAr?.toLowerCase().includes(query) ||
-                d.description?.toLowerCase().includes(query) ||
-                d.category?.toLowerCase().includes(query)
-            );
-        }
-
-        // Category filter
-        if (selectedCategory) {
-            result = result.filter(d => d.category === selectedCategory);
-        }
-
-        // Status filter
-        if (selectedStatus) {
-            result = result.filter(d => d.syncStatus === selectedStatus);
-        }
-
-        return result;
-    }, [datasets, searchQuery, selectedCategory, selectedStatus]);
-
-    // Paginated datasets
-    const paginatedDatasets = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredDatasets.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredDatasets, currentPage]);
-
-    const totalPages = Math.ceil(filteredDatasets.length / ITEMS_PER_PAGE);
-
-    // Reset page when filters change
+    // When filters change, refetch from page 1
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery, selectedCategory, selectedStatus]);
+        const timer = setTimeout(() => {
+            fetchDatasets(1, searchQuery, selectedCategory);
+        }, 300); // Debounce search
+        return () => clearTimeout(timer);
+    }, [searchQuery, selectedCategory]);
+
+    // Server-side pagination - datasets are already paginated from API
+    // Local filtering only for status (API doesn't support it)
+    const displayedDatasets = useMemo(() => {
+        if (selectedStatus) {
+            return datasets.filter(d => d.syncStatus === selectedStatus);
+        }
+        return datasets;
+    }, [datasets, selectedStatus]);
+
+    // Calculate total pages from API total
+    const totalPages = Math.ceil(totalDatasets / ITEMS_PER_PAGE);
 
     // Format date
     const formatDate = (dateStr: string) => {
@@ -635,7 +616,7 @@ const DatasetsPage: React.FC = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <p className="text-gray-600">
-                                    <span className="font-bold text-gray-900">{filteredDatasets.length}</span> مجموعة بيانات
+                                    <span className="font-bold text-gray-900">{displayedDatasets.length}</span> مجموعة بيانات (صفحة {currentPage})
                                     {hasFilters && (
                                         <button
                                             onClick={clearFilters}
@@ -649,11 +630,12 @@ const DatasetsPage: React.FC = () => {
 
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={fetchDatasets}
-                                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
-                                    title="تحديث"
+                                    onClick={() => fetchDatasets(currentPage)}
+                                    disabled={loading}
+                                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 disabled:opacity-50"
+                                    title="تحديث الصفحة الحالية"
                                 >
-                                    <RefreshCw size={18} />
+                                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                                 </button>
                                 <div className="flex bg-gray-100 rounded-lg p-1">
                                     <button
@@ -710,23 +692,23 @@ const DatasetsPage: React.FC = () => {
                         )}
 
                         {/* Dataset Grid/List */}
-                        {paginatedDatasets.length === 0 && !loading ? (
+                        {displayedDatasets.length === 0 && !loading ? (
                             <div className="text-center py-16">
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Database size={40} className="text-gray-400" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                    {hasFilters ? 'لا توجد نتائج للبحث' : 'جاري تحميل البيانات...'}
+                                    {hasFilters ? 'لا توجد نتائج للبحث' : 'لا توجد بيانات'}
                                 </h3>
                                 <p className="text-gray-600 mb-6">
                                     {hasFilters
                                         ? 'جرب تغيير معايير البحث أو إزالة الفلاتر'
-                                        : 'يتم جلب البيانات من المصدر...'}
+                                        : 'جرب إعادة المحاولة لجلب البيانات'}
                                 </p>
                                 <button
                                     onClick={() => {
                                         clearFilters();
-                                        fetchDatasets();
+                                        fetchDatasets(1);
                                     }}
                                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
                                 >
@@ -736,61 +718,43 @@ const DatasetsPage: React.FC = () => {
                             </div>
                         ) : viewMode === 'grid' ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                {paginatedDatasets.map(dataset => (
+                                {displayedDatasets.map(dataset => (
                                     <DatasetCard key={dataset.id} dataset={dataset} formatDate={formatDate} />
                                 ))}
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {paginatedDatasets.map(dataset => (
+                                {displayedDatasets.map(dataset => (
                                     <DatasetListItem key={dataset.id} dataset={dataset} formatDate={formatDate} />
                                 ))}
                             </div>
                         )}
 
-                        {/* Pagination */}
+                        {/* Pagination - Server-side */}
                         {totalPages > 1 && (
-                            <div className="mt-8 flex items-center justify-center gap-2">
+                            <div className="mt-8 flex items-center justify-center gap-4">
                                 <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1 || loading}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ChevronRight size={20} />
+                                    <span>السابق</span>
                                 </button>
 
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let page;
-                                    if (totalPages <= 5) {
-                                        page = i + 1;
-                                    } else if (currentPage <= 3) {
-                                        page = i + 1;
-                                    } else if (currentPage >= totalPages - 2) {
-                                        page = totalPages - 4 + i;
-                                    } else {
-                                        page = currentPage - 2 + i;
-                                    }
-
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                                                currentPage === page
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'border border-gray-200 hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                })}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-600">صفحة</span>
+                                    <span className="font-bold text-blue-600">{currentPage}</span>
+                                    <span className="text-gray-600">من</span>
+                                    <span className="font-bold">{Math.min(totalPages, 100)}</span>
+                                </div>
 
                                 <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage >= totalPages || loading}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
+                                    <span>التالي</span>
                                     <ChevronLeft size={20} />
                                 </button>
                             </div>
