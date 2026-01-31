@@ -372,38 +372,14 @@ const DatasetsPage: React.FC = () => {
 
                 console.log(`✅ Frontend Fetch: تم جلب ${data.length} dataset (${result.source})`);
             } else {
-                console.log('⚠️ API returned 0, using sample datasets');
-                // Use sample datasets when API fails
-                setDatasets(SAMPLE_DATASETS);
-                setTotalDatasets(SAMPLE_DATASETS.length);
-
-                // Calculate categories from sample data
-                const categoryMap = new Map<string, number>();
-                SAMPLE_DATASETS.forEach(d => {
-                    const cat = d.category || 'أخرى';
-                    categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-                });
-                const cats: CategoryCount[] = Array.from(categoryMap.entries())
-                    .map(([name, count]) => ({ name, count }))
-                    .sort((a, b) => b.count - a.count);
-                setCategories(cats);
+                console.log('⚠️ Frontend Fetch returned 0 datasets');
+                setError('لم يتم العثور على بيانات - جرب إعادة المحاولة');
+                setDatasets([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Frontend Fetch error:', err);
-            // Use sample datasets on error
-            console.log('⚠️ Error occurred, using sample datasets');
-            setDatasets(SAMPLE_DATASETS);
-            setTotalDatasets(SAMPLE_DATASETS.length);
-
-            const categoryMap = new Map<string, number>();
-            SAMPLE_DATASETS.forEach(d => {
-                const cat = d.category || 'أخرى';
-                categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-            });
-            const cats: CategoryCount[] = Array.from(categoryMap.entries())
-                .map(([name, count]) => ({ name, count }))
-                .sort((a, b) => b.count - a.count);
-            setCategories(cats);
+            setError(`فشل في جلب البيانات: ${err.message || 'خطأ غير معروف'}`);
+            setDatasets([]);
         } finally {
             setLoading(false);
         }

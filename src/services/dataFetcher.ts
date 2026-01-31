@@ -58,7 +58,7 @@ const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
 // CORS proxy for when direct requests fail (multiple options for reliability)
 const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
+  'https://api.allorigins.win/get?url=',  // Returns JSON with contents field
   'https://corsproxy.io/?',
   'https://api.codetabs.com/v1/proxy?quest=',
 ];
@@ -71,14 +71,17 @@ const LIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours for list cache
 // Helper: Fetch with CORS proxy fallback
 // ═══════════════════════════════════════════════════════════════════
 
-async function fetchWithCorsProxy(url: string): Promise<Response> {
+async function fetchWithCorsProxy(url: string): Promise<any> {
   // Try direct fetch first
   try {
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
       mode: 'cors',
     });
-    if (response.ok) return response;
+    if (response.ok) {
+      console.log(`   ✅ Direct fetch worked!`);
+      return response;
+    }
   } catch (e) {
     console.log(`   ⚠️ Direct fetch failed, trying proxy...`);
   }
@@ -87,14 +90,29 @@ async function fetchWithCorsProxy(url: string): Promise<Response> {
   for (const proxy of CORS_PROXIES) {
     try {
       const proxyUrl = proxy + encodeURIComponent(url);
+      console.log(`   🔄 Trying proxy: ${proxy.substring(0, 35)}...`);
+
       const response = await fetch(proxyUrl, {
         headers: { 'Accept': 'application/json' },
       });
+
       if (response.ok) {
         console.log(`   ✅ Proxy worked: ${proxy.substring(0, 30)}...`);
+
+        // Handle allorigins.win which wraps response in JSON
+        if (proxy.includes('allorigins.win/get')) {
+          const wrapper = await response.json();
+          // Return a fake Response with the contents
+          return {
+            ok: true,
+            json: async () => JSON.parse(wrapper.contents),
+          };
+        }
+
         return response;
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.log(`   ❌ Proxy failed: ${e.message || e}`);
       continue;
     }
   }
