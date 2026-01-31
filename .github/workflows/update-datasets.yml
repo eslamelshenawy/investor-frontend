@@ -49,7 +49,7 @@ jobs:
           head -10 public/data/datasets.json
           echo "..."
 
-      - name: Commit and push
+      - name: Commit and push (with history cleanup)
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -58,8 +58,22 @@ jobs:
 
           if git diff --staged --quiet; then
             echo "لا توجد تغييرات"
-          else
-            git commit -m "🔄 Auto-update datasets $(date +'%Y-%m-%d')"
-            git push
-            echo "✅ تم تحديث البيانات"
+            exit 0
           fi
+
+          # تحقق إذا آخر commit كان تحديث بيانات
+          LAST_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
+
+          if [[ "$LAST_MSG" == *"Auto-update datasets"* ]]; then
+            # استبدال الـ commit السابق (يوفر مساحة)
+            echo "🔄 تحديث الـ commit السابق (amend)..."
+            git commit --amend -m "🔄 Auto-update datasets $(date +'%Y-%m-%d %H:%M')"
+            git push --force-with-lease
+          else
+            # commit جديد
+            echo "📝 إنشاء commit جديد..."
+            git commit -m "🔄 Auto-update datasets $(date +'%Y-%m-%d %H:%M')"
+            git push
+          fi
+
+          echo "✅ تم تحديث البيانات"
