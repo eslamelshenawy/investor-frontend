@@ -31,6 +31,7 @@ import {
     ArrowUpRight
 } from 'lucide-react';
 import { api } from '../src/services/api';
+import { fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 
 // ============================================
 // TYPES
@@ -102,14 +103,35 @@ const DatasetsPage: React.FC = () => {
     // Stats
     const [totalDatasets, setTotalDatasets] = useState(0);
 
-    // Fetch datasets
+    // Fetch datasets - Frontend Fetch مباشرة من المصدر
     const fetchDatasets = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await api.getDatasets({ limit: 500 });
-            if (response.success && response.data) {
-                const data = response.data as Dataset[];
+            console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets...');
+
+            // Try Frontend Fetch first (مباشرة من منصة البيانات السعودية)
+            const result = await fetchDatasetsList({ limit: 500 });
+
+            if (result.datasets.length > 0) {
+                // Convert to Dataset format
+                const data: Dataset[] = result.datasets.map((d: DatasetInfo) => ({
+                    id: d.id,
+                    externalId: d.id,
+                    name: d.titleEn || d.titleAr,
+                    nameAr: d.titleAr,
+                    description: d.descriptionEn || '',
+                    descriptionAr: d.descriptionAr || '',
+                    category: d.category || 'أخرى',
+                    source: 'open.data.gov.sa',
+                    sourceUrl: `https://open.data.gov.sa/ar/datasets/view/${d.id}`,
+                    recordCount: d.recordCount || 0,
+                    columns: [],
+                    lastSyncAt: d.updatedAt || '',
+                    syncStatus: 'SUCCESS',
+                    updatedAt: d.updatedAt || new Date().toISOString(),
+                }));
+
                 setDatasets(data);
                 setTotalDatasets(data.length);
 
@@ -124,10 +146,42 @@ const DatasetsPage: React.FC = () => {
                     .map(([name, count]) => ({ name, count }))
                     .sort((a, b) => b.count - a.count);
                 setCategories(cats);
+
+                console.log(`✅ Frontend Fetch: تم جلب ${data.length} dataset (${result.source})`);
+            } else {
+                // Fallback to backend API
+                console.log('⚠️ Frontend Fetch فارغ، جاري استخدام Backend...');
+                const response = await api.getDatasets({ limit: 500 });
+                if (response.success && response.data) {
+                    const data = response.data as Dataset[];
+                    setDatasets(data);
+                    setTotalDatasets(data.length);
+
+                    const categoryMap = new Map<string, number>();
+                    data.forEach(d => {
+                        const cat = d.category || 'أخرى';
+                        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+                    });
+
+                    const cats: CategoryCount[] = Array.from(categoryMap.entries())
+                        .map(([name, count]) => ({ name, count }))
+                        .sort((a, b) => b.count - a.count);
+                    setCategories(cats);
+                }
             }
         } catch (err) {
             console.error('Error fetching datasets:', err);
             setError('تعذر جلب البيانات');
+
+            // Try backend as last resort
+            try {
+                const response = await api.getDatasets({ limit: 500 });
+                if (response.success && response.data) {
+                    setDatasets(response.data as Dataset[]);
+                }
+            } catch {
+                // Give up
+            }
         } finally {
             setLoading(false);
         }

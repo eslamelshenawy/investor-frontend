@@ -27,13 +27,37 @@ export interface FetchedData {
   source: 'api' | 'cache';
 }
 
+export interface DatasetInfo {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  descriptionAr?: string;
+  descriptionEn?: string;
+  category?: string;
+  organization?: string;
+  recordCount?: number;
+  resources?: DatasetResource[];
+  updatedAt?: string;
+}
+
+export interface DatasetListResult {
+  datasets: DatasetInfo[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+  source: 'api' | 'cache';
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Configuration
 // ═══════════════════════════════════════════════════════════════════
 
 const API_BASE = 'https://open.data.gov.sa/data/api';
+const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
 const CACHE_PREFIX = 'dataset_cache_';
+const DATASETS_LIST_KEY = 'datasets_list_cache';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const LIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours for list cache
 
 // ═══════════════════════════════════════════════════════════════════
 // Cache Functions
@@ -108,7 +132,283 @@ function clearOldCache(): void {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// API Functions
+// Datasets List Cache Functions
+// ═══════════════════════════════════════════════════════════════════
+
+interface ListCacheEntry {
+  datasets: DatasetInfo[];
+  total: number;
+  timestamp: number;
+}
+
+function getListFromCache(): ListCacheEntry | null {
+  try {
+    const cached = localStorage.getItem(DATASETS_LIST_KEY);
+    if (!cached) return null;
+
+    const entry: ListCacheEntry = JSON.parse(cached);
+    const now = Date.now();
+
+    if (now - entry.timestamp > LIST_CACHE_TTL) {
+      localStorage.removeItem(DATASETS_LIST_KEY);
+      return null;
+    }
+
+    return entry;
+  } catch (error) {
+    console.error('List cache read error:', error);
+    return null;
+  }
+}
+
+function saveListToCache(datasets: DatasetInfo[], total: number): void {
+  try {
+    const entry: ListCacheEntry = {
+      datasets,
+      total,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(DATASETS_LIST_KEY, JSON.stringify(entry));
+  } catch (error) {
+    console.error('List cache write error:', error);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Datasets List API Functions (جلب قائمة كل الـ Datasets)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * جلب قائمة الـ Datasets من API المنصة مباشرة
+ * يستخدم عدة endpoints للحصول على أكبر عدد
+ */
+export async function fetchDatasetsList(options: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  search?: string;
+  forceRefresh?: boolean;
+} = {}): Promise<DatasetListResult> {
+  const { page = 1, limit = 100, category, search, forceRefresh = false } = options;
+
+  // Check cache first (only for first page without filters)
+  if (!forceRefresh && page === 1 && !category && !search) {
+    const cached = getListFromCache();
+    if (cached) {
+      console.log(`📦 Datasets list from cache (${cached.datasets.length} datasets)`);
+      return {
+        datasets: cached.datasets.slice(0, limit),
+        total: cached.total,
+        page: 1,
+        hasMore: cached.datasets.length > limit,
+        source: 'cache',
+      };
+    }
+  }
+
+  console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
+
+  const allDatasets: DatasetInfo[] = [];
+
+  try {
+    // Try multiple API endpoints to get datasets
+    const endpoints = [
+      `${CATALOG_API}?version=-1&rows=${limit}&start=${(page - 1) * limit}`,
+      `${API_BASE}/datasets/search?version=-1&rows=${limit}&start=${(page - 1) * limit}`,
+      `${API_BASE}/catalog/datasets?rows=${limit}&page=${page}`,
+    ];
+
+    // Add category filter if specified
+    if (category) {
+      endpoints.push(`${API_BASE}/datasets/search?version=-1&category=${encodeURIComponent(category)}&rows=${limit}`);
+    }
+
+    // Add search filter if specified
+    if (search) {
+      endpoints.push(`${API_BASE}/datasets/search?version=-1&q=${encodeURIComponent(search)}&rows=${limit}`);
+    }
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!response.ok) continue;
+
+        const data = await response.json();
+
+        // Handle different response structures
+        const items = data.results || data.datasets || data.data || data.items || [];
+
+        if (Array.isArray(items) && items.length > 0) {
+          items.forEach((item: any) => {
+            const dataset: DatasetInfo = {
+              id: item.id || item.uuid || item.datasetId,
+              titleAr: item.titleAr || item.title_ar || item.nameAr || item.name || item.title,
+              titleEn: item.titleEn || item.title_en || item.nameEn || item.name,
+              descriptionAr: item.descriptionAr || item.description_ar || item.description,
+              descriptionEn: item.descriptionEn || item.description_en,
+              category: item.category?.titleAr || item.categoryAr || item.category?.name || item.category,
+              organization: item.organization?.titleAr || item.organizationAr || item.publisher?.name || item.publisher,
+              recordCount: item.recordCount || item.record_count || item.num_resources,
+              updatedAt: item.updatedAt || item.updated_at || item.metadata_modified,
+            };
+
+            // Avoid duplicates
+            if (dataset.id && !allDatasets.find(d => d.id === dataset.id)) {
+              allDatasets.push(dataset);
+            }
+          });
+
+          console.log(`   📊 Found ${items.length} from endpoint`);
+
+          // If we got results, we can break (or continue to get more)
+          if (allDatasets.length >= limit) break;
+        }
+      } catch (e) {
+        // Continue to next endpoint
+        console.warn(`   ⚠️ Endpoint failed:`, e);
+      }
+    }
+
+    // If API didn't work, try fetching from the HTML page (fallback)
+    if (allDatasets.length === 0) {
+      console.log('   🔄 Trying HTML scraping fallback...');
+      const htmlDatasets = await fetchDatasetsFromHTML(page, limit);
+      allDatasets.push(...htmlDatasets);
+    }
+
+    // Cache the results
+    if (allDatasets.length > 0 && page === 1 && !category && !search) {
+      saveListToCache(allDatasets, allDatasets.length);
+    }
+
+    console.log(`✅ Fetched ${allDatasets.length} datasets`);
+
+    return {
+      datasets: allDatasets,
+      total: allDatasets.length,
+      page,
+      hasMore: allDatasets.length === limit,
+      source: 'api',
+    };
+  } catch (error) {
+    console.error('Failed to fetch datasets list:', error);
+    return {
+      datasets: [],
+      total: 0,
+      page,
+      hasMore: false,
+      source: 'api',
+    };
+  }
+}
+
+/**
+ * جلب الـ Datasets من صفحة HTML (Fallback)
+ */
+async function fetchDatasetsFromHTML(page: number, limit: number): Promise<DatasetInfo[]> {
+  try {
+    const response = await fetch(`https://open.data.gov.sa/ar/datasets?page=${page}`, {
+      headers: {
+        'Accept': 'text/html',
+      },
+    });
+
+    if (!response.ok) return [];
+
+    const html = await response.text();
+    const datasets: DatasetInfo[] = [];
+
+    // Extract dataset IDs from HTML
+    const idPattern = /\/datasets\/view\/([a-f0-9-]{36})/gi;
+    const matches = html.matchAll(idPattern);
+    const ids = new Set<string>();
+
+    for (const match of matches) {
+      ids.add(match[1].toLowerCase());
+    }
+
+    // Create basic dataset info from IDs
+    for (const id of ids) {
+      if (datasets.length >= limit) break;
+
+      datasets.push({
+        id,
+        titleAr: `مجموعة بيانات`,
+        titleEn: `Dataset`,
+        category: 'أخرى',
+      });
+    }
+
+    return datasets;
+  } catch (error) {
+    console.error('HTML scraping failed:', error);
+    return [];
+  }
+}
+
+/**
+ * البحث في الـ Datasets
+ */
+export async function searchDatasets(query: string, limit: number = 50): Promise<DatasetInfo[]> {
+  const result = await fetchDatasetsList({ search: query, limit });
+  return result.datasets;
+}
+
+/**
+ * جلب Datasets حسب الفئة
+ */
+export async function fetchDatasetsByCategory(category: string, limit: number = 50): Promise<DatasetInfo[]> {
+  const result = await fetchDatasetsList({ category, limit });
+  return result.datasets;
+}
+
+/**
+ * جلب كل الـ Datasets (مع pagination تلقائي)
+ */
+export async function fetchAllDatasets(onProgress?: (loaded: number) => void): Promise<DatasetInfo[]> {
+  const allDatasets: DatasetInfo[] = [];
+  let page = 1;
+  let hasMore = true;
+  const limit = 100;
+
+  while (hasMore && page <= 200) { // Max 200 pages = 20,000 datasets
+    const result = await fetchDatasetsList({ page, limit });
+
+    if (result.datasets.length === 0) {
+      hasMore = false;
+    } else {
+      // Filter duplicates
+      result.datasets.forEach(d => {
+        if (!allDatasets.find(existing => existing.id === d.id)) {
+          allDatasets.push(d);
+        }
+      });
+
+      hasMore = result.hasMore;
+      page++;
+
+      if (onProgress) {
+        onProgress(allDatasets.length);
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  // Cache all results
+  saveListToCache(allDatasets, allDatasets.length);
+
+  return allDatasets;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Single Dataset API Functions
 // ═══════════════════════════════════════════════════════════════════
 
 /**
@@ -327,10 +627,17 @@ export function getCacheStats(): {
 }
 
 export default {
+  // Datasets List
+  fetchDatasetsList,
+  searchDatasets,
+  fetchDatasetsByCategory,
+  fetchAllDatasets,
+  // Single Dataset
   fetchDatasetMetadata,
   fetchDatasetResources,
   fetchDatasetData,
   fetchDatasetPreview,
+  // Cache
   clearDatasetCache,
   clearAllCache,
   getCacheStats,

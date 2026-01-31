@@ -51,7 +51,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { api } from '../src/services/api';
-import { fetchDatasetData as fetchDirectData } from '../src/services/dataFetcher';
+import { fetchDatasetData as fetchDirectData, fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 import {
     BarChart,
     Bar,
@@ -212,40 +212,58 @@ const ChartBuilderPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const chartRef = React.useRef<HTMLDivElement>(null);
 
-    // Fetch datasets metadata from API (On-Demand Architecture)
+    // Fetch datasets list - Frontend Fetch مباشرة من المصدر
     useEffect(() => {
         const fetchDatasets = async () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await api.getDatasets({ limit: 1000 });
-                if (response.success && response.data) {
-                    const datasets = response.data as APIDataset[];
-                    // With On-Demand architecture, we load all datasets
-                    // Data will be fetched when user selects one
-                    const sources: DataSource[] = datasets.map(d => ({
-                        id: d.externalId || d.id,
-                        name: d.name,
-                        nameAr: d.nameAr || d.name,
-                        category: d.category,
+                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets...');
+
+                // Frontend Fetch مباشرة من منصة البيانات السعودية
+                const result = await fetchDatasetsList({ limit: 500 });
+
+                if (result.datasets.length > 0) {
+                    const sources: DataSource[] = result.datasets.map((d: DatasetInfo) => ({
+                        id: d.id,
+                        name: d.titleEn || d.titleAr,
+                        nameAr: d.titleAr,
+                        category: d.category || 'أخرى',
                         fields: [], // Will be fetched on-demand
                         sampleData: [], // Will be fetched on-demand
                         recordCount: d.recordCount,
                     }));
 
                     setDataSources(sources);
+                    console.log(`✅ Frontend Fetch: تم جلب ${sources.length} dataset (${result.source})`);
 
                     if (sources.length === 0) {
                         setError('لا توجد مجموعات بيانات. جاري استخدام بيانات تجريبية.');
                         setDataSources(getSampleDataSources());
                     }
                 } else {
-                    setError('تعذر جلب البيانات');
-                    setDataSources(getSampleDataSources());
+                    // Fallback to backend API
+                    console.log('⚠️ Frontend Fetch فارغ، جاري استخدام Backend...');
+                    const response = await api.getDatasets({ limit: 1000 });
+                    if (response.success && response.data) {
+                        const datasets = response.data as APIDataset[];
+                        const sources: DataSource[] = datasets.map(d => ({
+                            id: d.externalId || d.id,
+                            name: d.name,
+                            nameAr: d.nameAr || d.name,
+                            category: d.category,
+                            fields: [],
+                            sampleData: [],
+                            recordCount: d.recordCount,
+                        }));
+                        setDataSources(sources);
+                    } else {
+                        setDataSources(getSampleDataSources());
+                    }
                 }
             } catch (err) {
                 console.error('Error fetching datasets:', err);
-                setError('تعذر الاتصال بالخادم. جاري استخدام بيانات تجريبية.');
+                setError('تعذر الاتصال. جاري استخدام بيانات تجريبية.');
                 setDataSources(getSampleDataSources());
             } finally {
                 setLoading(false);
