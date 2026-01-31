@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 // Frontend Fetch فقط - بدون Backend API
 import { fetchDatasetData as fetchDirectData, fetchDatasetsList, fetchAllDatasets, DatasetInfo } from '../src/services/dataFetcher';
+import { cacheDataset, getCachedDataset, getCacheStats } from '../src/services/smartCache';
 import {
     BarChart,
     Bar,
@@ -206,6 +207,11 @@ const ChartBuilderPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [totalLoaded, setTotalLoaded] = useState(0);
+
+    // Preload state (تحميل مسبق في الخلفية)
+    const [preloading, setPreloading] = useState(false);
+    const [preloadProgress, setPreloadProgress] = useState({ loaded: 0, total: 0, current: '' });
+    const [preloadStats, setPreloadStats] = useState({ cached: 0, totalRecords: 0 });
     const [loadingAll, setLoadingAll] = useState(false);
     const listContainerRef = React.useRef<HTMLDivElement>(null);
     const PAGE_SIZE = 100; // جلب 100 dataset في كل صفحة
@@ -330,6 +336,84 @@ const ChartBuilderPage: React.FC = () => {
             setLoadingAll(false);
         }
     };
+
+    // تحميل مسبق لكل البيانات في الخلفية
+    const preloadAllDataHandler = async () => {
+        if (dataSources.length === 0) {
+            setError('يجب تحميل قائمة البيانات أولاً');
+            return;
+        }
+
+        setPreloading(true);
+        setPreloadProgress({ loaded: 0, total: dataSources.length, current: '' });
+
+        let successCount = 0;
+        let totalRecords = 0;
+
+        for (let i = 0; i < dataSources.length; i++) {
+            const ds = dataSources[i];
+
+            // تحديث التقدم
+            setPreloadProgress({
+                loaded: i,
+                total: dataSources.length,
+                current: ds.nameAr || ds.name
+            });
+
+            try {
+                // تحقق إذا موجود في الـ Cache
+                const cached = await getCachedDataset(ds.id);
+                if (cached) {
+                    successCount++;
+                    totalRecords += cached.data.totalRecords || 0;
+                    continue; // تخطي - موجود بالفعل
+                }
+
+                // جلب وحفظ في الـ Cache
+                const result = await fetchDirectData(ds.id, { limit: 10000 });
+                if (result && result.records.length > 0) {
+                    await cacheDataset(ds.id, {
+                        records: result.records,
+                        columns: result.columns,
+                        totalRecords: result.totalRecords,
+                    }, {
+                        titleAr: ds.nameAr,
+                        titleEn: ds.name,
+                        category: ds.category,
+                    });
+                    successCount++;
+                    totalRecords += result.records.length;
+                }
+
+                // تأخير صغير لتجنب الحظر
+                await new Promise(r => setTimeout(r, 500));
+
+            } catch (e) {
+                console.log(`⚠️ تخطي ${ds.id}: فشل التحميل`);
+            }
+        }
+
+        setPreloadProgress({ loaded: dataSources.length, total: dataSources.length, current: '' });
+        setPreloadStats({ cached: successCount, totalRecords });
+        setPreloading(false);
+
+        console.log(`✅ تم تحميل ${successCount}/${dataSources.length} datasets (${totalRecords} سجل)`);
+    };
+
+    // تحديث إحصائيات الـ Cache
+    const updateCacheStats = async () => {
+        try {
+            const stats = await getCacheStats();
+            setPreloadStats({ cached: stats.count, totalRecords: stats.totalRecords });
+        } catch (e) {
+            // تجاهل
+        }
+    };
+
+    // تحديث الإحصائيات عند التحميل
+    useEffect(() => {
+        updateCacheStats();
+    }, []);
 
     // Fetch dataset data on-demand when selected (Frontend Fetch فقط - بدون Backend API)
     const fetchDatasetData = async (datasetId: string) => {
@@ -915,6 +999,41 @@ const ChartBuilderPage: React.FC = () => {
                                         </>
                                     )}
                                 </button>
+                            )}
+
+                            {/* Preload All Data Button - تحميل مسبق */}
+                            {dataSources.length > 0 && !loading && (
+                                <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-purple-700">💾 التخزين المحلي</span>
+                                        <span className="text-xs text-purple-600">
+                                            {preloadStats.cached > 0 ? `${preloadStats.cached} محفوظ` : 'فارغ'}
+                                        </span>
+                                    </div>
+                                    {preloading ? (
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 text-xs text-purple-600">
+                                                <Loader2 size={12} className="animate-spin" />
+                                                <span>جاري التحميل: {preloadProgress.loaded}/{preloadProgress.total}</span>
+                                            </div>
+                                            <div className="w-full bg-purple-200 rounded-full h-1.5">
+                                                <div
+                                                    className="bg-purple-600 h-1.5 rounded-full transition-all"
+                                                    style={{ width: `${(preloadProgress.loaded / preloadProgress.total) * 100}%` }}
+                                                />
+                                            </div>
+                                            <div className="text-xs text-purple-500 truncate">{preloadProgress.current}</div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={preloadAllDataHandler}
+                                            className="w-full py-1.5 bg-purple-600 text-white rounded text-xs font-bold hover:bg-purple-700 flex items-center justify-center gap-2"
+                                        >
+                                            <Cloud size={12} />
+                                            <span>تحميل كل البيانات مسبقاً</span>
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
 
