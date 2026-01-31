@@ -52,18 +52,21 @@ export interface DatasetListResult {
 // Configuration
 // ═══════════════════════════════════════════════════════════════════
 
-// Saudi Open Data Portal uses CKAN API
+// Backend API (Render) - Primary source for datasets
+const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+
+// Saudi Open Data Portal APIs (fallback)
 const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';
 const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
-// Use Vercel API route as primary proxy (most reliable)
+
+// Vercel proxy (fallback)
 const VERCEL_PROXY = '/api/proxy?url=';
 
-// Fallback CORS proxies (multiple options for reliability)
+// External CORS proxies (last resort)
 const CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
-  'https://thingproxy.freeboard.io/fetch/',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://corsproxy.org/?',
 ];
 const CACHE_PREFIX = 'dataset_cache_';
 const DATASETS_LIST_KEY = 'datasets_list_cache';
@@ -252,8 +255,9 @@ function saveListToCache(datasets: DatasetInfo[], total: number): void {
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * جلب قائمة الـ Datasets من API المنصة مباشرة
- * يستخدم عدة endpoints للحصول على أكبر عدد
+ * جلب قائمة الـ Datasets
+ * 1. يجرب Backend API أولاً (الأسرع والأضمن)
+ * 2. يرجع للـ direct API مع proxy لو Backend فشل
  */
 export async function fetchDatasetsList(options: {
   page?: number;
@@ -264,11 +268,11 @@ export async function fetchDatasetsList(options: {
 } = {}): Promise<DatasetListResult> {
   const { page = 1, limit = 100, category, search, forceRefresh = false } = options;
 
-  // Check cache first (only for first page without filters)
+  // Check local cache first (only for first page without filters)
   if (!forceRefresh && page === 1 && !category && !search) {
     const cached = getListFromCache();
     if (cached) {
-      console.log(`📦 Datasets list from cache (${cached.datasets.length} datasets)`);
+      console.log(`📦 Datasets list from local cache (${cached.datasets.length} datasets)`);
       return {
         datasets: cached.datasets.slice(0, limit),
         total: cached.total,
@@ -281,41 +285,85 @@ export async function fetchDatasetsList(options: {
 
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. Try Backend API first (most reliable - has server-side caching)
+  // ═══════════════════════════════════════════════════════════════════
+  try {
+    console.log(`   🚀 Trying Backend API: ${BACKEND_API}/datasets/saudi`);
+
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      ...(search && { search }),
+      ...(category && { category }),
+      ...(forceRefresh && { refresh: 'true' }),
+    });
+
+    const response = await fetch(`${BACKEND_API}/datasets/saudi?${params}`, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success && data.data?.datasets?.length > 0) {
+        const datasets: DatasetInfo[] = data.data.datasets.map((d: any) => ({
+          id: d.id,
+          titleAr: d.titleAr,
+          titleEn: d.titleEn,
+          descriptionAr: d.descriptionAr,
+          descriptionEn: d.descriptionEn,
+          category: d.category,
+          organization: d.organization,
+          recordCount: d.recordCount,
+          updatedAt: d.updatedAt,
+          resources: d.resources,
+        }));
+
+        console.log(`   ✅ Backend returned ${datasets.length} datasets (source: ${data.data.meta?.source})`);
+
+        // Cache locally
+        if (page === 1 && !category && !search) {
+          saveListToCache(datasets, data.data.meta?.total || datasets.length);
+        }
+
+        return {
+          datasets,
+          total: data.data.meta?.total || datasets.length,
+          page: data.data.meta?.page || page,
+          hasMore: data.data.meta?.hasMore ?? datasets.length === limit,
+          source: data.data.meta?.source === 'cache' ? 'cache' : 'api',
+        };
+      }
+    } else {
+      console.warn(`   ⚠️ Backend returned ${response.status}`);
+    }
+  } catch (e: any) {
+    console.warn(`   ⚠️ Backend API failed: ${e.message}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 2. Fallback: Try direct CKAN API with proxies
+  // ═══════════════════════════════════════════════════════════════════
+  console.log(`   🔄 Falling back to direct API...`);
+
   const allDatasets: DatasetInfo[] = [];
   const offset = (page - 1) * limit;
 
   try {
-    // Try CKAN API first (most reliable for open data portals)
     const ckanEndpoints = [
-      // CKAN package_search - main search API
       `${CKAN_BASE}/package_search?rows=${limit}&start=${offset}`,
-      // CKAN with search query
       search ? `${CKAN_BASE}/package_search?q=${encodeURIComponent(search)}&rows=${limit}` : null,
-      // CKAN with category/group filter
       category ? `${CKAN_BASE}/package_search?fq=groups:${encodeURIComponent(category)}&rows=${limit}` : null,
-      // Alternative CKAN endpoints
-      `${CKAN_BASE}/current_package_list_with_resources?limit=${limit}&offset=${offset}`,
     ].filter(Boolean) as string[];
 
-    // Also try the custom API endpoints
-    const customEndpoints = [
-      `${CATALOG_API}?version=-1&rows=${limit}&start=${offset}`,
-      `${API_BASE}/datasets/search?version=-1&rows=${limit}&start=${offset}`,
-      `${API_BASE}/catalog/datasets?rows=${limit}&page=${page}`,
-      `${API_BASE}/3/action/package_search?rows=${limit}&start=${offset}`,
-    ];
-
-    const allEndpoints = [...ckanEndpoints, ...customEndpoints];
-
-    for (const endpoint of allEndpoints) {
+    for (const endpoint of ckanEndpoints) {
       try {
-        console.log(`   🔍 Trying: ${endpoint.substring(0, 80)}...`);
+        console.log(`   🔍 Trying: ${endpoint.substring(0, 60)}...`);
 
         const response = await fetchWithCorsProxy(endpoint);
         const data = await response.json();
 
-        // CKAN API returns: { success: true, result: { results: [...], count: N } }
-        // Or for package_list: { success: true, result: [...] }
         let items: any[] = [];
         let totalCount = 0;
 
@@ -327,26 +375,22 @@ export async function fetchDatasetsList(options: {
             items = data.result.results;
             totalCount = data.result.count || items.length;
           }
-        } else {
-          // Try other response structures
-          items = data.results || data.datasets || data.data || data.items || [];
-          totalCount = data.count || data.total || items.length;
         }
 
         if (Array.isArray(items) && items.length > 0) {
-          console.log(`   ✅ Found ${items.length} datasets (total: ${totalCount})`);
+          console.log(`   ✅ Found ${items.length} datasets`);
 
           items.forEach((item: any) => {
             const dataset: DatasetInfo = {
-              id: item.id || item.uuid || item.datasetId || item.name,
-              titleAr: item.title_ar || item.titleAr || item.title || item.name,
-              titleEn: item.title_en || item.titleEn || item.title || item.name,
-              descriptionAr: item.notes_ar || item.descriptionAr || item.notes || item.description,
-              descriptionEn: item.notes_en || item.descriptionEn || item.notes,
-              category: item.groups?.[0]?.title || item.groups?.[0]?.name || item.category?.titleAr || item.category,
-              organization: item.organization?.title || item.organization?.name || item.publisher?.name,
-              recordCount: item.num_resources || item.recordCount || 0,
-              updatedAt: item.metadata_modified || item.updatedAt || item.modified,
+              id: item.id || item.name,
+              titleAr: item.title_ar || item.title || item.name,
+              titleEn: item.title_en || item.title || item.name,
+              descriptionAr: item.notes_ar || item.notes,
+              descriptionEn: item.notes_en || item.notes,
+              category: item.groups?.[0]?.title || item.groups?.[0]?.name,
+              organization: item.organization?.title || item.organization?.name,
+              recordCount: item.num_resources || 0,
+              updatedAt: item.metadata_modified,
               resources: item.resources?.map((r: any) => ({
                 id: r.id,
                 name: r.name || r.description,
@@ -355,13 +399,11 @@ export async function fetchDatasetsList(options: {
               })),
             };
 
-            // Avoid duplicates
             if (dataset.id && !allDatasets.find(d => d.id === dataset.id)) {
               allDatasets.push(dataset);
             }
           });
 
-          // If we got enough results, break
           if (allDatasets.length >= limit) break;
         }
       } catch (e: any) {
@@ -369,14 +411,7 @@ export async function fetchDatasetsList(options: {
       }
     }
 
-    // If API didn't work, try fetching from the HTML page (fallback)
-    if (allDatasets.length === 0) {
-      console.log('   🔄 Trying HTML scraping fallback...');
-      const htmlDatasets = await fetchDatasetsFromHTML(page, limit);
-      allDatasets.push(...htmlDatasets);
-    }
-
-    // Cache the results
+    // Cache results
     if (allDatasets.length > 0 && page === 1 && !category && !search) {
       saveListToCache(allDatasets, allDatasets.length);
     }
@@ -489,21 +524,70 @@ export async function fetchDatasetsByCategory(category: string, limit: number = 
 }
 
 /**
- * جلب كل الـ Datasets (مع pagination تلقائي)
+ * جلب كل الـ Datasets
+ * 1. يجرب Backend API أولاً (endpoint واحد يجيب الكل)
+ * 2. يرجع للـ pagination اليدوي لو فشل
  */
 export async function fetchAllDatasets(onProgress?: (loaded: number) => void): Promise<DatasetInfo[]> {
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. Try Backend API's /saudi/all endpoint (fetches all at once)
+  // ═══════════════════════════════════════════════════════════════════
+  try {
+    console.log(`🚀 Trying Backend API for all datasets...`);
+
+    const response = await fetch(`${BACKEND_API}/datasets/saudi/all`, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success && data.data?.datasets?.length > 0) {
+        const datasets: DatasetInfo[] = data.data.datasets.map((d: any) => ({
+          id: d.id,
+          titleAr: d.titleAr,
+          titleEn: d.titleEn,
+          descriptionAr: d.descriptionAr,
+          descriptionEn: d.descriptionEn,
+          category: d.category,
+          organization: d.organization,
+          recordCount: d.recordCount,
+          updatedAt: d.updatedAt,
+          resources: d.resources,
+        }));
+
+        console.log(`✅ Backend returned ${datasets.length} datasets`);
+
+        // Cache locally
+        saveListToCache(datasets, datasets.length);
+
+        if (onProgress) {
+          onProgress(datasets.length);
+        }
+
+        return datasets;
+      }
+    }
+  } catch (e: any) {
+    console.warn(`⚠️ Backend /saudi/all failed: ${e.message}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 2. Fallback: Manual pagination
+  // ═══════════════════════════════════════════════════════════════════
+  console.log(`🔄 Falling back to manual pagination...`);
+
   const allDatasets: DatasetInfo[] = [];
   let page = 1;
   let hasMore = true;
   const limit = 100;
 
-  while (hasMore && page <= 200) { // Max 200 pages = 20,000 datasets
+  while (hasMore && page <= 200) {
     const result = await fetchDatasetsList({ page, limit });
 
     if (result.datasets.length === 0) {
       hasMore = false;
     } else {
-      // Filter duplicates
       result.datasets.forEach(d => {
         if (!allDatasets.find(existing => existing.id === d.id)) {
           allDatasets.push(d);
@@ -517,12 +601,10 @@ export async function fetchAllDatasets(onProgress?: (loaded: number) => void): P
         onProgress(allDatasets.length);
       }
 
-      // Small delay to avoid rate limiting
       await new Promise(r => setTimeout(r, 500));
     }
   }
 
-  // Cache all results
   saveListToCache(allDatasets, allDatasets.length);
 
   return allDatasets;
@@ -647,7 +729,9 @@ async function fetchAndParseCSV(url: string): Promise<Record<string, unknown>[]>
 
 /**
  * جلب بيانات Dataset
- * يتحقق من Cache أولاً، ثم يجلب من المصدر
+ * 1. يتحقق من Cache المحلي
+ * 2. يجرب Backend API (له cache خاص في Redis)
+ * 3. يجرب جلب مباشر من Saudi API
  */
 export async function fetchDatasetData(
   datasetId: string,
@@ -656,15 +740,14 @@ export async function fetchDatasetData(
     limit?: number;
   } = {}
 ): Promise<FetchedData | null> {
-  const { forceRefresh = false, limit } = options;
+  const { forceRefresh = false, limit = 100 } = options;
 
-  // 1. Check cache first
+  // 1. Check local cache first
   if (!forceRefresh) {
     const cached = getFromCache(datasetId);
     if (cached) {
-      console.log(`📦 Cache hit for ${datasetId}`);
+      console.log(`📦 Local cache hit for ${datasetId}`);
 
-      // Apply limit if specified
       if (limit && cached.records.length > limit) {
         cached.records = cached.records.slice(0, limit);
       }
@@ -674,6 +757,52 @@ export async function fetchDatasetData(
   }
 
   console.log(`🌐 Fetching data for ${datasetId}`);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 2. Try Backend API first (has Redis cache)
+  // ═══════════════════════════════════════════════════════════════════
+  try {
+    console.log(`   🚀 Trying Backend API: ${BACKEND_API}/datasets/${datasetId}/data`);
+
+    const params = new URLSearchParams({
+      limit: String(limit),
+      ...(forceRefresh && { refresh: 'true' }),
+    });
+
+    const response = await fetch(`${BACKEND_API}/datasets/${datasetId}/data?${params}`, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success && data.data?.records?.length > 0) {
+        const result: FetchedData = {
+          records: data.data.records,
+          columns: data.data.columns || Object.keys(data.data.records[0] || {}),
+          totalRecords: data.data.meta?.total || data.data.records.length,
+          fetchedAt: data.data.meta?.fetchedAt || new Date().toISOString(),
+          source: data.data.meta?.source === 'cache' ? 'cache' : 'api',
+        };
+
+        console.log(`   ✅ Backend returned ${result.records.length} records (source: ${result.source})`);
+
+        // Cache locally
+        saveToCache(datasetId, result);
+
+        return result;
+      }
+    } else {
+      console.warn(`   ⚠️ Backend returned ${response.status}`);
+    }
+  } catch (e: any) {
+    console.warn(`   ⚠️ Backend API failed: ${e.message}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 3. Fallback: Direct fetch from Saudi API
+  // ═══════════════════════════════════════════════════════════════════
+  console.log(`   🔄 Falling back to direct API...`);
 
   try {
     // 2. Get resources from API
