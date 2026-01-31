@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "update-datasets": "node scripts/fetch-all-datasets.cjs"
+    "update-datasets": "node scripts/fetch-all-datasets.cjs",
+    "update-top": "node scripts/fetch-top-datasets.cjs",
+    "update-all": "node scripts/fetch-all-datasets.cjs && node scripts/fetch-top-datasets.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",

@@ -27,20 +27,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgbm-dev
 
-      - name: Fetch datasets
+      - name: Fetch all datasets metadata
         run: |
-          echo "🚀 بدء جلب البيانات..."
-          timeout 3600 node scripts/fetch-all-datasets.cjs || true
-          echo "✅ انتهى الجلب"
+          echo "🚀 بدء جلب فهرس البيانات..."
+          timeout 2400 node scripts/fetch-all-datasets.cjs || true
+          echo "✅ انتهى جلب الفهرس"
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
+
+      - name: Fetch top datasets with full data
+        run: |
+          echo "📊 جلب Top 100 Datasets مع البيانات..."
+          timeout 3000 node scripts/fetch-top-datasets.cjs || true
+          echo "✅ انتهى جلب البيانات"
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
 
       - name: Check results
         run: |
-          echo "📊 عدد الـ Datasets:"
+          echo "📊 فهرس الـ Datasets:"
           cat public/data/datasets.json | head -5
-          echo "..."
-          wc -l public/data/datasets.json
+          echo ""
+          echo "📁 Top Datasets:"
+          ls -la public/data/top-datasets/ 2>/dev/null | head -10 || echo "لا توجد بيانات"
+          echo ""
+          echo "📈 الإحصائيات:"
+          echo "- Datasets في الفهرس: $(cat public/data/datasets.json | grep -c '"id"')"
+          echo "- Top Datasets: $(ls public/data/top-datasets/*.json 2>/dev/null | wc -l || echo 0)"
 
       - name: Commit and push
         run: |

@@ -1,11 +1,14 @@
 /**
  * خدمة جلب البيانات من المصدر مباشرة - Data Fetcher Service
  *
- * تجلب البيانات مباشرة من منصة البيانات السعودية عبر Browser
- * لا حظر لأن الطلب من Browser وليس Server
+ * الترتيب:
+ * 1. Top Datasets (ملفات محلية - فوري)
+ * 2. Smart Cache (IndexedDB - فوري)
+ * 3. API مع fallbacks
  */
 
 import * as Papa from 'papaparse';
+import { getCachedDataset, cacheDataset, preloadTopDatasets } from './smartCache';
 
 // ═══════════════════════════════════════════════════════════════════
 // Types
@@ -787,9 +790,11 @@ async function fetchAndParseCSV(url: string): Promise<Record<string, unknown>[]>
 
 /**
  * جلب بيانات Dataset
- * 1. يتحقق من Cache المحلي
- * 2. يجرب Backend API (له cache خاص في Redis)
- * 3. يجرب جلب مباشر من Saudi API
+ * 1. يتحقق من Top Datasets (ملفات محلية - الأسرع)
+ * 2. يتحقق من Smart Cache (IndexedDB)
+ * 3. يتحقق من Cache المحلي (localStorage)
+ * 4. يجرب Backend API
+ * 5. يجرب جلب مباشر من Saudi API
  */
 export async function fetchDatasetData(
   datasetId: string,
@@ -800,11 +805,60 @@ export async function fetchDatasetData(
 ): Promise<FetchedData | null> {
   const { forceRefresh = false, limit = 100 } = options;
 
-  // 1. Check local cache first
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. Check Top Datasets (local JSON files - INSTANT!)
+  // ═══════════════════════════════════════════════════════════════════
   if (!forceRefresh) {
+    try {
+      const response = await fetch(`/data/top-datasets/${datasetId}.json`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.records && data.records.length > 0) {
+          console.log(`⚡ Top Dataset hit: ${datasetId} (${data.records.length} records)`);
+
+          const result: FetchedData = {
+            records: limit ? data.records.slice(0, limit) : data.records,
+            columns: data.columns || Object.keys(data.records[0] || {}),
+            totalRecords: data.totalRecords || data.records.length,
+            fetchedAt: data.fetchedAt || new Date().toISOString(),
+            source: 'cache',
+          };
+
+          return result;
+        }
+      }
+    } catch (e) {
+      // Top dataset not available, continue
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 2. Check Smart Cache (IndexedDB - larger storage)
+    // ═══════════════════════════════════════════════════════════════════
+    try {
+      const smartCached = await getCachedDataset(datasetId);
+      if (smartCached) {
+        console.log(`📦 Smart Cache hit: ${datasetId}`);
+
+        const result: FetchedData = {
+          records: limit ? smartCached.data.records.slice(0, limit) : smartCached.data.records,
+          columns: smartCached.data.columns,
+          totalRecords: smartCached.data.totalRecords,
+          fetchedAt: new Date(smartCached.cachedAt).toISOString(),
+          source: 'cache',
+        };
+
+        return result;
+      }
+    } catch (e) {
+      // IndexedDB not available, continue
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 3. Check localStorage cache
+    // ═══════════════════════════════════════════════════════════════════
     const cached = getFromCache(datasetId);
     if (cached) {
-      console.log(`📦 Local cache hit for ${datasetId}`);
+      console.log(`💾 localStorage cache hit for ${datasetId}`);
 
       if (limit && cached.records.length > limit) {
         cached.records = cached.records.slice(0, limit);
@@ -845,8 +899,19 @@ export async function fetchDatasetData(
 
         console.log(`   ✅ Backend returned ${result.records.length} records (source: ${result.source})`);
 
-        // Cache locally
+        // Cache locally (localStorage)
         saveToCache(datasetId, result);
+
+        // Also save to Smart Cache (IndexedDB) for larger storage
+        try {
+          await cacheDataset(datasetId, {
+            records: data.data.records,
+            columns: result.columns,
+            totalRecords: result.totalRecords,
+          }, { titleAr: '', titleEn: '' });
+        } catch (e) {
+          // IndexedDB save failed, continue
+        }
 
         return result;
       }
@@ -1015,6 +1080,19 @@ export function getCacheStats(): {
   };
 }
 
+/**
+ * تحميل Top Datasets مسبقاً عند بدء التطبيق
+ */
+export async function initializeCache(): Promise<void> {
+  try {
+    console.log('🚀 Initializing Smart Cache...');
+    const loaded = await preloadTopDatasets();
+    console.log(`✅ Cache initialized: ${loaded} datasets preloaded`);
+  } catch (e) {
+    console.log('⚠️ Cache initialization skipped');
+  }
+}
+
 export default {
   // Datasets List
   fetchDatasetsList,
@@ -1030,4 +1108,5 @@ export default {
   clearDatasetCache,
   clearAllCache,
   getCacheStats,
+  initializeCache,
 };
