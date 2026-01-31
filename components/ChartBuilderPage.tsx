@@ -201,40 +201,38 @@ const ChartBuilderPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const chartRef = React.useRef<HTMLDivElement>(null);
 
-    // Fetch datasets list - Frontend Fetch مباشرة من المصدر (بدون Backend API)
+    // Fetch datasets list - Frontend Fetch مباشرة من البوابة الوطنية للبيانات المفتوحة
     useEffect(() => {
         const fetchDatasets = async () => {
             setLoading(true);
             setError(null);
             try {
-                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets مباشرة من البوابة...');
+                console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets من البوابة الوطنية...');
 
-                // Frontend Fetch مباشرة من منصة البيانات السعودية (بدون Backend)
+                // Frontend Fetch مباشرة من منصة البيانات السعودية
                 const result = await fetchDatasetsList({ limit: 500 });
 
-                if (result.datasets.length > 0) {
-                    const sources: DataSource[] = result.datasets.map((d: DatasetInfo) => ({
-                        id: d.id,
-                        name: d.titleEn || d.titleAr,
-                        nameAr: d.titleAr,
-                        category: d.category || 'أخرى',
-                        fields: [], // Will be fetched on-demand
-                        sampleData: [], // Will be fetched on-demand
-                        recordCount: d.recordCount,
-                    }));
+                if (result.datasets && result.datasets.length > 0) {
+                    const sources: DataSource[] = result.datasets
+                        .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
+                        .map((d: DatasetInfo) => ({
+                            id: d.id,
+                            name: d.titleEn || d.titleAr || 'بدون اسم',
+                            nameAr: d.titleAr || d.titleEn || 'بدون اسم',
+                            category: d.category || 'أخرى',
+                            fields: [],
+                            sampleData: [],
+                            recordCount: d.recordCount,
+                        }));
 
                     setDataSources(sources);
                     console.log(`✅ Frontend Fetch: تم جلب ${sources.length} dataset (${result.source})`);
                 } else {
-                    // No backend fallback - use sample data directly
-                    console.log('⚠️ Frontend Fetch فارغ، جاري استخدام بيانات تجريبية...');
-                    setError('لا توجد مجموعات بيانات من المصدر. جاري استخدام بيانات تجريبية.');
-                    setDataSources(getSampleDataSources());
+                    setError('لا توجد مجموعات بيانات متاحة من المنصة');
                 }
             } catch (err) {
                 console.error('Error fetching datasets:', err);
-                setError('تعذر الاتصال بالمصدر. جاري استخدام بيانات تجريبية.');
-                setDataSources(getSampleDataSources());
+                setError('تعذر الاتصال بالبوابة الوطنية للبيانات المفتوحة');
             } finally {
                 setLoading(false);
             }
@@ -834,6 +832,18 @@ const ChartBuilderPage: React.FC = () => {
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="animate-spin text-indigo-600" size={32} />
+                                <span className="mr-2 text-sm text-gray-500">جاري الجلب من البوابة...</span>
+                            </div>
+                        ) : dataSources.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <Database size={32} className="mx-auto mb-2 opacity-50" />
+                                <p>لا توجد مصادر بيانات متاحة</p>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
+                                >
+                                    إعادة المحاولة
+                                </button>
                             </div>
                         ) : (
                             <div className="space-y-3 max-h-64 overflow-y-auto">

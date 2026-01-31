@@ -56,11 +56,13 @@ export interface DatasetListResult {
 const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';
 const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
-// CORS proxy for when direct requests fail (multiple options for reliability)
+// Use Vercel API route as primary proxy (most reliable)
+const VERCEL_PROXY = '/api/proxy?url=';
+
+// Fallback CORS proxies (less reliable)
 const CORS_PROXIES = [
-  'https://api.allorigins.win/get?url=',  // Returns JSON with contents field
-  'https://corsproxy.io/?',
-  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://proxy.cors.sh/',
+  'https://api.allorigins.win/raw?url=',
 ];
 const CACHE_PREFIX = 'dataset_cache_';
 const DATASETS_LIST_KEY = 'datasets_list_cache';
@@ -72,43 +74,51 @@ const LIST_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours for list cache
 // ═══════════════════════════════════════════════════════════════════
 
 async function fetchWithCorsProxy(url: string): Promise<any> {
-  // Try direct fetch first
+  // 1. Try Vercel API route first (most reliable - our own serverless proxy)
+  try {
+    const proxyUrl = VERCEL_PROXY + encodeURIComponent(url);
+    console.log(`   🔄 Trying Vercel proxy...`);
+
+    const response = await fetch(proxyUrl, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      console.log(`   ✅ Vercel proxy worked!`);
+      return response;
+    } else {
+      const error = await response.json().catch(() => ({}));
+      console.log(`   ⚠️ Vercel proxy returned ${response.status}:`, error);
+    }
+  } catch (e: any) {
+    console.log(`   ⚠️ Vercel proxy failed: ${e.message}`);
+  }
+
+  // 2. Try direct fetch (unlikely to work due to CORS)
   try {
     const response = await fetch(url, {
       headers: { 'Accept': 'application/json' },
-      mode: 'cors',
     });
     if (response.ok) {
       console.log(`   ✅ Direct fetch worked!`);
       return response;
     }
   } catch (e) {
-    console.log(`   ⚠️ Direct fetch failed, trying proxy...`);
+    console.log(`   ⚠️ Direct fetch failed`);
   }
 
-  // Try CORS proxies
+  // 3. Try external CORS proxies as last resort
   for (const proxy of CORS_PROXIES) {
     try {
       const proxyUrl = proxy + encodeURIComponent(url);
-      console.log(`   🔄 Trying proxy: ${proxy.substring(0, 35)}...`);
+      console.log(`   🔄 Trying external proxy: ${proxy.substring(0, 30)}...`);
 
       const response = await fetch(proxyUrl, {
         headers: { 'Accept': 'application/json' },
       });
 
       if (response.ok) {
-        console.log(`   ✅ Proxy worked: ${proxy.substring(0, 30)}...`);
-
-        // Handle allorigins.win which wraps response in JSON
-        if (proxy.includes('allorigins.win/get')) {
-          const wrapper = await response.json();
-          // Return a fake Response with the contents
-          return {
-            ok: true,
-            json: async () => JSON.parse(wrapper.contents),
-          };
-        }
-
+        console.log(`   ✅ External proxy worked!`);
         return response;
       }
     } catch (e: any) {
