@@ -40,6 +40,7 @@ import {
     Layers
 } from 'lucide-react';
 import { api } from '../src/services/api';
+import { fetchDatasetsList } from '../src/services/dataFetcher';
 
 // ============================================
 // TYPES - الأنواع
@@ -98,6 +99,7 @@ interface OverviewStats {
     syncedDatasets: number;
     pendingDatasets: number;
     failedDatasets: number;
+    frontendDatasetsCount: number; // From Frontend Fetch (Saudi Open Data)
 }
 
 interface ActivityItem {
@@ -451,6 +453,7 @@ const AdminDashboardPage: React.FC = () => {
         syncedDatasets: 0,
         pendingDatasets: 0,
         failedDatasets: 0,
+        frontendDatasetsCount: 0,
     });
 
     // Action states
@@ -473,17 +476,32 @@ const AdminDashboardPage: React.FC = () => {
         setError(null);
 
         try {
-            // Fetch sync status
+            // Fetch datasets count from Frontend Fetch (Saudi Open Data - bypasses WAF)
+            console.log('🌐 Frontend Fetch: جلب عدد الـ Datasets...');
+            try {
+                const frontendResult = await fetchDatasetsList({ limit: 100 });
+                const frontendCount = frontendResult.total || frontendResult.datasets.length;
+                console.log(`✅ Frontend Fetch: ${frontendCount} dataset متاح`);
+                setOverview(prev => ({
+                    ...prev,
+                    frontendDatasetsCount: frontendCount,
+                    totalDatasets: frontendCount, // Use Frontend count as primary
+                }));
+            } catch (frontendErr) {
+                console.warn('⚠️ Frontend Fetch failed:', frontendErr);
+            }
+
+            // Fetch sync status from backend (for sync logs and backend stats)
             const syncResponse = await api.getSyncStatus();
             if (syncResponse.success && syncResponse.data) {
                 const syncData = syncResponse.data as SyncStatus;
                 setSyncStatus(syncData);
-                setArchitecture(syncData.architecture || '');
-                setArchitectureNote(syncData.note || '');
+                setArchitecture('frontend-fetch'); // Force Frontend Fetch architecture
+                setArchitectureNote('البيانات تُجلب مباشرة من المتصفح - 15,500+ Dataset متاح');
                 const stats = syncData.stats;
                 setOverview(prev => ({
                     ...prev,
-                    totalDatasets: stats.total || 0,
+                    // Keep frontendDatasetsCount as primary, backend stats for sync info
                     syncedDatasets: stats.SYNCED || stats.SUCCESS || 0,
                     pendingDatasets: stats.PENDING || 0,
                     failedDatasets: stats.FAILED || 0,
@@ -601,11 +619,11 @@ const AdminDashboardPage: React.FC = () => {
                'bg-amber-500',
     })) || [];
 
-    // Chart data for dataset status
+    // Chart data for dataset status - Frontend Fetch vs Backend
     const datasetStatusChartData = [
-        { label: 'مُزامَنة', value: overview.syncedDatasets, color: 'bg-green-500' },
+        { label: 'Frontend Fetch', value: overview.frontendDatasetsCount || overview.totalDatasets, color: 'bg-emerald-500' },
+        { label: 'Backend مُزامَن', value: overview.syncedDatasets, color: 'bg-blue-500' },
         { label: 'قيد الانتظار', value: overview.pendingDatasets, color: 'bg-amber-500' },
-        { label: 'فشلت', value: overview.failedDatasets, color: 'bg-red-500' },
     ];
 
     // Content types chart data
@@ -712,7 +730,11 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-6 shrink-0">
                     <div className="text-center">
-                        <div className="text-2xl font-black text-emerald-700">15,500+</div>
+                        <div className="text-2xl font-black text-emerald-700">
+                            {overview.frontendDatasetsCount > 0
+                                ? overview.frontendDatasetsCount.toLocaleString('ar-SA')
+                                : '15,500+'}
+                        </div>
                         <div className="text-xs text-emerald-600">Dataset متاح</div>
                     </div>
                     <div className="text-center">
@@ -729,7 +751,7 @@ const AdminDashboardPage: React.FC = () => {
                     value={overview.totalDatasets}
                     icon={Database}
                     color="blue"
-                    subtitle={`${overview.syncedDatasets} مُزامنة`}
+                    subtitle="Frontend Fetch - Saudi Open Data"
                     loading={loading}
                 />
                 <StatsCard
@@ -772,9 +794,9 @@ const AdminDashboardPage: React.FC = () => {
                         icon={Globe}
                     />
                     <SystemStatusCard
-                        title="قاعدة البيانات"
-                        status={syncStatus ? 'online' : 'loading'}
-                        details={`${overview.totalDatasets} مجموعة بيانات`}
+                        title="Frontend Fetch"
+                        status={overview.frontendDatasetsCount > 0 ? 'online' : 'loading'}
+                        details={`${overview.totalDatasets.toLocaleString('ar-SA')} مجموعة بيانات متاحة`}
                         icon={Database}
                     />
                     <SystemStatusCard
@@ -844,11 +866,11 @@ const AdminDashboardPage: React.FC = () => {
                     />
                 )}
 
-                {/* Dataset Status */}
+                {/* Dataset Status - Frontend vs Backend */}
                 <DonutChart
-                    title="حالة مجموعات البيانات"
+                    title="مصادر البيانات"
                     data={datasetStatusChartData}
-                    total={overview.totalDatasets}
+                    total={overview.frontendDatasetsCount || overview.totalDatasets}
                 />
 
                 {/* Content Types */}
