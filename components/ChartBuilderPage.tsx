@@ -225,7 +225,7 @@ const ChartBuilderPage: React.FC = () => {
             const result = await fetchDatasetsList({
                 page,
                 limit: PAGE_SIZE,
-                forceRefresh: page === 1
+                forceRefresh: false  // استخدم الـ JSON المحلي أولاً للسرعة
             });
 
             if (result.datasets && result.datasets.length > 0) {
