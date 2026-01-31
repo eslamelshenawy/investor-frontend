@@ -51,6 +51,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { api } from '../src/services/api';
+import { fetchDatasetData as fetchDirectData } from '../src/services/dataFetcher';
 import {
     BarChart,
     Bar,
@@ -254,30 +255,52 @@ const ChartBuilderPage: React.FC = () => {
         fetchDatasets();
     }, []);
 
-    // Fetch dataset data on-demand when selected
+    // Fetch dataset data on-demand when selected (Frontend Fetch - Direct from Source)
     const fetchDatasetData = async (datasetId: string) => {
         setLoadingData(true);
         setDataSource(null);
+        setError(null);
         try {
-            const response = await api.getDatasetPreview(datasetId, 50);
-            if (response.success && response.data) {
-                const { preview, columns } = response.data;
+            // Use Frontend Fetch - جلب مباشر من المصدر (بدون Backend)
+            console.log(`🌐 Frontend Fetch: Fetching data for ${datasetId}`);
+            const result = await fetchDirectData(datasetId, { limit: 100 });
 
-                if (preview && preview.length > 0 && columns && columns.length > 0) {
-                    setSelectedDataSource(prev => prev ? {
-                        ...prev,
-                        fields: columns,
-                        sampleData: preview,
-                    } : null);
-                    setXAxis(columns[0]);
-                    setYAxis(columns[1] || columns[0]);
-                    setDataSource('api');
-                    setStep(2);
-                } else {
-                    setError('لا توجد بيانات متاحة لهذا المصدر');
-                }
+            if (result && result.records.length > 0) {
+                const columns = result.columns;
+                const preview = result.records as Record<string, unknown>[];
+
+                setSelectedDataSource(prev => prev ? {
+                    ...prev,
+                    fields: columns,
+                    sampleData: preview,
+                } : null);
+                setXAxis(columns[0]);
+                setYAxis(columns[1] || columns[0]);
+                setDataSource(result.source === 'cache' ? 'cache' : 'api');
+                setStep(2);
+                console.log(`✅ Frontend Fetch: Got ${result.records.length} records (${result.source})`);
             } else {
-                setError(response.errorAr || 'تعذر جلب البيانات');
+                // Fallback to backend API if frontend fetch fails
+                console.log('⚠️ Frontend Fetch failed, trying backend API...');
+                const response = await api.getDatasetPreview(datasetId, 50);
+                if (response.success && response.data) {
+                    const { preview, columns } = response.data;
+                    if (preview && preview.length > 0 && columns && columns.length > 0) {
+                        setSelectedDataSource(prev => prev ? {
+                            ...prev,
+                            fields: columns,
+                            sampleData: preview,
+                        } : null);
+                        setXAxis(columns[0]);
+                        setYAxis(columns[1] || columns[0]);
+                        setDataSource('api');
+                        setStep(2);
+                    } else {
+                        setError('لا توجد بيانات متاحة لهذا المصدر');
+                    }
+                } else {
+                    setError('فشل في جلب البيانات - تأكد من وجود ملف CSV للمصدر');
+                }
             }
         } catch (err) {
             console.error('Error fetching dataset data:', err);
@@ -832,10 +855,10 @@ const ChartBuilderPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* On-Demand Badge */}
+                        {/* Frontend Fetch Badge */}
                         <div className="mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 text-emerald-700 text-xs">
-                            <Cloud size={14} />
-                            <span>البيانات تُجلب عند الطلب (On-Demand)</span>
+                            <Zap size={14} />
+                            <span>جلب مباشر من المصدر (Frontend Fetch)</span>
                         </div>
 
                         {loading ? (
