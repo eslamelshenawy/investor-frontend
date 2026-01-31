@@ -9,6 +9,7 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5 ساعات كحد أقصى
 
     steps:
       - name: Checkout repository
@@ -27,33 +28,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgbm-dev
 
-      - name: Fetch all datasets metadata
+      - name: Fetch ALL datasets metadata (11,500+)
         run: |
-          echo "🚀 بدء جلب فهرس البيانات..."
-          timeout 2400 node scripts/fetch-all-datasets.cjs || true
+          echo "🚀 بدء جلب كل الـ 11,500 dataset..."
+          echo "⏱️ قد يستغرق 2-4 ساعات..."
+          timeout 14400 node scripts/fetch-all-datasets.cjs || true
           echo "✅ انتهى جلب الفهرس"
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
-
-      - name: Fetch top datasets with full data
-        run: |
-          echo "📊 جلب Top 100 Datasets مع البيانات..."
-          timeout 3000 node scripts/fetch-top-datasets.cjs || true
-          echo "✅ انتهى جلب البيانات"
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
 
       - name: Check results
         run: |
-          echo "📊 فهرس الـ Datasets:"
-          cat public/data/datasets.json | head -5
           echo ""
-          echo "📁 Top Datasets:"
-          ls -la public/data/top-datasets/ 2>/dev/null | head -10 || echo "لا توجد بيانات"
+          echo "════════════════════════════════════════"
+          echo "📊 النتائج النهائية"
+          echo "════════════════════════════════════════"
+          TOTAL=$(cat public/data/datasets.json | grep -c '"id"' || echo 0)
+          echo "✅ عدد الـ Datasets: $TOTAL"
           echo ""
-          echo "📈 الإحصائيات:"
-          echo "- Datasets في الفهرس: $(cat public/data/datasets.json | grep -c '"id"')"
-          echo "- Top Datasets: $(ls public/data/top-datasets/*.json 2>/dev/null | wc -l || echo 0)"
+          head -10 public/data/datasets.json
+          echo "..."
 
       - name: Commit and push
         run: |
