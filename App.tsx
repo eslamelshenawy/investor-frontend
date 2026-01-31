@@ -72,6 +72,7 @@ import AdminDashboardPage from './components/AdminDashboardPage';
 import TimelineWrapper from './components/TimelineWrapper';
 import DataAnalysisPage from './components/DataAnalysisPage';
 import OfficialDashboardsWrapper from './components/OfficialDashboardsWrapper';
+import DatasetsPage from './components/DatasetsPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -266,6 +267,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         <div className="my-2 border-t border-slate-800/40 mx-2"></div>
 
         <NavGroup title="البيانات والتحليل" open={sections.data} onToggle={() => toggle('data')}>
+          <NavItem to="/datasets" icon={Database}>مجموعات البيانات</NavItem>
           <NavItem to="/dashboards" icon={LayoutDashboard}>كل اللوحات</NavItem>
           {isExpert && (
             <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
@@ -886,6 +888,7 @@ const AppContent = () => {
             <Route path="/analysis" element={<DataAnalysisPage />} />
             <Route path="/verification" element={<DataAnalysisPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/datasets" element={<DatasetsPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
           </Routes>
