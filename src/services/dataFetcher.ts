@@ -268,11 +268,11 @@ export async function fetchDatasetsList(options: {
 } = {}): Promise<DatasetListResult> {
   const { page = 1, limit = 100, category, search, forceRefresh = false } = options;
 
-  // Check local cache first (only for first page without filters)
+  // Check browser cache first
   if (!forceRefresh && page === 1 && !category && !search) {
     const cached = getListFromCache();
     if (cached) {
-      console.log(`📦 Datasets list from local cache (${cached.datasets.length} datasets)`);
+      console.log(`📦 Datasets list from browser cache (${cached.datasets.length} datasets)`);
       return {
         datasets: cached.datasets.slice(0, limit),
         total: cached.total,
@@ -283,10 +283,66 @@ export async function fetchDatasetsList(options: {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. Load from LOCAL JSON first (INSTANT - no network delay!)
+  // ═══════════════════════════════════════════════════════════════════
+  if (!forceRefresh) {
+    try {
+      console.log(`📁 Loading from local datasets.json...`);
+      const response = await fetch('/data/datasets.json');
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.datasets && data.datasets.length > 0) {
+          console.log(`✅ Loaded ${data.datasets.length} datasets instantly!`);
+
+          let filtered = data.datasets;
+
+          // Apply search filter
+          if (search) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter((d: DatasetInfo) =>
+              d.titleAr?.toLowerCase().includes(searchLower) ||
+              d.titleEn?.toLowerCase().includes(searchLower) ||
+              d.descriptionAr?.toLowerCase().includes(searchLower)
+            );
+          }
+
+          // Apply category filter
+          if (category) {
+            filtered = filtered.filter((d: DatasetInfo) =>
+              d.category?.toLowerCase().includes(category.toLowerCase())
+            );
+          }
+
+          // Apply pagination
+          const startIndex = (page - 1) * limit;
+          const paginated = filtered.slice(startIndex, startIndex + limit);
+
+          // Cache for next time
+          if (page === 1 && !category && !search) {
+            saveListToCache(data.datasets, data.total);
+          }
+
+          return {
+            datasets: paginated,
+            total: filtered.length,
+            page,
+            hasMore: startIndex + limit < filtered.length,
+            source: 'cache',
+          };
+        }
+      }
+    } catch (e) {
+      console.log(`⚠️ Local JSON not available, trying APIs...`);
+    }
+  }
+
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
 
   // ═══════════════════════════════════════════════════════════════════
-  // 1. Try Backend API first (most reliable - has server-side caching)
+  // 2. Fallback: Try Backend API
   // ═══════════════════════════════════════════════════════════════════
   try {
     console.log(`   🚀 Trying Backend API: ${BACKEND_API}/datasets/saudi`);
@@ -427,55 +483,6 @@ export async function fetchDatasetsList(options: {
     };
   } catch (error) {
     console.error('Failed to fetch datasets list:', error);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // 3. Final Fallback: Load from local JSON file
-  // ═══════════════════════════════════════════════════════════════════
-  console.log(`   📁 Trying local datasets.json...`);
-
-  try {
-    const response = await fetch('/data/datasets.json');
-    if (response.ok) {
-      const data = await response.json();
-
-      if (data.datasets && data.datasets.length > 0) {
-        console.log(`   ✅ Loaded ${data.datasets.length} datasets from local file`);
-
-        let filtered = data.datasets;
-
-        // Apply search filter
-        if (search) {
-          const searchLower = search.toLowerCase();
-          filtered = filtered.filter((d: DatasetInfo) =>
-            d.titleAr?.toLowerCase().includes(searchLower) ||
-            d.titleEn?.toLowerCase().includes(searchLower) ||
-            d.descriptionAr?.toLowerCase().includes(searchLower)
-          );
-        }
-
-        // Apply category filter
-        if (category) {
-          filtered = filtered.filter((d: DatasetInfo) =>
-            d.category?.toLowerCase().includes(category.toLowerCase())
-          );
-        }
-
-        // Apply pagination
-        const startIndex = (page - 1) * limit;
-        const paginated = filtered.slice(startIndex, startIndex + limit);
-
-        return {
-          datasets: paginated,
-          total: filtered.length,
-          page,
-          hasMore: startIndex + limit < filtered.length,
-          source: 'cache',
-        };
-      }
-    }
-  } catch (e) {
-    console.warn('   ⚠️ Local JSON also failed:', e);
   }
 
   // Return empty if all methods failed
