@@ -92,7 +92,7 @@ const DataAnalysisPage: React.FC = () => {
             }
 
             // Fetch datasets
-            const datasetsRes = await api.getDatasets({ limit: 20 });
+            const datasetsRes = await api.getDatasets({ limit: 1000 });
             if (datasetsRes.success && datasetsRes.data) {
                 setDatasets(datasetsRes.data as any[]);
             }

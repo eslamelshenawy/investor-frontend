@@ -217,7 +217,7 @@ const ChartBuilderPage: React.FC = () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await api.getDatasets({ limit: 100 });
+                const response = await api.getDatasets({ limit: 1000 });
                 if (response.success && response.data) {
                     const datasets = response.data as APIDataset[];
                     // With On-Demand architecture, we load all datasets
