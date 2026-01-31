@@ -1,0 +1,461 @@
+[
+  {
+    "categoryID": "32fb8913-827c-4c98-9108-006b86fc0bd7",
+    "titleEn": "Survey and Maps",
+    "titleAr": "المساحة والخرائط",
+    "name": "survey-and-maps",
+    "descriptionEn": "Survey and Maps",
+    "descriptionAr": "المساحة والخرائط",
+    "noDatasets": 239
+  },
+  {
+    "categoryID": "927a7a6c-32be-4117-87c1-08ef00257877",
+    "titleEn": "Education and Training",
+    "titleAr": "التعليم والتدريب",
+    "name": "education_and_training",
+    "descriptionEn": "Education and Training",
+    "descriptionAr": "التعليم والتدريب",
+    "noDatasets": 2123
+  },
+  {
+    "categoryID": "0b2648cf-50eb-4667-8dd4-0fb4e276a113",
+    "titleEn": "Industry",
+    "titleAr": "الصناعة",
+    "name": "industry",
+    "descriptionEn": "Industry",
+    "descriptionAr": "الصناعة",
+    "noDatasets": 321
+  },
+  {
+    "categoryID": "e9a5f336-0b3a-4ddc-9862-104da282e8c1",
+    "titleEn": "Youth",
+    "titleAr": "الشباب",
+    "name": "youth",
+    "descriptionEn": "Youth",
+    "descriptionAr": "الشباب",
+    "noDatasets": 297
+  },
+  {
+    "categoryID": "cfe21892-94d4-468b-bba3-19a38925e0f7",
+    "titleEn": "E-government",
+    "titleAr": "الحكومة الإلكترونية",
+    "name": "e-government",
+    "descriptionEn": "Electronic government (or e-Government) is the application of Information and Communication Technologies (ICTs) to government functions and procedures with the purpose of increasing efficiency, transparency and citizen participation.",
+    "descriptionAr": "الحكومة الإلكترونية (أو الحكومة الإلكترونية) هي تطبيق تكنولوجيا المعلومات والاتصالات على الوظائف والإجراءات الحكومية بهدف زيادة الكفاءة والشفافية ومشاركة المواطنين.",
+    "noDatasets": 341
+  },
+  {
+    "categoryID": "188e6b6e-2119-4d18-bdf2-1e4397fb4e26",
+    "titleEn": "customer service",
+    "titleAr": "خدمة العملاء",
+    "name": "customer-service",
+    "descriptionEn": "customer service",
+    "descriptionAr": "خدمة العملاء",
+    "noDatasets": 195
+  },
+  {
+    "categoryID": "8157a93b-bcb3-4e99-80e3-20dc88114e0d",
+    "titleEn": "Other",
+    "titleAr": "آخر",
+    "name": "other",
+    "descriptionEn": "Miscellaneous datasets",
+    "descriptionAr": "مجموعات البيانات المتنوعة",
+    "noDatasets": 738
+  },
+  {
+    "categoryID": "67ce560a-51c2-4547-b100-2156fa04138a",
+    "titleEn": "National economy",
+    "titleAr": "اقتصاد وطني",
+    "name": "national_economy",
+    "descriptionEn": "Datasets involving the KSA economy, which may include investment, Prices and Indices, Economy and planning, etc.",
+    "descriptionAr": "مجموعات البيانات المتعلقة باالقتصاد السعودي ، والتي قد تشمل االستثمار ، واألسعار والمؤشرات ، واالقتصاد والتخطيط ، إلخ.",
+    "noDatasets": 425
+  },
+  {
+    "categoryID": "1e85dcd6-d879-4fea-b4a4-25c89314c8ae",
+    "titleEn": "Social protection and social services",
+    "titleAr": "الحماية الاجتماعية والخدمات الاجتماعية",
+    "name": "social_protection_and_social_services",
+    "descriptionEn": "Datasets referring to social support provided by government entities",
+    "descriptionAr": "مجموعات البيانات التي تشير إلى الدعم الاجتماعي الذي تقدمه الجهات الحكومية",
+    "noDatasets": 130
+  },
+  {
+    "categoryID": "7fe350d0-ec27-483d-b66f-2aa4ab711067",
+    "titleEn": "Open Data Migration Group",
+    "titleAr": "مجموعة تهجير البيانات",
+    "name": "open_data_migration_group",
+    "descriptionEn": "Open Data Migration Group",
+    "descriptionAr": "مجموعة تهجير البيانات",
+    "noDatasets": 58
+  },
+  {
+    "categoryID": "8d0d8495-4ea1-428e-997b-3c6a3a65dd2e",
+    "titleEn": "Laboratories",
+    "titleAr": "المختبرات",
+    "name": "laboratories",
+    "descriptionEn": "Laboratories",
+    "descriptionAr": "المختبرات",
+    "noDatasets": 44
+  },
+  {
+    "categoryID": "5921c961-4a44-404b-98d1-3d2e6aeeb89d",
+    "titleEn": "Tourism",
+    "titleAr": "السياحة",
+    "name": "tourism",
+    "descriptionEn": "Datasets related to hospitality organizations, travel companies and visitors statistics",
+    "descriptionAr": "مجموعات البيانات المتعلقة بمنظمات الضيافة وشركات السفر وإحصاءات الزوار",
+    "noDatasets": 251
+  },
+  {
+    "categoryID": "df072863-81e1-4cac-b95b-403108011cc9",
+    "titleEn": "Employment",
+    "titleAr": "التوظيف",
+    "name": "employment",
+    "descriptionEn": "Datasets clarifying number job opportunities, employment across KSA and specific sectors",
+    "descriptionAr": "مجموعات بيانات توضح عدد فرص العمل والتوظيف في المملكة العربية السعودية وقطاعات محددة",
+    "noDatasets": 225
+  },
+  {
+    "categoryID": "c42224b3-88fd-4591-a5d4-46d6c787da2f",
+    "titleEn": "Elderly",
+    "titleAr": "كبار السن",
+    "name": "elderly",
+    "descriptionEn": "Elderly",
+    "descriptionAr": "كبار السن",
+    "noDatasets": 27
+  },
+  {
+    "categoryID": "f155c4f2-2a8e-451a-9ab5-4c298daa31c9",
+    "titleEn": "Investment",
+    "titleAr": "الاستثمار",
+    "name": "investment",
+    "descriptionEn": "Investment",
+    "descriptionAr": "الاستثمار",
+    "noDatasets": 437
+  },
+  {
+    "categoryID": "febd2251-d703-452f-a815-4c9f42414410",
+    "titleEn": "Woman",
+    "titleAr": "المرأة",
+    "name": "woman",
+    "descriptionEn": "Woman",
+    "descriptionAr": "المرأة",
+    "noDatasets": 197
+  },
+  {
+    "categoryID": "6bb45ed7-d6b4-43bb-b4da-4e0b14e4d0bb",
+    "titleEn": "Human Resources",
+    "titleAr": "الموارد البشرية",
+    "name": "human-resources",
+    "descriptionEn": " The division of a business responsible for finding, recruiting, screening, and training job applicants",
+    "descriptionAr": " المسؤول عن البحث عن المتقدمين للوظائف وتوظيفهم وفرزهم وتدريبهم",
+    "noDatasets": 363
+  },
+  {
+    "categoryID": "e0a5e7f8-80ac-4248-911b-4fea46cfb0d6",
+    "titleEn": "Nuclear and radiation safety",
+    "titleAr": "الأمان النووي والإشعاعي",
+    "name": "nuclear-and-radiation-safety",
+    "descriptionEn": "Nuclear and radiation safety",
+    "descriptionAr": "الأمان النووي والإشعاعي",
+    "noDatasets": 1896
+  },
+  {
+    "categoryID": "b7249185-14ef-4cbc-8f1f-57fee69a0744",
+    "titleEn": "Monitoring Agencies",
+    "titleAr": "الجهات الرقابية",
+    "name": "monitoring_agencies",
+    "descriptionEn": "Monitoring Agencies",
+    "descriptionAr": "الجهات الرقابية",
+    "noDatasets": 159
+  },
+  {
+    "categoryID": "b42f0945-6d00-4c17-9c3f-5b24aa338af4",
+    "titleEn": "Budget ",
+    "titleAr": "الميزانية",
+    "name": "group",
+    "descriptionEn": "Budgeting is the process of creating a plan for how to allocate financial resources over a period of time.",
+    "descriptionAr": "الموازنة هي عملية إنشاء خطة لكيفية تخصيص الموارد المالية على مدى فترة زمنية.",
+    "noDatasets": 231
+  },
+  {
+    "categoryID": "88ebce27-b3df-464b-a609-6094c8d5848d",
+    "titleEn": "Education",
+    "titleAr": "التعليم",
+    "name": "education",
+    "descriptionEn": "Datasets referring to information generated in the education sector (e.g., literacy rates)",
+    "descriptionAr": "مجموعات البيانات التي تشير إلى المعلومات في قطاع التعليم (على سبيل المثال ، معدلات معرفة القراءة والكتابة)",
+    "noDatasets": 647
+  },
+  {
+    "categoryID": "f8465b38-8538-4bfd-b016-6c9c1327cf65",
+    "titleEn": "E-Services Statistics",
+    "titleAr": "إحصاءات الخدمات اإللكترونية",
+    "name": "eservices_statistics",
+    "descriptionEn": "Datasets pertaining to online government services and customer satisfaction",
+    "descriptionAr": "مجموعات البيانات المتعلقة بالخدمات الحكومية عبر اإلنترنت ورضا العمالء",
+    "noDatasets": 421
+  },
+  {
+    "categoryID": "4a9c58b6-9bf5-4a33-a168-782ea42633e2",
+    "titleEn": "Sport",
+    "titleAr": "الرياضة",
+    "name": "Sport",
+    "descriptionEn": "Sport",
+    "descriptionAr": "الرياضة",
+    "noDatasets": 97
+  },
+  {
+    "categoryID": "7887cd52-7256-4878-8be7-7b692c983438",
+    "titleEn": "Economy and Planning",
+    "titleAr": "الاقتصاد والتخطيط",
+    "name": "economy_and_planning",
+    "descriptionEn": "Economy and Planning",
+    "descriptionAr": "الاقتصاد والتخطيط",
+    "noDatasets": 246
+  },
+  {
+    "categoryID": "04d74668-a8b5-4c5b-ba20-7c5f4c13efdc",
+    "titleEn": "Government Expenditure and Reporting",
+    "titleAr": "النفقات الحكومية وإعداد التقارير",
+    "name": "government_expenditure_and_reporting",
+    "descriptionEn": "Datasets relating to government finances such as planned vs actual budgets",
+    "descriptionAr": "مجموعات البيانات المتعلقة بالتمويالت الحكومية مثل الميزانيات المخططة مقابل الميزانيات الفعلية",
+    "noDatasets": 50
+  },
+  {
+    "categoryID": "c2224a30-277b-4ad0-b876-7f839d7438f8",
+    "titleEn": "Prices and Indices",
+    "titleAr": "الأسعار والمؤشرات",
+    "name": "prices_and_indices",
+    "descriptionEn": "Prices and Indices",
+    "descriptionAr": "الأسعار والمؤشرات",
+    "noDatasets": 289
+  },
+  {
+    "categoryID": "715b3ec1-c84a-4e1c-8c14-81ecdb3b8231",
+    "titleEn": "Accounts Financial Monetary Affairs and Industry",
+    "titleAr": "حسابات الشؤون المالية والصناعية",
+    "name": "accounts_financial_monetary_affairs_and_industry",
+    "descriptionEn": "Accounts Financial Monetary Affairs and Industry",
+    "descriptionAr": "حسابات الشؤون المالية والصناعية",
+    "noDatasets": 268
+  },
+  {
+    "categoryID": "041a2790-4ef0-4cfb-8cb3-8326b62b1b9c",
+    "titleEn": "Hajj and Umrah",
+    "titleAr": "الحج و العمرة",
+    "name": "hajj-and-umrah",
+    "descriptionEn": " Hajj and Umrah",
+    "descriptionAr": " الحجاج و المعتمرين",
+    "noDatasets": 150
+  },
+  {
+    "categoryID": "e4944365-4c07-4365-9fbc-899f5d1d5253",
+    "titleEn": "Energy and Water",
+    "titleAr": "الطاقة والمياه",
+    "name": "energy_and_water",
+    "descriptionEn": "Energy and Water",
+    "descriptionAr": "الطاقة والمياه",
+    "noDatasets": 370
+  },
+  {
+    "categoryID": "ad688821-f348-44c5-9a9d-93b5e0a2cbe9",
+    "titleEn": "Weather Conditions",
+    "titleAr": "الأحوال الجوية",
+    "name": "weather_conditions",
+    "descriptionEn": "Weather Conditions",
+    "descriptionAr": "الأحوال الجوية",
+    "noDatasets": 214
+  },
+  {
+    "categoryID": "12620c39-166a-4f5d-9d79-9a4fad86d455",
+    "titleEn": "Human Rights",
+    "titleAr": "حقوق الانسان",
+    "name": "human-rights",
+    "descriptionEn": "Human Rights refer to the basic rights and freedoms that every individual is entitled to, simply because they are human",
+    "descriptionAr": "تشير حقوق الإنسان إلى الحقوق والحريات الأساسية التي يستحقها كل فرد ، لمجرد أنهم بشر",
+    "noDatasets": 61
+  },
+  {
+    "categoryID": "71df1f24-7b7a-4644-b1d0-9e4d4d58bffd",
+    "titleEn": "Information Technology",
+    "titleAr": "تقنية المعلومات",
+    "name": "information-technology",
+    "descriptionEn": "This group related to all the datasets to IT.",
+    "descriptionAr": "هذه المجموعة تصف مجموعة البيانات المتعلقة بتقنية المعلومات",
+    "noDatasets": 159
+  },
+  {
+    "categoryID": "e251eda2-3f36-4e46-8d40-9eea3c178384",
+    "titleEn": "Population and Housing",
+    "titleAr": "السكان والإسكان",
+    "name": "population_and_housing",
+    "descriptionEn": "Population and Housing",
+    "descriptionAr": "السكان والإسكان",
+    "noDatasets": 472
+  },
+  {
+    "categoryID": "b8889c54-7ee9-425e-8dba-a244591e0335",
+    "titleEn": "Justice",
+    "titleAr": "العدل",
+    "name": "justice",
+    "descriptionEn": "Datasets within the legal and judicial dimension which could also include real-estate information",
+    "descriptionAr": "مجموعات البيانات ضمن البعد القانوني والقضائي والتي يمكن أن تتضمن معلومات عن العقارات",
+    "noDatasets": 932
+  },
+  {
+    "categoryID": "f46873c6-1efb-4cef-bb87-ac70fa9556e8",
+    "titleEn": "statistics",
+    "titleAr": "أحصائيات",
+    "name": "statistics",
+    "descriptionEn": "statistics",
+    "descriptionAr": "أحصائيات",
+    "noDatasets": 2074
+  },
+  {
+    "categoryID": "c33c9fd9-376b-4e4a-b422-aea8d0e57b72",
+    "titleEn": "Transport and Communications",
+    "titleAr": "النقل والمواصلات",
+    "name": "transport_and_communications",
+    "descriptionEn": "Transport and Communications",
+    "descriptionAr": "النقل والمواصلات",
+    "noDatasets": 944
+  },
+  {
+    "categoryID": "215a478a-7d51-42c3-b960-b91fe4c26c04",
+    "titleEn": "Social Services",
+    "titleAr": "الخدمات الاجتماعية",
+    "name": "social_services",
+    "descriptionEn": "Social Services",
+    "descriptionAr": "الخدمات الاجتماعية",
+    "noDatasets": 774
+  },
+  {
+    "categoryID": "b7dcbfa6-a6ab-4c86-93d3-bc604810a88f",
+    "titleEn": "Social Insurance",
+    "titleAr": "الضمان الاجتماعي",
+    "name": "social_insurance",
+    "descriptionEn": "Social Insurance",
+    "descriptionAr": "الضمان الاجتماعي",
+    "noDatasets": 292
+  },
+  {
+    "categoryID": "f8576c35-7cb3-4096-b808-be588c1c0dc0",
+    "titleEn": "Health",
+    "titleAr": "الصحة",
+    "name": "health",
+    "descriptionEn": "Health",
+    "descriptionAr": "الصحة",
+    "noDatasets": 1837
+  },
+  {
+    "categoryID": "ee24e602-7a5e-4bd2-9b4e-c05359b0c1c4",
+    "titleEn": "Arab Gulf Cooperation Council (GCC)",
+    "titleAr": "مجلس التعاون الخليجي العربي (GCC)",
+    "name": "gcc",
+    "descriptionEn": "Datasets pertaining to activities and initiatives of the Arab Gulf Cooperation Council (GCC)",
+    "descriptionAr": "مجموعات البيانات المتعلقة بأنشطة ومبادرات مجلس التعاون الخليجي",
+    "noDatasets": 0
+  },
+  {
+    "categoryID": "1714044f-7aeb-48ba-8c27-c5b3a31aa8cc",
+    "titleEn": "Labor Market",
+    "titleAr": "سوق العمل",
+    "name": "labor_market",
+    "descriptionEn": "Labor Market",
+    "descriptionAr": "سوق العمل",
+    "noDatasets": 339
+  },
+  {
+    "categoryID": "585f6097-fd89-4e5f-9467-cd218499a6c2",
+    "titleEn": "Finance",
+    "titleAr": "المالية",
+    "name": "finance",
+    "descriptionEn": "Finance",
+    "descriptionAr": "المالية",
+    "noDatasets": 550
+  },
+  {
+    "categoryID": "dda30d14-c2f1-4e58-82f6-cddbc104b22d",
+    "titleEn": "Agriculture and Fishing",
+    "titleAr": "مجال الزراعة والأسماك",
+    "name": "agriculture_and_fishing",
+    "descriptionEn": "Agriculture and Fishing",
+    "descriptionAr": "مجال الزراعة والأسماك",
+    "noDatasets": 1027
+  },
+  {
+    "categoryID": "c50f3c9e-6e42-4e75-8c3f-ce34b164d857",
+    "titleEn": "Municipal ",
+    "titleAr": "البلدية",
+    "name": "municipal",
+    "descriptionEn": "Municipal ",
+    "descriptionAr": "البلدية",
+    "noDatasets": 527
+  },
+  {
+    "categoryID": "906845a3-48b2-401d-964c-d117a56c4604",
+    "titleEn": "Disabilities",
+    "titleAr": "ذوي الاعاقة",
+    "name": "disabilities",
+    "descriptionEn": "Disabilities",
+    "descriptionAr": "ذوي الاعاقة",
+    "noDatasets": 40
+  },
+  {
+    "categoryID": "4d21f788-18cb-40cb-8622-d242ec5a3bae",
+    "titleEn": "Hajj and Umrah",
+    "titleAr": "الحج والعمرة",
+    "name": "hajj_and_umrah",
+    "descriptionEn": "Datasets related to Hajj and Umrah visitors and facilitating agencies",
+    "descriptionAr": "مجموعات البيانات الخاصة بزوار الحج والعمرة والوكالالت التيسيرية",
+    "noDatasets": 32
+  },
+  {
+    "categoryID": "826eb295-d598-439f-a636-dafd13bf8c03",
+    "titleEn": "Environment",
+    "titleAr": "البيئة",
+    "name": "environment",
+    "descriptionEn": "Datasets involving various aspects of the environment, such as air quality, water, etc.",
+    "descriptionAr": "مجموعات البيانات التي تتضمن جوانب مختلفة من البيئة ، مثل جودة الهواء والماء وما إلى ذلك.",
+    "noDatasets": 188
+  },
+  {
+    "categoryID": "61ec931e-efe0-4be1-ac90-e084694798f4",
+    "titleEn": "Trade (internal and external)",
+    "titleAr": "التجارة (الداخلية والخارجية)",
+    "name": "trade_-internal_and_external-",
+    "descriptionEn": "Trade (internal and external)",
+    "descriptionAr": "التجارة (الداخلية والخارجية)",
+    "noDatasets": 630
+  },
+  {
+    "categoryID": "48db6ca9-7cbc-439b-99d2-ea10353ef9ca",
+    "titleEn": "Children",
+    "titleAr": "أطفال",
+    "name": "children",
+    "descriptionEn": "Children",
+    "descriptionAr": "أطفال",
+    "noDatasets": 22
+  },
+  {
+    "categoryID": "26514f95-29b3-4420-b64e-f366ad2d64d7",
+    "titleEn": "Government Procurement",
+    "titleAr": "المشتريات الحكومية",
+    "name": "government-procurement",
+    "descriptionEn": "Government procurement refers to the process by which government agencies purchase goods, services, and works from suppliers. ",
+    "descriptionAr": "تشير المشتريات الحكومية إلى العملية التي تقوم من خلالها الوكالات الحكومية بشراء السلع والخدمات والأعمال من الموردين.",
+    "noDatasets": 117
+  },
+  {
+    "categoryID": "cb5873fd-62ef-4f6c-bcdd-f6d079dc9f0d",
+    "titleEn": "Arab Gulf Cooperation Council (GCC)",
+    "titleAr": "مجلس التعاون لدول الخليج العربية (GCC)",
+    "name": "arab_gulf_cooperation_council_-gcc-",
+    "descriptionEn": "Arab Gulf Cooperation Council (GCC)",
+    "descriptionAr": "مجلس التعاون لدول الخليج العربية (GCC)",
+    "noDatasets": 307
+  }
+]

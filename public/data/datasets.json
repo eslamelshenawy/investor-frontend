@@ -1,0 +1,295 @@
+{
+  "fetchedAt": "2026-01-31T05:03:15.559Z",
+  "total": 12,
+  "status": "in_progress",
+  "datasets": [
+    {
+      "id": "195bb29c-0482-498d-ae55-eec3c77a96ec",
+      "titleAr": "إدارة الرقابة والتراخيص التجارية الربع الرابع من العام 2025",
+      "titleEn": "Commercial Control and Licensing Management Group fourth quarter of 2025",
+      "descriptionAr": "تحتوي على بيانات الرقابة الصحية والتراخيص للحملات وإجمالي المصادرات وإجمالي إتلافات المواد الغذائية وعدد المنشآت المغرمة.",
+      "descriptionEn": "It contains data on health inspections, campaign licenses, total seizures, total food destruction, and the number of penalized establishments.",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "27dd2b76-aff5-417c-9c76-2b22c1857663",
+          "name": "1Commercial licenses",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "226203bb-82e5-416b-8c2b-74c4e3b51c8b",
+          "name": "Commercial licenses",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "41b46280-aeed-4a2e-9ad6-ec3cc38996c1",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب اقسام المهنة والمنطقة والجنس والجنسية   للربع الرابع 2025",
+      "titleEn": "Employees currently employed in the private sector categorized by occupation regiongender nationality Q4 2025",
+      "descriptionAr": "توضح هذه المجموعة العاملين  على راس العمل  في القطاع الخاص حسب اقسام المهنة والمنطقة والجنس والجنسية   للربع الرابع 2025",
+      "descriptionEn": "This group shows the total number of employees  private sector,  by occupation, region, gender, and nationality Q4 2025",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "ce8ada6e-5da9-40f1-b590-341266cca4b7",
+          "name": "by occupation region gender nationality Q4 2025",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "90a33222-1a58-4921-94ec-ff7edbeb7376",
+          "name": "by occupation region gender nationality Q4 2025CSV",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "ac121e81-74d4-46c8-9729-eb090180fe99",
+      "titleAr": "إجمالي خريجي برامج الدراسات العليا للعام الأكاديمي 1446هـ",
+      "titleEn": "Overall Graduate Students from Postgraduate Programs AY 2024 2025",
+      "descriptionAr": "إجمالي عدد خريجي برامج الدراسات العليا في الجامعة للعام الأكاديمي 1446هـ، موزع حسب الفروع والكليات",
+      "descriptionEn": "Total number of graduates from postgraduate programs at the university for the academic year 2024/2025, distributed by campuses and colleges\n",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "eb2de9f2-3e36-430a-a9d0-2989e4d39821",
+          "name": "Graduates from Postgraduate Programs AY 2024 2025",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "7ef22b91-b11e-4e93-bca2-5084daa0eb3e",
+          "name": "Graduates from Postgraduate Programs1 AY 2024 2025",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "6d3ee302-28db-4dc0-ab0c-8823f2d88b9e",
+      "titleAr": "الشهادات الصحية الربع الرابع من العام 2025م",
+      "titleEn": " Health certificates for the fourth quarter of 2025",
+      "descriptionAr": "تحتوي على بيانات إحصائية تحتوي على بيانات المختبرات وإجمالي العينات وبيانات الشهادات الصحية الربع الرابع من العام 2025",
+      "descriptionEn": "Contains statistical data including laboratory data, total samples, and health certificate data for the fourth quarter of 2025.",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "2bb12619-dc22-4817-a338-0ae71583db41",
+          "name": "1Health certificates",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "f013462f-5a1c-4001-b92e-aa5ab3b5547a",
+          "name": "Health certificates",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "a55a76d9-6138-471f-85f6-24b8f1f391f6",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب النشاط الاقتصادي والفئة العمرية   للربع الرابع 2025",
+      "titleEn": "Employees currently employed in the private sector by economic activity and age groupQ4 2025",
+      "descriptionAr": "توضح هذه المجموعةالعاملين  على راس العمل  في القطاع الخاص  حسب النشاط الاقتصادي والفئة العمرية    للربع الرابع 2025",
+      "descriptionEn": "This group shows the total number of employees  private sector,   by economic activity and age group Q4 2025",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "d649130c-fb3b-4586-b9e5-32dbddb7fecb",
+          "name": "economic activity and age group Q4 2025",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "b518675e-4bfa-45b2-9c95-3f6d25cff3f5",
+          "name": "economic activity and age group Q4 2025CSV",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "4811a908-9bb1-478d-9f39-bd8da558cd28",
+      "titleAr": "الصيدليات المعتمدة بمجلس الضمان الصحي 2025 ربع الرابع",
+      "titleEn": "Accredited Pharmacies with the Council of Health Insurance 2025Q4",
+      "descriptionAr": "مثل هذا الجدول بيانات للصيدليات في القطاع الخاص المعتمدة لدى مجلس الضمان الصحي، ويشمل نوع مقدم الخدمة، والموقع الجغرافي من حيث المدينة والمنطقة، وذلك لدعم أغراض التنظيم، والاعتماد، والتحليل، والإشراف على مقدمي خدمات الصيدلة ",
+      "descriptionEn": "This data on private pharmacies accredited by the Council of Health Insurance. It includes the type of service provider and the geographical location by city and region, supporting regulatory organization, accreditation, analysis, and oversight of pharmacy service providers.\n",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "66522e1b-9161-4e7b-9fd0-784b331555f9",
+          "name": "Accredited Pharmacies by CHI 2025 Q4",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "d87da3bd-762a-4bf6-b0e8-fa49f6f1c01e",
+          "name": "Accredited Pharmacies by CHI 2025Q4",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "ce455ba6-d10e-4616-8811-0e2aacd4a08a",
+      "titleAr": "عدد موظفي صندوق التنمية الصناعية لعام 2024",
+      "titleEn": "SIDF Number of Employees 2024",
+      "descriptionAr": "This dataset displays the total number of employees by year in  SIDF.",
+      "descriptionEn": "تعرض هذه المجموعة من البيانات إجمالي عدد الموظفين حسب السنة في SIDF",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "55850224-2402-4827-8ac8-3ef0f5d34a4c",
+          "name": "SIDF Number of Employees 2024",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "745e8d10-0446-4f16-8a9f-7ae30b9d771e",
+          "name": "SIDF Number of Employees 2024XSL",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "32ab628b-4735-4f8f-a41f-3713ed4480e1",
+      "titleAr": "المبالغ المعتمدة حسب المنتجات التمويلة 2024",
+      "titleEn": "Approved Amount by Financing Product 2024",
+      "descriptionAr": "تعرض هذه المجموعة من البيانات عدد الموافقات التي أجرتها SIDF، حسب المنتج",
+      "descriptionEn": "This dataset displays the number of Approvals done by SIDF, aggregated by product.",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "064c57f7-2352-4a02-8a25-1964cd84ea57",
+          "name": "Approved Amount by Financing Product 2024XSL",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "2f43cbb8-e97b-4b43-be91-2044fb2cebbf",
+          "name": "Approved Amount by Financing Product 2024",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "16acc790-e472-4699-845f-77c5c9b2f4fb",
+      "titleAr": "عدد تصاريح الحمولة الاستثنائية للمركبات الأجنبية",
+      "titleEn": "Number of exceptional load permits for international vehicles",
+      "descriptionAr": "عدد تصاريح الحمولة الاستثنائية الصادرة من قبل الهيئة العامة للطرق للمركبات الأجنبية حسب المنطقة والربع السنوي",
+      "descriptionEn": "Number of Exceptional Load Permits issued by Roads General Authority for international vehicles by region and quarter\n",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "bfa7d306-2f89-4dd9-95b3-b9de951d418c",
+          "name": "Exceptional load permits for international xlsx",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "550ead4e-e8cb-4f8f-b7f6-e9d9dee75765",
+          "name": "Exceptional load permits for international csv",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "cccfc7f5-7800-4641-bf84-c9082778955d",
+      "titleAr": "عدد طلبات تمديدات تصاريح الحفر",
+      "titleEn": "Number of extension of drilling permit requests",
+      "descriptionAr": "عدد طلبات تمديد تصاريح الحفر حسب المنطقة والربع السنوي",
+      "descriptionEn": "Number of drilling permit extensions requested by region and quarter",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "58c70d4d-e263-4fb8-9ca2-6a39f9828a64",
+          "name": "Extension of Drilling Permit csv",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "341ef7c1-541c-4a9b-b663-e78164656c2d",
+          "name": "Extension of Drilling Permit xlsx",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "daa44995-0dea-43df-957e-8b56ebd4a7bb",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب النشاط الاقتصادي والجنس والجنسية  للربع الرابع 2025",
+      "titleEn": "Employees in the private sector by economic activity gender and nationalityQ4 2025",
+      "descriptionAr": "توضح هذه المجموعة العاملين  على راس العمل  في القطاع الخاص  حسب النشاط الاقتصادي والجنس والجنسية   للربع الرابع 2025",
+      "descriptionEn": "This group shows the total number of employees private sector, economic activity, gender, and nationalityQ4 2025",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "34229247-7cce-4b02-9d53-29b9af942c01",
+          "name": "economic activity gender nationalityQ4 2025CSV",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "89c10761-6389-400e-9a37-e9fd79cdd637",
+          "name": "economic activity gender nationalityQ4 2025",
+          "format": "",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "id": "447986fc-5bce-4333-b2dc-4b48aa6b10d3",
+      "titleAr": "عدد القروض المعتمدة حسب المنتجات 2024",
+      "titleEn": "Number of Approved loans by Products 2024",
+      "descriptionAr": "تعرض هذه المجموعة من البيانات عدد الموافقات التي أجرتها SIDF، حسب المنتج.",
+      "descriptionEn": "This dataset displays the number of Approvals done by SIDF, aggregated by product.",
+      "category": "",
+      "organization": "",
+      "updatedAt": "",
+      "resources": [
+        {
+          "id": "fb3b7d01-7e06-4e5f-8b3e-2ce67db3a0c6",
+          "name": "Number of Approved loans by Products",
+          "format": "",
+          "url": ""
+        },
+        {
+          "id": "09d47b55-5cb5-479a-93a2-50b83628a40b",
+          "name": "Number of Approved loans by Products 2024",
+          "format": "",
+          "url": ""
+        }
+      ]
+    }
+  ]
+}

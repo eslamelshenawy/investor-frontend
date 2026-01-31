@@ -427,14 +427,65 @@ export async function fetchDatasetsList(options: {
     };
   } catch (error) {
     console.error('Failed to fetch datasets list:', error);
-    return {
-      datasets: [],
-      total: 0,
-      page,
-      hasMore: false,
-      source: 'api',
-    };
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 3. Final Fallback: Load from local JSON file
+  // ═══════════════════════════════════════════════════════════════════
+  console.log(`   📁 Trying local datasets.json...`);
+
+  try {
+    const response = await fetch('/data/datasets.json');
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.datasets && data.datasets.length > 0) {
+        console.log(`   ✅ Loaded ${data.datasets.length} datasets from local file`);
+
+        let filtered = data.datasets;
+
+        // Apply search filter
+        if (search) {
+          const searchLower = search.toLowerCase();
+          filtered = filtered.filter((d: DatasetInfo) =>
+            d.titleAr?.toLowerCase().includes(searchLower) ||
+            d.titleEn?.toLowerCase().includes(searchLower) ||
+            d.descriptionAr?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Apply category filter
+        if (category) {
+          filtered = filtered.filter((d: DatasetInfo) =>
+            d.category?.toLowerCase().includes(category.toLowerCase())
+          );
+        }
+
+        // Apply pagination
+        const startIndex = (page - 1) * limit;
+        const paginated = filtered.slice(startIndex, startIndex + limit);
+
+        return {
+          datasets: paginated,
+          total: filtered.length,
+          page,
+          hasMore: startIndex + limit < filtered.length,
+          source: 'cache',
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('   ⚠️ Local JSON also failed:', e);
+  }
+
+  // Return empty if all methods failed
+  return {
+    datasets: [],
+    total: 0,
+    page,
+    hasMore: false,
+    source: 'api',
+  };
 }
 
 /**
