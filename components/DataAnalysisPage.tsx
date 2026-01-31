@@ -21,6 +21,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { api } from '../src/services/api';
+import { fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 
 interface SignalStats {
     total: number;
@@ -91,10 +92,36 @@ const DataAnalysisPage: React.FC = () => {
                 setContentStats(stats);
             }
 
-            // Fetch datasets
-            const datasetsRes = await api.getDatasets({ limit: 1000 });
-            if (datasetsRes.success && datasetsRes.data) {
-                setDatasets(datasetsRes.data as any[]);
+            // Fetch datasets using Frontend Fetch (bypasses WAF)
+            console.log('🌐 Frontend Fetch: جلب قائمة الـ Datasets...');
+            try {
+                const datasetsResult = await fetchDatasetsList({ limit: 500 });
+                if (datasetsResult.datasets.length > 0) {
+                    const mappedDatasets = datasetsResult.datasets.map((d: DatasetInfo) => ({
+                        id: d.id,
+                        name: d.titleEn || d.titleAr,
+                        nameAr: d.titleAr,
+                        category: d.category || 'عام',
+                        recordCount: d.recordCount || 0,
+                        syncStatus: 'SUCCESS'
+                    }));
+                    setDatasets(mappedDatasets);
+                    console.log(`✅ Frontend Fetch: تم جلب ${mappedDatasets.length} dataset`);
+                } else {
+                    // Fallback to backend API
+                    console.log('⚠️ Frontend Fetch فارغ، جاري استخدام Backend API...');
+                    const datasetsRes = await api.getDatasets({ limit: 1000 });
+                    if (datasetsRes.success && datasetsRes.data) {
+                        setDatasets(datasetsRes.data as any[]);
+                    }
+                }
+            } catch (fetchError) {
+                console.warn('⚠️ Frontend Fetch فشل:', fetchError);
+                // Fallback to backend
+                const datasetsRes = await api.getDatasets({ limit: 1000 });
+                if (datasetsRes.success && datasetsRes.data) {
+                    setDatasets(datasetsRes.data as any[]);
+                }
             }
 
             // Fetch sync status

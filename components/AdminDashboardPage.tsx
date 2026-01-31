@@ -696,27 +696,31 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Architecture Banner */}
-            {architecture === 'on-demand' && (
-                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
-                        <Zap size={24} className="text-emerald-600" />
+            {/* Architecture Banner - Frontend Fetch */}
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                    <Zap size={24} className="text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-emerald-800">المعمارية: Frontend Fetch</h4>
+                        <span className="text-xs bg-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full font-bold">نشط</span>
                     </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-emerald-800">المعمارية: On-Demand</h4>
-                            <span className="text-xs bg-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full font-bold">نشط</span>
-                        </div>
-                        <p className="text-sm text-emerald-600">
-                            {architectureNote || 'البيانات تُجلب عند الطلب من API - توفير 95% من مساحة التخزين'}
-                        </p>
+                    <p className="text-sm text-emerald-600">
+                        {architectureNote || 'البيانات تُجلب مباشرة من المتصفح - تجاوز WAF بنسبة 100%'}
+                    </p>
+                </div>
+                <div className="flex items-center gap-6 shrink-0">
+                    <div className="text-center">
+                        <div className="text-2xl font-black text-emerald-700">15,500+</div>
+                        <div className="text-xs text-emerald-600">Dataset متاح</div>
                     </div>
-                    <div className="text-left shrink-0">
+                    <div className="text-center">
                         <div className="text-2xl font-black text-emerald-700">38</div>
                         <div className="text-xs text-emerald-600">قسم متاح</div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* Overview Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">

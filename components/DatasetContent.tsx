@@ -21,6 +21,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { api } from '../src/services/api';
+import { fetchDatasetData } from '../src/services/dataFetcher';
 import { 
   AreaChart, 
   Area, 
@@ -51,13 +52,33 @@ const DatasetContent: React.FC<DatasetContentProps> = ({ dataset, onBack, role }
 
   const canViewComments = role === UserRole.ADMIN || role === UserRole.EDITOR || role === UserRole.CONTENT_MANAGER || role === UserRole.SUPER_ADMIN || role === UserRole.CURBTRON;
 
-  // Fetch preview data on-demand
+  // Fetch preview data on-demand using Frontend Fetch (bypasses WAF)
   const fetchPreviewData = async () => {
-    if (!dataset.id) return;
+    if (!dataset.id && !dataset.externalId) return;
 
     setLoadingPreview(true);
     setPreviewError(null);
 
+    const datasetId = dataset.externalId || dataset.id;
+
+    try {
+      // Try Frontend Fetch first (bypasses WAF)
+      console.log('🌐 Frontend Fetch: جلب معاينة البيانات...', datasetId);
+      const result = await fetchDatasetData(datasetId, { limit: 20 });
+
+      if (result.data.length > 0) {
+        setPreviewData(result.data);
+        setPreviewColumns(result.columns);
+        setTotalRecords(result.totalRecords || result.data.length);
+        setDataSource(result.source === 'cache' ? 'cache' : 'api');
+        console.log(`✅ Frontend Fetch: تم جلب ${result.data.length} سجل`);
+        return;
+      }
+    } catch (frontendError) {
+      console.warn('⚠️ Frontend Fetch فشل، جاري استخدام Backend API...', frontendError);
+    }
+
+    // Fallback to backend API
     try {
       const response = await api.getDatasetPreview(dataset.id, 20);
       if (response.success && response.data) {
@@ -243,14 +264,14 @@ const DatasetContent: React.FC<DatasetContentProps> = ({ dataset, onBack, role }
 
           {activeTab === 'data' && (
             <div className="animate-fadeIn space-y-6">
-              {/* On-Demand Info Banner */}
+              {/* Frontend Fetch Info Banner */}
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4">
                 <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
-                  <Cloud size={20} className="text-emerald-600" />
+                  <Zap size={20} className="text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-emerald-800">البيانات تُجلب عند الطلب (On-Demand)</p>
-                  <p className="text-xs text-emerald-600">يتم جلب البيانات مباشرة من البوابة الوطنية للبيانات المفتوحة</p>
+                  <p className="text-sm font-bold text-emerald-800">Frontend Fetch - جلب مباشر من المتصفح</p>
+                  <p className="text-xs text-emerald-600">يتم جلب البيانات مباشرة من البوابة الوطنية بدون حاجة للـ Backend</p>
                 </div>
                 {dataSource && (
                   <span className={`text-xs px-3 py-1 rounded-full font-bold ${
