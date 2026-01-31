@@ -52,6 +52,8 @@ export interface DatasetListResult {
 // Configuration
 // ═══════════════════════════════════════════════════════════════════
 
+// Saudi Open Data Portal uses CKAN API
+const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';
 const API_BASE = 'https://open.data.gov.sa/data/api';
 const CATALOG_API = 'https://open.data.gov.sa/data/api/catalog';
 const CACHE_PREFIX = 'dataset_cache_';
@@ -209,52 +211,88 @@ export async function fetchDatasetsList(options: {
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
 
   const allDatasets: DatasetInfo[] = [];
+  const offset = (page - 1) * limit;
 
   try {
-    // Try multiple API endpoints to get datasets
-    const endpoints = [
-      `${CATALOG_API}?version=-1&rows=${limit}&start=${(page - 1) * limit}`,
-      `${API_BASE}/datasets/search?version=-1&rows=${limit}&start=${(page - 1) * limit}`,
+    // Try CKAN API first (most reliable for open data portals)
+    const ckanEndpoints = [
+      // CKAN package_search - main search API
+      `${CKAN_BASE}/package_search?rows=${limit}&start=${offset}`,
+      // CKAN with search query
+      search ? `${CKAN_BASE}/package_search?q=${encodeURIComponent(search)}&rows=${limit}` : null,
+      // CKAN with category/group filter
+      category ? `${CKAN_BASE}/package_search?fq=groups:${encodeURIComponent(category)}&rows=${limit}` : null,
+      // Alternative CKAN endpoints
+      `${CKAN_BASE}/current_package_list_with_resources?limit=${limit}&offset=${offset}`,
+    ].filter(Boolean) as string[];
+
+    // Also try the custom API endpoints
+    const customEndpoints = [
+      `${CATALOG_API}?version=-1&rows=${limit}&start=${offset}`,
+      `${API_BASE}/datasets/search?version=-1&rows=${limit}&start=${offset}`,
       `${API_BASE}/catalog/datasets?rows=${limit}&page=${page}`,
+      `${API_BASE}/3/action/package_search?rows=${limit}&start=${offset}`,
     ];
 
-    // Add category filter if specified
-    if (category) {
-      endpoints.push(`${API_BASE}/datasets/search?version=-1&category=${encodeURIComponent(category)}&rows=${limit}`);
-    }
+    const allEndpoints = [...ckanEndpoints, ...customEndpoints];
 
-    // Add search filter if specified
-    if (search) {
-      endpoints.push(`${API_BASE}/datasets/search?version=-1&q=${encodeURIComponent(search)}&rows=${limit}`);
-    }
-
-    for (const endpoint of endpoints) {
+    for (const endpoint of allEndpoints) {
       try {
+        console.log(`   🔍 Trying: ${endpoint.substring(0, 80)}...`);
+
         const response = await fetch(endpoint, {
           headers: {
             'Accept': 'application/json',
           },
+          mode: 'cors',
         });
 
-        if (!response.ok) continue;
+        if (!response.ok) {
+          console.log(`   ❌ HTTP ${response.status}`);
+          continue;
+        }
 
         const data = await response.json();
 
-        // Handle different response structures
-        const items = data.results || data.datasets || data.data || data.items || [];
+        // CKAN API returns: { success: true, result: { results: [...], count: N } }
+        // Or for package_list: { success: true, result: [...] }
+        let items: any[] = [];
+        let totalCount = 0;
+
+        if (data.success && data.result) {
+          if (Array.isArray(data.result)) {
+            items = data.result;
+            totalCount = items.length;
+          } else if (data.result.results) {
+            items = data.result.results;
+            totalCount = data.result.count || items.length;
+          }
+        } else {
+          // Try other response structures
+          items = data.results || data.datasets || data.data || data.items || [];
+          totalCount = data.count || data.total || items.length;
+        }
 
         if (Array.isArray(items) && items.length > 0) {
+          console.log(`   ✅ Found ${items.length} datasets (total: ${totalCount})`);
+
           items.forEach((item: any) => {
             const dataset: DatasetInfo = {
-              id: item.id || item.uuid || item.datasetId,
-              titleAr: item.titleAr || item.title_ar || item.nameAr || item.name || item.title,
-              titleEn: item.titleEn || item.title_en || item.nameEn || item.name,
-              descriptionAr: item.descriptionAr || item.description_ar || item.description,
-              descriptionEn: item.descriptionEn || item.description_en,
-              category: item.category?.titleAr || item.categoryAr || item.category?.name || item.category,
-              organization: item.organization?.titleAr || item.organizationAr || item.publisher?.name || item.publisher,
-              recordCount: item.recordCount || item.record_count || item.num_resources,
-              updatedAt: item.updatedAt || item.updated_at || item.metadata_modified,
+              id: item.id || item.uuid || item.datasetId || item.name,
+              titleAr: item.title_ar || item.titleAr || item.title || item.name,
+              titleEn: item.title_en || item.titleEn || item.title || item.name,
+              descriptionAr: item.notes_ar || item.descriptionAr || item.notes || item.description,
+              descriptionEn: item.notes_en || item.descriptionEn || item.notes,
+              category: item.groups?.[0]?.title || item.groups?.[0]?.name || item.category?.titleAr || item.category,
+              organization: item.organization?.title || item.organization?.name || item.publisher?.name,
+              recordCount: item.num_resources || item.recordCount || 0,
+              updatedAt: item.metadata_modified || item.updatedAt || item.modified,
+              resources: item.resources?.map((r: any) => ({
+                id: r.id,
+                name: r.name || r.description,
+                format: r.format,
+                downloadUrl: r.url,
+              })),
             };
 
             // Avoid duplicates
@@ -263,14 +301,11 @@ export async function fetchDatasetsList(options: {
             }
           });
 
-          console.log(`   📊 Found ${items.length} from endpoint`);
-
-          // If we got results, we can break (or continue to get more)
+          // If we got enough results, break
           if (allDatasets.length >= limit) break;
         }
-      } catch (e) {
-        // Continue to next endpoint
-        console.warn(`   ⚠️ Endpoint failed:`, e);
+      } catch (e: any) {
+        console.warn(`   ⚠️ Endpoint failed:`, e.message || e);
       }
     }
 
@@ -312,36 +347,62 @@ export async function fetchDatasetsList(options: {
  */
 async function fetchDatasetsFromHTML(page: number, limit: number): Promise<DatasetInfo[]> {
   try {
-    const response = await fetch(`https://open.data.gov.sa/ar/datasets?page=${page}`, {
-      headers: {
-        'Accept': 'text/html',
-      },
-    });
-
-    if (!response.ok) return [];
-
-    const html = await response.text();
+    // Try multiple pages to get more datasets
     const datasets: DatasetInfo[] = [];
+    const pagesToFetch = Math.min(5, Math.ceil(limit / 20)); // Assuming 20 per page
 
-    // Extract dataset IDs from HTML
-    const idPattern = /\/datasets\/view\/([a-f0-9-]{36})/gi;
-    const matches = html.matchAll(idPattern);
-    const ids = new Set<string>();
+    for (let p = page; p < page + pagesToFetch && datasets.length < limit; p++) {
+      try {
+        const response = await fetch(`https://open.data.gov.sa/ar/datasets?page=${p}`, {
+          headers: {
+            'Accept': 'text/html',
+          },
+          mode: 'cors',
+        });
 
-    for (const match of matches) {
-      ids.add(match[1].toLowerCase());
-    }
+        if (!response.ok) continue;
 
-    // Create basic dataset info from IDs
-    for (const id of ids) {
-      if (datasets.length >= limit) break;
+        const html = await response.text();
 
-      datasets.push({
-        id,
-        titleAr: `مجموعة بيانات`,
-        titleEn: `Dataset`,
-        category: 'أخرى',
-      });
+        // Extract dataset IDs from HTML
+        const idPattern = /\/datasets\/view\/([a-f0-9-]{36})/gi;
+        const matches = html.matchAll(idPattern);
+        const ids = new Set<string>();
+
+        for (const match of matches) {
+          ids.add(match[1].toLowerCase());
+        }
+
+        // Try to extract titles from HTML too
+        const titlePattern = /<h[2-4][^>]*class="[^"]*dataset[^"]*"[^>]*>([^<]+)<\/h[2-4]>/gi;
+        const titles: string[] = [];
+        let titleMatch;
+        while ((titleMatch = titlePattern.exec(html)) !== null) {
+          titles.push(titleMatch[1].trim());
+        }
+
+        // Create dataset info from IDs
+        let titleIndex = 0;
+        for (const id of ids) {
+          if (datasets.length >= limit) break;
+          if (datasets.find(d => d.id === id)) continue;
+
+          datasets.push({
+            id,
+            titleAr: titles[titleIndex] || `مجموعة بيانات ${id.substring(0, 8)}`,
+            titleEn: `Dataset ${id.substring(0, 8)}`,
+            category: 'أخرى',
+          });
+          titleIndex++;
+        }
+
+        console.log(`   📄 HTML page ${p}: Found ${ids.size} datasets`);
+
+        // Small delay
+        await new Promise(r => setTimeout(r, 300));
+      } catch (pageError) {
+        console.warn(`   ⚠️ HTML page ${p} failed:`, pageError);
+      }
     }
 
     return datasets;
