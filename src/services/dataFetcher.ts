@@ -271,20 +271,8 @@ export async function fetchDatasetsList(options: {
 } = {}): Promise<DatasetListResult> {
   const { page = 1, limit = 100, category, search, forceRefresh = false } = options;
 
-  // Check browser cache first
-  if (!forceRefresh && page === 1 && !category && !search) {
-    const cached = getListFromCache();
-    if (cached) {
-      console.log(`📦 Datasets list from browser cache (${cached.datasets.length} datasets)`);
-      return {
-        datasets: cached.datasets.slice(0, limit),
-        total: cached.total,
-        page: 1,
-        hasMore: cached.datasets.length > limit,
-        source: 'cache',
-      };
-    }
-  }
+  // Skip browser cache - always fetch fresh from Backend API
+  // This ensures we always get the latest data from database
 
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
 
