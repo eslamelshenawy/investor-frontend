@@ -286,66 +286,10 @@ export async function fetchDatasetsList(options: {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // 1. Load from LOCAL JSON first (INSTANT - no network delay!)
-  // ═══════════════════════════════════════════════════════════════════
-  if (!forceRefresh) {
-    try {
-      console.log(`📁 Loading from local datasets.json...`);
-      const response = await fetch('/data/datasets.json');
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.datasets && data.datasets.length > 0) {
-          console.log(`✅ Loaded ${data.datasets.length} datasets instantly!`);
-
-          let filtered = data.datasets;
-
-          // Apply search filter
-          if (search) {
-            const searchLower = search.toLowerCase();
-            filtered = filtered.filter((d: DatasetInfo) =>
-              d.titleAr?.toLowerCase().includes(searchLower) ||
-              d.titleEn?.toLowerCase().includes(searchLower) ||
-              d.descriptionAr?.toLowerCase().includes(searchLower)
-            );
-          }
-
-          // Apply category filter
-          if (category) {
-            filtered = filtered.filter((d: DatasetInfo) =>
-              d.category?.toLowerCase().includes(category.toLowerCase())
-            );
-          }
-
-          // Apply pagination
-          const startIndex = (page - 1) * limit;
-          const paginated = filtered.slice(startIndex, startIndex + limit);
-
-          // Cache for next time
-          if (page === 1 && !category && !search) {
-            saveListToCache(data.datasets, data.total);
-          }
-
-          return {
-            datasets: paginated,
-            total: filtered.length,
-            page,
-            hasMore: startIndex + limit < filtered.length,
-            source: 'cache',
-          };
-        }
-      }
-    } catch (e) {
-      console.log(`⚠️ Local JSON not available, trying APIs...`);
-    }
-  }
-
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
 
   // ═══════════════════════════════════════════════════════════════════
-  // 2. Fallback: Try Backend API
+  // 1. Try Backend API FIRST (reads from Supabase database)
   // ═══════════════════════════════════════════════════════════════════
   try {
     console.log(`   🚀 Trying Backend API: ${BACKEND_API}/datasets/saudi`);
@@ -355,7 +299,6 @@ export async function fetchDatasetsList(options: {
       limit: String(limit),
       ...(search && { search }),
       ...(category && { category }),
-      ...(forceRefresh && { refresh: 'true' }),
     });
 
     const response = await fetch(`${BACKEND_API}/datasets/saudi?${params}`, {
@@ -402,7 +345,56 @@ export async function fetchDatasetsList(options: {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 2. Fallback: Try direct CKAN API with proxies
+  // 2. Fallback: Load from LOCAL JSON
+  // ═══════════════════════════════════════════════════════════════════
+  try {
+    console.log(`📁 Fallback: Loading from local datasets.json...`);
+    const response = await fetch('/data/datasets.json');
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.datasets && data.datasets.length > 0) {
+        console.log(`✅ Loaded ${data.datasets.length} datasets from local JSON`);
+
+        let filtered = data.datasets;
+
+        // Apply search filter
+        if (search) {
+          const searchLower = search.toLowerCase();
+          filtered = filtered.filter((d: DatasetInfo) =>
+            d.titleAr?.toLowerCase().includes(searchLower) ||
+            d.titleEn?.toLowerCase().includes(searchLower) ||
+            d.descriptionAr?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Apply category filter
+        if (category) {
+          filtered = filtered.filter((d: DatasetInfo) =>
+            d.category?.toLowerCase().includes(category.toLowerCase())
+          );
+        }
+
+        // Apply pagination
+        const startIndex = (page - 1) * limit;
+        const paginated = filtered.slice(startIndex, startIndex + limit);
+
+        return {
+          datasets: paginated,
+          total: filtered.length,
+          page,
+          hasMore: startIndex + limit < filtered.length,
+          source: 'cache',
+        };
+      }
+    }
+  } catch (e) {
+    console.log(`⚠️ Local JSON not available`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 3. Fallback: Try direct CKAN API with proxies
   // ═══════════════════════════════════════════════════════════════════
   console.log(`   🔄 Falling back to direct API...`);
 
