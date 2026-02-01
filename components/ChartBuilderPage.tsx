@@ -280,9 +280,10 @@ const ChartBuilderPage: React.FC = () => {
         }
     };
 
-    // Initial fetch
+    // Initial fetch - تحميل جميع الـ datasets أوتوماتيك
     useEffect(() => {
-        fetchDatasetsPage(1);
+        // تحميل الكل مباشرة بدون انتظار
+        loadAllDatasetsHandler();
     }, []);
 
     // Load more function
@@ -980,40 +981,28 @@ const ChartBuilderPage: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            {/* Load All Button */}
-                            {hasMore && !loading && (
-                                <button
-                                    onClick={loadAllDatasetsHandler}
-                                    disabled={loadingAll}
-                                    className="mt-2 w-full py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {loadingAll ? (
-                                        <>
-                                            <Loader2 size={12} className="animate-spin" />
-                                            <span>جاري التحميل... ({totalLoaded})</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <RefreshCw size={12} />
-                                            <span>تحميل جميع مصادر البيانات</span>
-                                        </>
-                                    )}
-                                </button>
+                            {/* عدد المصادر المحملة */}
+                            {!hasMore && dataSources.length > 0 && (
+                                <div className="mt-2 text-center text-xs text-emerald-600 font-bold">
+                                    ✅ تم تحميل {dataSources.length.toLocaleString('ar-SA')} مصدر بيانات
+                                </div>
                             )}
 
                         </div>
 
-                        {loading ? (
-                            <div className="flex items-center justify-center py-8">
+                        {loading || loadingAll ? (
+                            <div className="flex flex-col items-center justify-center py-8">
                                 <Loader2 className="animate-spin text-indigo-600" size={32} />
-                                <span className="mr-2 text-sm text-gray-500">جاري الجلب من البوابة...</span>
+                                <span className="mr-2 text-sm text-gray-500 mt-2">
+                                    {loadingAll ? `جاري تحميل جميع البيانات... (${totalLoaded})` : 'جاري الجلب من البوابة...'}
+                                </span>
                             </div>
                         ) : dataSources.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 <Database size={32} className="mx-auto mb-2 opacity-50" />
                                 <p>لا توجد مصادر بيانات متاحة</p>
                                 <button
-                                    onClick={() => fetchDatasetsPage(1)}
+                                    onClick={loadAllDatasetsHandler}
                                     className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
                                 >
                                     إعادة المحاولة
@@ -1023,7 +1012,6 @@ const ChartBuilderPage: React.FC = () => {
                             <div
                                 ref={listContainerRef}
                                 className="space-y-3 max-h-80 overflow-y-auto"
-                                onScroll={handleScroll}
                             >
                                 {dataSources.map(ds => (
                                     <button
@@ -1058,30 +1046,8 @@ const ChartBuilderPage: React.FC = () => {
                                     </button>
                                 ))}
 
-                                {/* Load More Indicator */}
-                                {loadingMore && (
-                                    <div className="flex items-center justify-center py-4">
-                                        <Loader2 className="animate-spin text-indigo-600 ml-2" size={20} />
-                                        <span className="text-sm text-gray-500">جاري تحميل المزيد...</span>
-                                    </div>
-                                )}
 
-                                {/* Load More Button */}
-                                {hasMore && !loadingMore && (
-                                    <button
-                                        onClick={loadMoreDatasets}
-                                        className="w-full py-3 text-center text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-bold border-2 border-dashed border-indigo-200"
-                                    >
-                                        تحميل المزيد...
-                                    </button>
-                                )}
-
-                                {/* End of List */}
-                                {!hasMore && dataSources.length > 0 && (
-                                    <p className="text-center text-xs text-gray-400 py-2">
-                                        تم تحميل جميع مصادر البيانات ({dataSources.length})
-                                    </p>
-                                )}
+                                {/* End of List - لا حاجة لزر التحميل لأن الكل يتحمل أوتوماتيك */}
                             </div>
                         )}
                     </div>
