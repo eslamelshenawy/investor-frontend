@@ -1001,40 +1001,6 @@ const ChartBuilderPage: React.FC = () => {
                                 </button>
                             )}
 
-                            {/* Preload All Data Button - تحميل مسبق */}
-                            {dataSources.length > 0 && !loading && (
-                                <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-bold text-purple-700">💾 التخزين المحلي</span>
-                                        <span className="text-xs text-purple-600">
-                                            {preloadStats.cached > 0 ? `${preloadStats.cached} محفوظ` : 'فارغ'}
-                                        </span>
-                                    </div>
-                                    {preloading ? (
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-xs text-purple-600">
-                                                <Loader2 size={12} className="animate-spin" />
-                                                <span>جاري التحميل: {preloadProgress.loaded}/{preloadProgress.total}</span>
-                                            </div>
-                                            <div className="w-full bg-purple-200 rounded-full h-1.5">
-                                                <div
-                                                    className="bg-purple-600 h-1.5 rounded-full transition-all"
-                                                    style={{ width: `${(preloadProgress.loaded / preloadProgress.total) * 100}%` }}
-                                                />
-                                            </div>
-                                            <div className="text-xs text-purple-500 truncate">{preloadProgress.current}</div>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={preloadAllDataHandler}
-                                            className="w-full py-1.5 bg-purple-600 text-white rounded text-xs font-bold hover:bg-purple-700 flex items-center justify-center gap-2"
-                                        >
-                                            <Cloud size={12} />
-                                            <span>تحميل كل البيانات مسبقاً</span>
-                                        </button>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
                         {loading ? (
