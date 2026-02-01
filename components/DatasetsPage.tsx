@@ -1,6 +1,6 @@
 /**
  * Datasets Page - صفحة مجموعات البيانات
- * Similar to Saudi Open Data Portal (open.data.gov.sa)
+ * Client-side filtering - الفلترة تتم محلياً بدون إعادة تحميل
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -62,7 +62,7 @@ interface CategoryCount {
 // CONSTANTS
 // ============================================
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 24;
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
     'العدل': Building2,
@@ -82,262 +82,42 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 // ============================================
 
 const DatasetsPage: React.FC = () => {
-    // State
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
-    const [categories, setCategories] = useState<CategoryCount[]>([]);
+    // All datasets (loaded once)
+    const [allDatasets, setAllDatasets] = useState<Dataset[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Filters
+    // Filters (client-side)
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-    // Pagination
+    // Pagination (client-side)
     const [currentPage, setCurrentPage] = useState(1);
 
     // View
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    // Stats
-    const [totalDatasets, setTotalDatasets] = useState(0);
+    // ============================================
+    // LOAD ALL DATASETS ONCE
+    // ============================================
 
-    // Saudi Open Data Categories - الأقسام من البوابة الوطنية
-    const SAUDI_CATEGORIES: CategoryCount[] = [
-        { name: 'الاقتصاد والأعمال', count: 2850 },
-        { name: 'الصحة', count: 1920 },
-        { name: 'التعليم والتدريب', count: 1650 },
-        { name: 'البيئة والطاقة', count: 1420 },
-        { name: 'السكان والإسكان', count: 1280 },
-        { name: 'النقل والمواصلات', count: 980 },
-        { name: 'الزراعة والمياه', count: 890 },
-        { name: 'السياحة والثقافة', count: 820 },
-        { name: 'العمل والتوظيف', count: 760 },
-        { name: 'الحكومة والإدارة', count: 720 },
-        { name: 'التجارة والصناعة', count: 680 },
-        { name: 'المالية والضرائب', count: 640 },
-        { name: 'العدل والقانون', count: 580 },
-        { name: 'الأمن والدفاع', count: 450 },
-        { name: 'التقنية والاتصالات', count: 420 },
-        { name: 'الرياضة والشباب', count: 380 },
-        { name: 'الخدمات الاجتماعية', count: 350 },
-        { name: 'أخرى', count: 710 },
-    ];
-
-    // Sample Datasets - نماذج بيانات للعرض عند فشل الـ API
-    const SAMPLE_DATASETS: Dataset[] = [
-        {
-            id: 'pop-stats-2024',
-            externalId: 'pop-stats-2024',
-            name: 'Population Statistics 2024',
-            nameAr: 'إحصائيات السكان 2024',
-            description: 'Saudi Arabia population statistics by region and age group',
-            descriptionAr: 'إحصائيات السكان في المملكة العربية السعودية حسب المنطقة والفئة العمرية',
-            category: 'السكان والإسكان',
-            source: 'الهيئة العامة للإحصاء',
-            sourceUrl: null,
-            recordCount: 45000,
-            columns: ['المنطقة', 'السنة', 'الذكور', 'الإناث', 'الإجمالي'],
-            lastSyncAt: '2024-12-15T10:30:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-15T10:30:00Z',
-        },
-        {
-            id: 'gdp-quarterly-2024',
-            externalId: 'gdp-quarterly-2024',
-            name: 'GDP Quarterly Report 2024',
-            nameAr: 'تقرير الناتج المحلي الربع سنوي 2024',
-            description: 'Quarterly GDP data by economic sector',
-            descriptionAr: 'بيانات الناتج المحلي الإجمالي ربع السنوية حسب القطاع الاقتصادي',
-            category: 'الاقتصاد والأعمال',
-            source: 'وزارة المالية',
-            sourceUrl: null,
-            recordCount: 1200,
-            columns: ['الربع', 'القطاع', 'القيمة', 'نسبة النمو'],
-            lastSyncAt: '2024-12-20T08:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-20T08:00:00Z',
-        },
-        {
-            id: 'health-facilities-2024',
-            externalId: 'health-facilities-2024',
-            name: 'Healthcare Facilities Directory',
-            nameAr: 'دليل المنشآت الصحية',
-            description: 'Complete directory of hospitals and health centers',
-            descriptionAr: 'دليل شامل للمستشفيات والمراكز الصحية في المملكة',
-            category: 'الصحة',
-            source: 'وزارة الصحة',
-            sourceUrl: null,
-            recordCount: 3500,
-            columns: ['اسم المنشأة', 'المنطقة', 'المدينة', 'النوع', 'السعة'],
-            lastSyncAt: '2024-11-30T14:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-11-30T14:00:00Z',
-        },
-        {
-            id: 'education-schools-2024',
-            externalId: 'education-schools-2024',
-            name: 'Schools Statistics 2024',
-            nameAr: 'إحصائيات المدارس 2024',
-            description: 'Statistics of schools by region and education level',
-            descriptionAr: 'إحصائيات المدارس حسب المنطقة والمرحلة التعليمية',
-            category: 'التعليم والتدريب',
-            source: 'وزارة التعليم',
-            sourceUrl: null,
-            recordCount: 28000,
-            columns: ['المنطقة', 'المرحلة', 'عدد المدارس', 'عدد الطلاب', 'عدد المعلمين'],
-            lastSyncAt: '2024-12-01T09:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-01T09:00:00Z',
-        },
-        {
-            id: 'employment-stats-2024',
-            externalId: 'employment-stats-2024',
-            name: 'Employment Statistics Q4 2024',
-            nameAr: 'إحصائيات التوظيف الربع الرابع 2024',
-            description: 'Labor market and employment data',
-            descriptionAr: 'بيانات سوق العمل والتوظيف في المملكة',
-            category: 'العمل والتوظيف',
-            source: 'وزارة الموارد البشرية',
-            sourceUrl: null,
-            recordCount: 15000,
-            columns: ['القطاع', 'الجنسية', 'الجنس', 'عدد العاملين', 'متوسط الراتب'],
-            lastSyncAt: '2024-12-18T11:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-18T11:00:00Z',
-        },
-        {
-            id: 'tourism-visitors-2024',
-            externalId: 'tourism-visitors-2024',
-            name: 'Tourism Visitors Statistics',
-            nameAr: 'إحصائيات زوار السياحة',
-            description: 'Monthly tourism and visitor statistics',
-            descriptionAr: 'إحصائيات شهرية للسياحة وأعداد الزوار',
-            category: 'السياحة والثقافة',
-            source: 'وزارة السياحة',
-            sourceUrl: null,
-            recordCount: 8500,
-            columns: ['الشهر', 'الجنسية', 'نوع التأشيرة', 'عدد الزوار', 'مدة الإقامة'],
-            lastSyncAt: '2024-12-10T16:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-10T16:00:00Z',
-        },
-        {
-            id: 'transport-traffic-2024',
-            externalId: 'transport-traffic-2024',
-            name: 'Traffic Flow Statistics',
-            nameAr: 'إحصائيات حركة المرور',
-            description: 'Daily traffic flow data on major highways',
-            descriptionAr: 'بيانات حركة المرور اليومية على الطرق الرئيسية',
-            category: 'النقل والمواصلات',
-            source: 'وزارة النقل',
-            sourceUrl: null,
-            recordCount: 120000,
-            columns: ['الطريق', 'التاريخ', 'الساعة', 'عدد المركبات', 'السرعة المتوسطة'],
-            lastSyncAt: '2024-12-22T07:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-22T07:00:00Z',
-        },
-        {
-            id: 'agriculture-production-2024',
-            externalId: 'agriculture-production-2024',
-            name: 'Agricultural Production 2024',
-            nameAr: 'الإنتاج الزراعي 2024',
-            description: 'Annual agricultural production by crop type',
-            descriptionAr: 'الإنتاج الزراعي السنوي حسب نوع المحصول',
-            category: 'الزراعة والمياه',
-            source: 'وزارة البيئة والمياه والزراعة',
-            sourceUrl: null,
-            recordCount: 5600,
-            columns: ['المنطقة', 'المحصول', 'المساحة', 'الإنتاج', 'السنة'],
-            lastSyncAt: '2024-11-25T12:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-11-25T12:00:00Z',
-        },
-        {
-            id: 'energy-consumption-2024',
-            externalId: 'energy-consumption-2024',
-            name: 'Energy Consumption Report',
-            nameAr: 'تقرير استهلاك الطاقة',
-            description: 'Monthly energy consumption by sector',
-            descriptionAr: 'استهلاك الطاقة الشهري حسب القطاع',
-            category: 'البيئة والطاقة',
-            source: 'وزارة الطاقة',
-            sourceUrl: null,
-            recordCount: 9800,
-            columns: ['الشهر', 'القطاع', 'نوع الطاقة', 'الاستهلاك', 'التكلفة'],
-            lastSyncAt: '2024-12-05T10:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-05T10:00:00Z',
-        },
-        {
-            id: 'business-licenses-2024',
-            externalId: 'business-licenses-2024',
-            name: 'Commercial Licenses Registry',
-            nameAr: 'سجل الرخص التجارية',
-            description: 'Active commercial licenses by activity type',
-            descriptionAr: 'الرخص التجارية النشطة حسب نوع النشاط',
-            category: 'التجارة والصناعة',
-            source: 'وزارة التجارة',
-            sourceUrl: null,
-            recordCount: 250000,
-            columns: ['رقم الرخصة', 'النشاط', 'المنطقة', 'تاريخ الإصدار', 'الحالة'],
-            lastSyncAt: '2024-12-19T15:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-19T15:00:00Z',
-        },
-        {
-            id: 'gov-budget-2024',
-            externalId: 'gov-budget-2024',
-            name: 'Government Budget 2024',
-            nameAr: 'الميزانية الحكومية 2024',
-            description: 'Government budget allocation by ministry',
-            descriptionAr: 'توزيع الميزانية الحكومية حسب الوزارة',
-            category: 'المالية والضرائب',
-            source: 'وزارة المالية',
-            sourceUrl: null,
-            recordCount: 850,
-            columns: ['الوزارة', 'البند', 'المخصص', 'المصروف', 'النسبة'],
-            lastSyncAt: '2024-12-01T08:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-01T08:00:00Z',
-        },
-        {
-            id: 'tech-startups-2024',
-            externalId: 'tech-startups-2024',
-            name: 'Tech Startups Directory',
-            nameAr: 'دليل الشركات الناشئة التقنية',
-            description: 'Registered tech startups and their funding',
-            descriptionAr: 'الشركات الناشئة التقنية المسجلة وتمويلها',
-            category: 'التقنية والاتصالات',
-            source: 'هيئة الاتصالات',
-            sourceUrl: null,
-            recordCount: 3200,
-            columns: ['اسم الشركة', 'المجال', 'التمويل', 'عدد الموظفين', 'سنة التأسيس'],
-            lastSyncAt: '2024-12-12T13:00:00Z',
-            syncStatus: 'SUCCESS',
-            updatedAt: '2024-12-12T13:00:00Z',
-        },
-    ];
-
-    // Fetch datasets with pagination - Frontend Fetch فقط
-    const fetchDatasets = async (page: number = 1, search?: string, category?: string) => {
+    const loadAllDatasets = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            console.log(`🌐 Frontend Fetch: جلب الصفحة ${page}...`);
+            console.log('🌐 جلب جميع مجموعات البيانات...');
 
+            // Try to get all datasets (use large limit)
             const result = await fetchDatasetsList({
-                page,
-                limit: ITEMS_PER_PAGE,
-                search: search || searchQuery || undefined,
-                category: category || selectedCategory || undefined,
+                page: 1,
+                limit: 10000, // Get all
                 forceRefresh: false,
             });
 
             if (result.datasets.length > 0) {
-                // Convert to Dataset format
                 const data: Dataset[] = result.datasets.map((d: DatasetInfo) => ({
                     id: d.id,
                     externalId: d.id,
@@ -346,7 +126,7 @@ const DatasetsPage: React.FC = () => {
                     description: d.descriptionEn || '',
                     descriptionAr: d.descriptionAr || '',
                     category: d.category || 'أخرى',
-                    source: 'open.data.gov.sa',
+                    source: d.organization || 'open.data.gov.sa',
                     sourceUrl: null,
                     recordCount: d.recordCount || 0,
                     columns: [],
@@ -355,62 +135,107 @@ const DatasetsPage: React.FC = () => {
                     updatedAt: d.updatedAt || new Date().toISOString(),
                 }));
 
-                setDatasets(data);
-                setTotalDatasets(result.total || 15500);
-                setCurrentPage(page);
-
-                console.log(`✅ تم جلب ${data.length} dataset (صفحة ${page})`);
+                setAllDatasets(data);
+                console.log(`✅ تم تحميل ${data.length} مجموعة بيانات`);
             } else {
-                console.log('⚠️ لا توجد بيانات في هذه الصفحة');
-                setDatasets([]);
-                if (page === 1) {
-                    setError('لم يتم العثور على بيانات - جرب إعادة المحاولة');
-                }
+                console.log('⚠️ لم يتم العثور على بيانات');
+                setError('لم يتم العثور على بيانات');
             }
         } catch (err: any) {
-            console.error('Frontend Fetch error:', err);
-            setError(`فشل في جلب البيانات: ${err.message || 'خطأ غير معروف'}`);
-            setDatasets([]);
+            console.error('Error loading datasets:', err);
+            setError(`فشل في تحميل البيانات: ${err.message}`);
         } finally {
             setLoading(false);
         }
     };
 
-    // Initial load
+    // Load on mount
     useEffect(() => {
-        fetchDatasets(1);
-        // Keep default categories
-        setCategories(SAUDI_CATEGORIES);
+        loadAllDatasets();
     }, []);
 
-    // Handle page change
+    // ============================================
+    // CLIENT-SIDE FILTERING (NO API CALLS)
+    // ============================================
+
+    const filteredDatasets = useMemo(() => {
+        let result = [...allDatasets];
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            result = result.filter(d =>
+                d.nameAr?.toLowerCase().includes(query) ||
+                d.name?.toLowerCase().includes(query) ||
+                d.descriptionAr?.toLowerCase().includes(query) ||
+                d.description?.toLowerCase().includes(query) ||
+                d.category?.toLowerCase().includes(query)
+            );
+        }
+
+        // Filter by category
+        if (selectedCategory) {
+            result = result.filter(d => d.category === selectedCategory);
+        }
+
+        // Filter by status
+        if (selectedStatus) {
+            result = result.filter(d => d.syncStatus === selectedStatus);
+        }
+
+        return result;
+    }, [allDatasets, searchQuery, selectedCategory, selectedStatus]);
+
+    // ============================================
+    // CLIENT-SIDE PAGINATION
+    // ============================================
+
+    const totalPages = Math.ceil(filteredDatasets.length / ITEMS_PER_PAGE);
+
+    const paginatedDatasets = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        return filteredDatasets.slice(start, end);
+    }, [filteredDatasets, currentPage]);
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedCategory, selectedStatus]);
+
+    // ============================================
+    // DYNAMIC CATEGORIES FROM DATA
+    // ============================================
+
+    const categories = useMemo(() => {
+        const counts: Record<string, number> = {};
+        allDatasets.forEach(d => {
+            const cat = d.category || 'أخرى';
+            counts[cat] = (counts[cat] || 0) + 1;
+        });
+
+        return Object.entries(counts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+    }, [allDatasets]);
+
+    // ============================================
+    // HANDLERS
+    // ============================================
+
     const handlePageChange = (newPage: number) => {
-        if (newPage < 1 || loading) return;
+        if (newPage < 1 || newPage > totalPages) return;
         setCurrentPage(newPage);
-        fetchDatasets(newPage);
-        // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // When filters change, refetch from page 1
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchDatasets(1, searchQuery, selectedCategory);
-        }, 300); // Debounce search
-        return () => clearTimeout(timer);
-    }, [searchQuery, selectedCategory]);
+    const clearFilters = () => {
+        setSearchQuery('');
+        setSelectedCategory(null);
+        setSelectedStatus(null);
+    };
 
-    // Server-side pagination - datasets are already paginated from API
-    // Local filtering only for status (API doesn't support it)
-    const displayedDatasets = useMemo(() => {
-        if (selectedStatus) {
-            return datasets.filter(d => d.syncStatus === selectedStatus);
-        }
-        return datasets;
-    }, [datasets, selectedStatus]);
-
-    // Calculate total pages from API total
-    const totalPages = Math.ceil(totalDatasets / ITEMS_PER_PAGE);
+    const hasFilters = searchQuery || selectedCategory || selectedStatus;
 
     // Format date
     const formatDate = (dateStr: string) => {
@@ -428,14 +253,9 @@ const DatasetsPage: React.FC = () => {
         return CATEGORY_ICONS[category] || CATEGORY_ICONS['default'];
     };
 
-    // Clear filters
-    const clearFilters = () => {
-        setSearchQuery('');
-        setSelectedCategory(null);
-        setSelectedStatus(null);
-    };
-
-    const hasFilters = searchQuery || selectedCategory || selectedStatus;
+    // ============================================
+    // RENDER
+    // ============================================
 
     if (loading) {
         return (
@@ -443,6 +263,7 @@ const DatasetsPage: React.FC = () => {
                 <div className="text-center">
                     <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
                     <p className="text-gray-600 font-medium">جاري تحميل مجموعات البيانات...</p>
+                    <p className="text-gray-400 text-sm mt-2">يتم تحميل جميع البيانات مرة واحدة للفلترة السريعة</p>
                 </div>
             </div>
         );
@@ -467,15 +288,15 @@ const DatasetsPage: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">إجمالي المجموعات</p>
-                            <p className="text-3xl font-black mt-1">{totalDatasets.toLocaleString('ar-SA')}</p>
+                            <p className="text-3xl font-black mt-1">{allDatasets.length.toLocaleString('ar-SA')}</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                            <p className="text-blue-100 text-sm">نتائج البحث</p>
+                            <p className="text-3xl font-black mt-1">{filteredDatasets.length.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">التصنيفات</p>
                             <p className="text-3xl font-black mt-1">{categories.length}</p>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                            <p className="text-blue-100 text-sm">المحملة</p>
-                            <p className="text-3xl font-black mt-1">{datasets.length}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">المصدر</p>
@@ -493,7 +314,7 @@ const DatasetsPage: React.FC = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="ابحث في مجموعات البيانات..."
+                            placeholder="ابحث في مجموعات البيانات... (الفلترة فورية)"
                             className="w-full bg-white text-gray-900 rounded-xl py-4 pr-12 pl-4 text-lg shadow-lg focus:ring-4 focus:ring-white/30 outline-none"
                         />
                         {searchQuery && (
@@ -518,6 +339,7 @@ const DatasetsPage: React.FC = () => {
                                 <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                     <Filter size={18} className="text-blue-600" />
                                     التصنيفات
+                                    <span className="text-xs text-gray-500 font-normal">(فلترة فورية)</span>
                                 </h3>
                             </div>
 
@@ -536,72 +358,33 @@ const DatasetsPage: React.FC = () => {
                                         <span className="font-medium">جميع التصنيفات</span>
                                     </span>
                                     <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full">
-                                        {totalDatasets}
+                                        {allDatasets.length}
                                     </span>
                                 </button>
 
                                 {categories.map(cat => {
                                     const Icon = getCategoryIcon(cat.name);
+                                    const isSelected = selectedCategory === cat.name;
                                     return (
                                         <button
                                             key={cat.name}
-                                            onClick={() => setSelectedCategory(cat.name)}
+                                            onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
                                             className={`w-full flex items-center justify-between p-3 rounded-xl transition-all mt-1 ${
-                                                selectedCategory === cat.name
+                                                isSelected
                                                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                                     : 'hover:bg-gray-50 text-gray-700'
                                             }`}
                                         >
                                             <span className="flex items-center gap-2">
                                                 <Icon size={16} />
-                                                <span className="font-medium text-sm">{cat.name}</span>
+                                                <span className="font-medium text-sm truncate">{cat.name}</span>
                                             </span>
                                             <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                                selectedCategory === cat.name
+                                                isSelected
                                                     ? 'bg-blue-200 text-blue-800'
                                                     : 'bg-gray-100 text-gray-600'
                                             }`}>
                                                 {cat.count}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-4">
-                            <div className="p-4 border-b border-gray-100 bg-gray-50">
-                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <CheckCircle2 size={18} className="text-green-600" />
-                                    حالة المزامنة
-                                </h3>
-                            </div>
-                            <div className="p-2">
-                                {['SUCCESS', 'PENDING', 'FAILED'].map(status => {
-                                    const count = datasets.filter(d => d.syncStatus === status).length;
-                                    const statusConfig = {
-                                        'SUCCESS': { label: 'متزامن', color: 'green', icon: CheckCircle2 },
-                                        'PENDING': { label: 'قيد الانتظار', color: 'yellow', icon: Clock },
-                                        'FAILED': { label: 'فشل', color: 'red', icon: AlertCircle }
-                                    }[status]!;
-
-                                    return (
-                                        <button
-                                            key={status}
-                                            onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-                                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all mt-1 ${
-                                                selectedStatus === status
-                                                    ? `bg-${statusConfig.color}-50 text-${statusConfig.color}-700 border border-${statusConfig.color}-200`
-                                                    : 'hover:bg-gray-50 text-gray-700'
-                                            }`}
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                <statusConfig.icon size={16} className={`text-${statusConfig.color}-600`} />
-                                                <span className="font-medium text-sm">{statusConfig.label}</span>
-                                            </span>
-                                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                                                {count}
                                             </span>
                                         </button>
                                     );
@@ -616,7 +399,8 @@ const DatasetsPage: React.FC = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <p className="text-gray-600">
-                                    <span className="font-bold text-gray-900">{displayedDatasets.length}</span> مجموعة بيانات (صفحة {currentPage})
+                                    <span className="font-bold text-gray-900">{filteredDatasets.length}</span> مجموعة بيانات
+                                    {totalPages > 1 && <span className="text-gray-400"> (صفحة {currentPage} من {totalPages})</span>}
                                     {hasFilters && (
                                         <button
                                             onClick={clearFilters}
@@ -630,10 +414,10 @@ const DatasetsPage: React.FC = () => {
 
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => fetchDatasets(currentPage)}
+                                    onClick={() => loadAllDatasets()}
                                     disabled={loading}
                                     className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 disabled:opacity-50"
-                                    title="تحديث الصفحة الحالية"
+                                    title="إعادة تحميل البيانات"
                                 >
                                     <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                                 </button>
@@ -692,7 +476,7 @@ const DatasetsPage: React.FC = () => {
                         )}
 
                         {/* Dataset Grid/List */}
-                        {displayedDatasets.length === 0 && !loading ? (
+                        {paginatedDatasets.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Database size={40} className="text-gray-400" />
@@ -703,59 +487,102 @@ const DatasetsPage: React.FC = () => {
                                 <p className="text-gray-600 mb-6">
                                     {hasFilters
                                         ? 'جرب تغيير معايير البحث أو إزالة الفلاتر'
-                                        : 'جرب إعادة المحاولة لجلب البيانات'}
+                                        : 'جرب إعادة المحاولة لتحميل البيانات'}
                                 </p>
-                                <button
-                                    onClick={() => {
-                                        clearFilters();
-                                        fetchDatasets(1);
-                                    }}
-                                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                >
-                                    <RefreshCw size={18} />
-                                    {hasFilters ? 'إزالة الفلاتر وإعادة المحاولة' : 'إعادة المحاولة'}
-                                </button>
+                                {hasFilters ? (
+                                    <button
+                                        onClick={clearFilters}
+                                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                    >
+                                        <X size={18} />
+                                        إزالة الفلاتر
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={loadAllDatasets}
+                                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                    >
+                                        <RefreshCw size={18} />
+                                        إعادة المحاولة
+                                    </button>
+                                )}
                             </div>
                         ) : viewMode === 'grid' ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                {displayedDatasets.map(dataset => (
+                                {paginatedDatasets.map(dataset => (
                                     <DatasetCard key={dataset.id} dataset={dataset} formatDate={formatDate} />
                                 ))}
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {displayedDatasets.map(dataset => (
+                                {paginatedDatasets.map(dataset => (
                                     <DatasetListItem key={dataset.id} dataset={dataset} formatDate={formatDate} />
                                 ))}
                             </div>
                         )}
 
-                        {/* Pagination - Server-side */}
+                        {/* Pagination - Client-side */}
                         {totalPages > 1 && (
-                            <div className="mt-8 flex items-center justify-center gap-4">
+                            <div className="mt-8 flex items-center justify-center gap-2 flex-wrap">
+                                <button
+                                    onClick={() => handlePageChange(1)}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                >
+                                    الأولى
+                                </button>
                                 <button
                                     onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1 || loading}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={currentPage === 1}
+                                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <ChevronRight size={20} />
+                                    <ChevronRight size={18} />
                                     <span>السابق</span>
                                 </button>
 
-                                <div className="flex items-center gap-2">
-                                    <span className="text-gray-600">صفحة</span>
-                                    <span className="font-bold text-blue-600">{currentPage}</span>
-                                    <span className="text-gray-600">من</span>
-                                    <span className="font-bold">{Math.min(totalPages, 100)}</span>
+                                <div className="flex items-center gap-1">
+                                    {/* Page numbers */}
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => handlePageChange(pageNum)}
+                                                className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'border border-gray-200 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 <button
                                     onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage >= totalPages || loading}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={currentPage >= totalPages}
+                                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span>التالي</span>
-                                    <ChevronLeft size={20} />
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handlePageChange(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                    className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                >
+                                    الأخيرة
                                 </button>
                             </div>
                         )}
@@ -773,16 +600,10 @@ const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => strin
             {/* Header */}
             <div className="p-5 border-b border-gray-100">
                 <div className="flex items-start justify-between gap-3 mb-3">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
-                        dataset.syncStatus === 'SUCCESS'
-                            ? 'bg-green-100 text-green-700'
-                            : dataset.syncStatus === 'PENDING'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                    }`}>
-                        {dataset.syncStatus === 'SUCCESS' ? 'متزامن' : dataset.syncStatus === 'PENDING' ? 'قيد الانتظار' : 'فشل'}
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-100 text-green-700">
+                        متزامن
                     </span>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded truncate max-w-[120px]">
                         {dataset.category}
                     </span>
                 </div>
@@ -841,17 +662,11 @@ const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => s
             {/* Content */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                    <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
                         {dataset.nameAr || dataset.name}
                     </h3>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 ${
-                        dataset.syncStatus === 'SUCCESS'
-                            ? 'bg-green-100 text-green-700'
-                            : dataset.syncStatus === 'PENDING'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                    }`}>
-                        {dataset.syncStatus === 'SUCCESS' ? 'متزامن' : dataset.syncStatus === 'PENDING' ? 'قيد الانتظار' : 'فشل'}
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-green-100 text-green-700">
+                        متزامن
                     </span>
                 </div>
 
@@ -860,7 +675,7 @@ const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => s
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                    <span className="bg-gray-100 px-2 py-1 rounded">{dataset.category}</span>
+                    <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-[150px]">{dataset.category}</span>
                     <span className="flex items-center gap-1">
                         <Globe size={12} />
                         {dataset.source}
