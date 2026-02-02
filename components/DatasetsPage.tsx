@@ -2,11 +2,11 @@
  * Datasets Page - صفحة مجموعات البيانات
  *
  * ✅ Real-time من Database مباشرة
- * ✅ Infinite Scroll - تحميل تدريجي
+ * ✅ Pagination - تنقل بين الصفحات
  * ✅ تحديث أوتوماتيكي
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search,
     Database,
@@ -25,7 +25,10 @@ import {
     Tag,
     Globe,
     ArrowUpRight,
-    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
     Zap
 } from 'lucide-react';
 
@@ -55,8 +58,8 @@ interface CategoryCount {
 // ============================================
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
-const PAGE_SIZE = 50; // جلب 50 في كل طلب
-const SEARCH_DEBOUNCE = 300; // تأخير البحث
+const PAGE_SIZE = 24; // عدد العناصر في الصفحة
+const SEARCH_DEBOUNCE = 300;
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
     'العدل': Building2,
@@ -78,28 +81,20 @@ const DatasetsPage: React.FC = () => {
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [categories, setCategories] = useState<CategoryCount[]>([]);
     const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     // Loading State
     const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filters
+    // Filters & Pagination
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-    // Pagination
-    const [page, setPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // View
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-    // Refs
-    const observerRef = useRef<IntersectionObserver | null>(null);
-    const loadMoreRef = useRef<HTMLDivElement | null>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     // ============================================
     // DEBOUNCE SEARCH
@@ -118,38 +113,25 @@ const DatasetsPage: React.FC = () => {
     // ============================================
 
     const fetchDatasets = useCallback(async (
-        pageNum: number,
+        page: number,
         search: string,
-        category: string | null,
-        append: boolean = false
+        category: string | null
     ) => {
-        // Cancel previous request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = new AbortController();
-
         try {
-            if (pageNum === 1) {
-                setLoading(true);
-            } else {
-                setLoadingMore(true);
-            }
+            setLoading(true);
             setError(null);
 
-            // Build URL with params
             const params = new URLSearchParams({
-                page: String(pageNum),
+                page: String(page),
                 limit: String(PAGE_SIZE),
             });
 
             if (search) params.append('search', search);
             if (category) params.append('category', category);
 
-            console.log(`📡 Fetching page ${pageNum} from Database...`);
+            console.log(`📡 Fetching page ${page} from Database...`);
 
             const response = await fetch(`${API_URL}/datasets/saudi?${params}`, {
-                signal: abortControllerRef.current.signal,
                 headers: { 'Accept': 'application/json' },
             });
 
@@ -162,29 +144,19 @@ const DatasetsPage: React.FC = () => {
             if (data.success && data.data) {
                 const newDatasets = data.data.datasets || [];
                 const total = data.data.meta?.total || 0;
-                const hasMoreData = data.data.meta?.hasMore ?? (newDatasets.length === PAGE_SIZE);
+                const pages = data.data.meta?.totalPages || Math.ceil(total / PAGE_SIZE);
 
-                console.log(`✅ Got ${newDatasets.length} datasets (total: ${total})`);
+                console.log(`✅ Got ${newDatasets.length} datasets (total: ${total}, pages: ${pages})`);
 
-                if (append) {
-                    setDatasets(prev => [...prev, ...newDatasets]);
-                } else {
-                    setDatasets(newDatasets);
-                }
-
+                setDatasets(newDatasets);
                 setTotalCount(total);
-                setHasMore(hasMoreData);
+                setTotalPages(pages);
             }
         } catch (err: any) {
-            if (err.name === 'AbortError') {
-                console.log('Request cancelled');
-                return;
-            }
             console.error('Error fetching datasets:', err);
             setError(err.message);
         } finally {
             setLoading(false);
-            setLoadingMore(false);
         }
     }, []);
 
@@ -207,14 +179,18 @@ const DatasetsPage: React.FC = () => {
     }, []);
 
     // ============================================
-    // INITIAL LOAD + FILTER CHANGES
+    // EFFECTS
     // ============================================
 
+    // Reset to page 1 when filters change
     useEffect(() => {
-        setPage(1);
-        setDatasets([]);
-        fetchDatasets(1, debouncedSearch, selectedCategory, false);
-    }, [debouncedSearch, selectedCategory, fetchDatasets]);
+        setCurrentPage(1);
+    }, [debouncedSearch, selectedCategory]);
+
+    // Fetch data when page or filters change
+    useEffect(() => {
+        fetchDatasets(currentPage, debouncedSearch, selectedCategory);
+    }, [currentPage, debouncedSearch, selectedCategory, fetchDatasets]);
 
     // Load categories once
     useEffect(() => {
@@ -222,49 +198,17 @@ const DatasetsPage: React.FC = () => {
     }, [fetchCategories]);
 
     // ============================================
-    // INFINITE SCROLL - INTERSECTION OBSERVER
-    // ============================================
-
-    useEffect(() => {
-        // Disconnect previous observer
-        if (observerRef.current) {
-            observerRef.current.disconnect();
-        }
-
-        // Create new observer
-        observerRef.current = new IntersectionObserver(
-            (entries) => {
-                const [entry] = entries;
-                if (entry.isIntersecting && hasMore && !loadingMore && !loading) {
-                    console.log('🔄 Loading more...');
-                    const nextPage = page + 1;
-                    setPage(nextPage);
-                    fetchDatasets(nextPage, debouncedSearch, selectedCategory, true);
-                }
-            },
-            { threshold: 0.1, rootMargin: '100px' }
-        );
-
-        // Observe load more element
-        if (loadMoreRef.current) {
-            observerRef.current.observe(loadMoreRef.current);
-        }
-
-        return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
-            }
-        };
-    }, [hasMore, loadingMore, loading, page, debouncedSearch, selectedCategory, fetchDatasets]);
-
-    // ============================================
     // HANDLERS
     // ============================================
 
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages) return;
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleRefresh = () => {
-        setPage(1);
-        setDatasets([]);
-        fetchDatasets(1, debouncedSearch, selectedCategory, false);
+        fetchDatasets(currentPage, debouncedSearch, selectedCategory);
         fetchCategories();
     };
 
@@ -272,6 +216,7 @@ const DatasetsPage: React.FC = () => {
         setSearchQuery('');
         setDebouncedSearch('');
         setSelectedCategory(null);
+        setCurrentPage(1);
     };
 
     const hasFilters = searchQuery || selectedCategory;
@@ -288,6 +233,120 @@ const DatasetsPage: React.FC = () => {
 
     const getCategoryIcon = (category: string) => {
         return CATEGORY_ICONS[category] || CATEGORY_ICONS['default'];
+    };
+
+    // ============================================
+    // PAGINATION COMPONENT
+    // ============================================
+
+    const Pagination = () => {
+        if (totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages: (number | string)[] = [];
+            const showPages = 5; // عدد الصفحات المعروضة
+
+            if (totalPages <= showPages + 2) {
+                // عرض كل الصفحات
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                // دائماً أظهر الصفحة الأولى
+                pages.push(1);
+
+                if (currentPage > 3) {
+                    pages.push('...');
+                }
+
+                // الصفحات حول الصفحة الحالية
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+
+                if (currentPage < totalPages - 2) {
+                    pages.push('...');
+                }
+
+                // دائماً أظهر الصفحة الأخيرة
+                pages.push(totalPages);
+            }
+
+            return pages;
+        };
+
+        return (
+            <div className="flex items-center justify-center gap-1 mt-8 flex-wrap">
+                {/* First Page */}
+                <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="الصفحة الأولى"
+                >
+                    <ChevronsRight size={18} />
+                </button>
+
+                {/* Previous Page */}
+                <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="السابق"
+                >
+                    <ChevronRight size={18} />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                    {getPageNumbers().map((page, index) => (
+                        page === '...' ? (
+                            <span key={`dots-${index}`} className="px-2 text-gray-400">...</span>
+                        ) : (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page as number)}
+                                className={`min-w-[40px] h-10 rounded-lg font-medium transition-all ${
+                                    currentPage === page
+                                        ? 'bg-blue-600 text-white'
+                                        : 'border border-gray-200 hover:bg-gray-50'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        )
+                    ))}
+                </div>
+
+                {/* Next Page */}
+                <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="التالي"
+                >
+                    <ChevronLeft size={18} />
+                </button>
+
+                {/* Last Page */}
+                <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="الصفحة الأخيرة"
+                >
+                    <ChevronsLeft size={18} />
+                </button>
+
+                {/* Page Info */}
+                <span className="text-sm text-gray-500 mr-4">
+                    صفحة {currentPage.toLocaleString('ar-SA')} من {totalPages.toLocaleString('ar-SA')}
+                </span>
+            </div>
+        );
     };
 
     // ============================================
@@ -319,12 +378,12 @@ const DatasetsPage: React.FC = () => {
                             <p className="text-3xl font-black mt-1">{totalCount.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                            <p className="text-blue-100 text-sm">تم تحميل</p>
-                            <p className="text-3xl font-black mt-1">{datasets.length.toLocaleString('ar-SA')}</p>
+                            <p className="text-blue-100 text-sm">الصفحة الحالية</p>
+                            <p className="text-3xl font-black mt-1">{currentPage.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                            <p className="text-blue-100 text-sm">التصنيفات</p>
-                            <p className="text-3xl font-black mt-1">{categories.length}</p>
+                            <p className="text-blue-100 text-sm">عدد الصفحات</p>
+                            <p className="text-3xl font-black mt-1">{totalPages.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">المصدر</p>
@@ -342,7 +401,7 @@ const DatasetsPage: React.FC = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="ابحث في مجموعات البيانات... (يبحث في Database مباشرة)"
+                            placeholder="ابحث في مجموعات البيانات..."
                             className="w-full bg-white text-gray-900 rounded-xl py-4 pr-12 pl-4 text-lg shadow-lg focus:ring-4 focus:ring-white/30 outline-none"
                         />
                         {searchQuery && (
@@ -381,9 +440,6 @@ const DatasetsPage: React.FC = () => {
                                     <span className="flex items-center gap-2">
                                         <Layers size={16} />
                                         <span className="font-medium">جميع التصنيفات</span>
-                                    </span>
-                                    <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full">
-                                        {totalCount}
                                     </span>
                                 </button>
 
@@ -424,8 +480,8 @@ const DatasetsPage: React.FC = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <p className="text-gray-600">
-                                    <span className="font-bold text-gray-900">{datasets.length}</span>
-                                    <span className="text-gray-400"> / {totalCount.toLocaleString()}</span>
+                                    <span className="font-bold text-gray-900">{totalCount.toLocaleString('ar-SA')}</span>
+                                    <span className="text-gray-400"> مجموعة بيانات</span>
                                     {hasFilters && (
                                         <button
                                             onClick={clearFilters}
@@ -491,8 +547,8 @@ const DatasetsPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Initial Loading */}
-                        {loading && datasets.length === 0 ? (
+                        {/* Loading */}
+                        {loading ? (
                             <div className="flex items-center justify-center min-h-[40vh]">
                                 <div className="text-center">
                                     <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
@@ -546,24 +602,8 @@ const DatasetsPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Infinite Scroll Trigger */}
-                                <div ref={loadMoreRef} className="py-8 flex justify-center">
-                                    {loadingMore ? (
-                                        <div className="flex items-center gap-3 text-gray-500">
-                                            <Loader2 size={24} className="animate-spin" />
-                                            <span>جاري تحميل المزيد...</span>
-                                        </div>
-                                    ) : hasMore ? (
-                                        <div className="flex items-center gap-2 text-gray-400">
-                                            <ChevronDown size={20} className="animate-bounce" />
-                                            <span>انزل لتحميل المزيد</span>
-                                        </div>
-                                    ) : (
-                                        <p className="text-gray-400">
-                                            ✅ تم تحميل جميع البيانات ({datasets.length.toLocaleString()})
-                                        </p>
-                                    )}
-                                </div>
+                                {/* Pagination */}
+                                <Pagination />
                             </>
                         )}
                     </main>
