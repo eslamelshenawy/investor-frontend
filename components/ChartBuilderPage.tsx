@@ -1057,7 +1057,7 @@ const ChartBuilderPage: React.FC = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2 text-blue-700">
                                     <Zap size={16} className="text-yellow-500" />
-                                    <span className="text-sm font-bold">WebFlux - جلب مباشر من قاعدة البيانات</span>
+                                    <span className="text-sm font-bold">جلب مباشر من قاعدة البيانات</span>
                                 </div>
                                 <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
                                     {totalDatasets.toLocaleString('ar-SA')} مصدر
@@ -1140,7 +1140,7 @@ const ChartBuilderPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <span className="text-sm text-gray-500 mt-3">جاري الاتصال بقاعدة البيانات...</span>
-                                <span className="text-xs text-indigo-500 mt-1">WebFlux Streaming</span>
+                                <span className="text-xs text-indigo-500 mt-1">جاري البث...</span>
                             </div>
                         ) : dataSources.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
