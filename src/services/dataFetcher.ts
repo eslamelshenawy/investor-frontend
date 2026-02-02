@@ -729,55 +729,50 @@ export async function fetchDatasetMetadata(datasetId: string): Promise<{
 }
 
 /**
- * جلب resources (روابط التحميل) - مع CORS proxy fallback
+ * جلب resources (روابط التحميل) - يستخدم Backend API أولاً
  */
 export async function fetchDatasetResources(datasetId: string): Promise<DatasetResource[]> {
   console.log(`🔍 Fetching resources for dataset: ${datasetId}`);
 
-  // Try multiple endpoints
-  const endpoints = [
-    // CKAN API - package_show (most reliable)
-    `${CKAN_BASE}/package_show?id=${datasetId}`,
-    // Custom API endpoints
-    `${API_BASE}/datasets/resources?version=-1&dataset=${datasetId}`,
-    `${API_BASE}/datasets?version=-1&dataset=${datasetId}`,
-  ];
-
-  for (const endpoint of endpoints) {
-    try {
-      console.log(`   🔗 Trying: ${endpoint.substring(0, 60)}...`);
-
-      const response = await fetchWithCorsProxy(endpoint);
+  // 1. Try Backend API first (resources stored in DB)
+  try {
+    console.log(`   🔗 Trying Backend API...`);
+    const response = await fetch(`${BACKEND_API}/datasets/${datasetId}`);
+    if (response.ok) {
       const data = await response.json();
-
-      let resources: DatasetResource[] = [];
-
-      // CKAN API returns: { success: true, result: { resources: [...] } }
-      if (data.success && data.result?.resources) {
-        resources = data.result.resources.map((r: any) => ({
+      if (data.success && data.data?.resources?.length > 0) {
+        const resources = data.data.resources.map((r: any) => ({
           id: r.id,
-          name: r.name || r.description,
+          name: r.name,
           format: r.format,
           downloadUrl: r.url,
         }));
-      }
-      // Custom API might return { resources: [...] }
-      else if (data.resources) {
-        resources = data.resources.map((r: any) => ({
-          id: r.id,
-          name: r.name || r.description,
-          format: r.format,
-          downloadUrl: r.url || r.downloadUrl,
-        }));
-      }
-
-      if (resources.length > 0) {
-        console.log(`   ✅ Found ${resources.length} resources`);
+        console.log(`   ✅ Found ${resources.length} resources from Backend`);
         return resources;
       }
-    } catch (error) {
-      console.warn(`   ⚠️ Endpoint failed:`, error);
     }
+  } catch (error) {
+    console.warn(`   ⚠️ Backend API failed:`, error);
+  }
+
+  // 2. Try Saudi Open Data API directly (correct endpoint)
+  try {
+    console.log(`   🔗 Trying Saudi Open Data API...`);
+    const response = await fetchWithCorsProxy(`https://open.data.gov.sa/api/datasets/${datasetId}`);
+    const data = await response.json();
+
+    if (data.resources?.length > 0) {
+      const resources = data.resources.map((r: any) => ({
+        id: r.resourceID || r.id,
+        name: r.titleAr || r.titleEn || r.name,
+        format: (r.fileFormat || r.format || '').toUpperCase(),
+        downloadUrl: r.downloadUrl || r.url,
+      }));
+      console.log(`   ✅ Found ${resources.length} resources from Saudi API`);
+      return resources;
+    }
+  } catch (error) {
+    console.warn(`   ⚠️ Saudi API failed:`, error);
   }
 
   console.warn(`❌ No resources found for ${datasetId}`);
@@ -973,37 +968,31 @@ export async function fetchDatasetData(
       );
     }
 
-    // 4. If still no resource, try direct CKAN datastore API
+    // 4. If still no resource, try Backend preview API
     if (!csvResource?.downloadUrl) {
-      console.log('   🔄 Trying CKAN datastore dump...');
-      const datastoreUrl = `https://open.data.gov.sa/api/3/action/datastore_search?resource_id=${datasetId}&limit=100`;
+      console.log('   🔄 Trying Backend preview API...');
 
       try {
-        const response = await fetchWithCorsProxy(datastoreUrl);
-        const data = await response.json();
+        const response = await fetch(`${BACKEND_API}/datasets/${datasetId}/preview?count=${limit || 100}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data?.records?.length > 0) {
+            console.log(`   ✅ Got ${data.data.records.length} records from Backend`);
 
-        if (data.success && data.result?.records?.length > 0) {
-          console.log(`   ✅ Got ${data.result.records.length} records from datastore`);
+            const result: FetchedData = {
+              records: data.data.records,
+              columns: data.data.columns || Object.keys(data.data.records[0] || {}),
+              totalRecords: data.data.totalRecords || data.data.records.length,
+              fetchedAt: new Date().toISOString(),
+              source: 'api',
+            };
 
-          const records = data.result.records;
-          const result: FetchedData = {
-            records,
-            columns: Object.keys(records[0] || {}).filter(k => k !== '_id'),
-            totalRecords: data.result.total || records.length,
-            fetchedAt: new Date().toISOString(),
-            source: 'api',
-          };
-
-          saveToCache(datasetId, result);
-
-          if (limit && result.records.length > limit) {
-            result.records = result.records.slice(0, limit);
+            saveToCache(datasetId, result);
+            return result;
           }
-
-          return result;
         }
       } catch (e) {
-        console.warn('   ⚠️ Datastore API failed:', e);
+        console.warn('   ⚠️ Backend preview failed:', e);
       }
     }
 
