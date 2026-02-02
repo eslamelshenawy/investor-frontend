@@ -1,36 +1,33 @@
 /**
  * Datasets Page - صفحة مجموعات البيانات
- * Client-side filtering - الفلترة تتم محلياً بدون إعادة تحميل
+ *
+ * ✅ Real-time من Database مباشرة
+ * ✅ Infinite Scroll - تحميل تدريجي
+ * ✅ تحديث أوتوماتيكي
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     Search,
     Database,
     Filter,
     Grid3X3,
     List,
-    ChevronLeft,
-    ChevronRight,
     Calendar,
     Building2,
     FileSpreadsheet,
-    Download,
-    ExternalLink,
     Loader2,
     RefreshCw,
     X,
-    CheckCircle2,
-    AlertCircle,
     TrendingUp,
     BarChart3,
     Layers,
     Tag,
-    Clock,
     Globe,
-    ArrowUpRight
+    ArrowUpRight,
+    ChevronDown,
+    Zap
 } from 'lucide-react';
-import { fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 
 // ============================================
 // TYPES
@@ -38,18 +35,13 @@ import { fetchDatasetsList, DatasetInfo } from '../src/services/dataFetcher';
 
 interface Dataset {
     id: string;
-    externalId: string;
-    name: string;
-    nameAr: string;
-    description: string;
+    titleAr: string;
+    titleEn: string;
     descriptionAr: string;
+    descriptionEn: string;
     category: string;
-    source: string;
-    sourceUrl: string | null;
+    organization: string;
     recordCount: number;
-    columns: string[];
-    lastSyncAt: string;
-    syncStatus: string;
     updatedAt: string;
 }
 
@@ -62,7 +54,9 @@ interface CategoryCount {
 // CONSTANTS
 // ============================================
 
-const ITEMS_PER_PAGE = 24;
+const API_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const PAGE_SIZE = 50; // جلب 50 في كل طلب
+const SEARCH_DEBOUNCE = 300; // تأخير البحث
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
     'العدل': Building2,
@@ -72,172 +66,216 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
     'الصحة': Building2,
     'المالية': BarChart3,
     'الاستثمار': TrendingUp,
-    'الصناعة': Building2,
-    'النقل والمواصلات': Building2,
     'default': Database
 };
 
 // ============================================
-// COMPONENTS
+// MAIN COMPONENT
 // ============================================
 
 const DatasetsPage: React.FC = () => {
-    // All datasets (loaded once)
-    const [allDatasets, setAllDatasets] = useState<Dataset[]>([]);
+    // Data State
+    const [datasets, setDatasets] = useState<Dataset[]>([]);
+    const [categories, setCategories] = useState<CategoryCount[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+
+    // Loading State
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filters (client-side)
+    // Filters
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-    // Pagination (client-side)
-    const [currentPage, setCurrentPage] = useState(1);
+    // Pagination
+    const [page, setPage] = useState(1);
 
     // View
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+    // Refs
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     // ============================================
-    // LOAD ALL DATASETS ONCE
+    // DEBOUNCE SEARCH
     // ============================================
 
-    const loadAllDatasets = async () => {
-        setLoading(true);
-        setError(null);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, SEARCH_DEBOUNCE);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // ============================================
+    // FETCH DATASETS FROM DATABASE
+    // ============================================
+
+    const fetchDatasets = useCallback(async (
+        pageNum: number,
+        search: string,
+        category: string | null,
+        append: boolean = false
+    ) => {
+        // Cancel previous request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
 
         try {
-            console.log('🌐 جلب جميع مجموعات البيانات...');
+            if (pageNum === 1) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
+            setError(null);
 
-            // Try to get all datasets (use large limit)
-            const result = await fetchDatasetsList({
-                page: 1,
-                limit: 10000, // Get all
-                forceRefresh: false,
+            // Build URL with params
+            const params = new URLSearchParams({
+                page: String(pageNum),
+                limit: String(PAGE_SIZE),
             });
 
-            if (result.datasets.length > 0) {
-                const data: Dataset[] = result.datasets.map((d: DatasetInfo) => ({
-                    id: d.id,
-                    externalId: d.id,
-                    name: d.titleEn || d.titleAr,
-                    nameAr: d.titleAr,
-                    description: d.descriptionEn || '',
-                    descriptionAr: d.descriptionAr || '',
-                    category: d.category || 'أخرى',
-                    source: d.organization || 'open.data.gov.sa',
-                    sourceUrl: null,
-                    recordCount: d.recordCount || 0,
-                    columns: [],
-                    lastSyncAt: d.updatedAt || '',
-                    syncStatus: 'SUCCESS',
-                    updatedAt: d.updatedAt || new Date().toISOString(),
-                }));
+            if (search) params.append('search', search);
+            if (category) params.append('category', category);
 
-                setAllDatasets(data);
-                console.log(`✅ تم تحميل ${data.length} مجموعة بيانات`);
-            } else {
-                console.log('⚠️ لم يتم العثور على بيانات');
-                setError('لم يتم العثور على بيانات');
+            console.log(`📡 Fetching page ${pageNum} from Database...`);
+
+            const response = await fetch(`${API_URL}/datasets/saudi?${params}`, {
+                signal: abortControllerRef.current.signal,
+                headers: { 'Accept': 'application/json' },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success && data.data) {
+                const newDatasets = data.data.datasets || [];
+                const total = data.data.meta?.total || 0;
+                const hasMoreData = data.data.meta?.hasMore ?? (newDatasets.length === PAGE_SIZE);
+
+                console.log(`✅ Got ${newDatasets.length} datasets (total: ${total})`);
+
+                if (append) {
+                    setDatasets(prev => [...prev, ...newDatasets]);
+                } else {
+                    setDatasets(newDatasets);
+                }
+
+                setTotalCount(total);
+                setHasMore(hasMoreData);
             }
         } catch (err: any) {
-            console.error('Error loading datasets:', err);
-            setError(`فشل في تحميل البيانات: ${err.message}`);
+            if (err.name === 'AbortError') {
+                console.log('Request cancelled');
+                return;
+            }
+            console.error('Error fetching datasets:', err);
+            setError(err.message);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
-    };
-
-    // Load on mount
-    useEffect(() => {
-        loadAllDatasets();
     }, []);
 
     // ============================================
-    // CLIENT-SIDE FILTERING (NO API CALLS)
+    // FETCH CATEGORIES
     // ============================================
 
-    const filteredDatasets = useMemo(() => {
-        let result = [...allDatasets];
-
-        // Filter by search query
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase().trim();
-            result = result.filter(d =>
-                d.nameAr?.toLowerCase().includes(query) ||
-                d.name?.toLowerCase().includes(query) ||
-                d.descriptionAr?.toLowerCase().includes(query) ||
-                d.description?.toLowerCase().includes(query) ||
-                d.category?.toLowerCase().includes(query)
-            );
+    const fetchCategories = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_URL}/datasets/categories`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setCategories(data.data);
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching categories:', err);
         }
-
-        // Filter by category
-        if (selectedCategory) {
-            result = result.filter(d => d.category === selectedCategory);
-        }
-
-        // Filter by status
-        if (selectedStatus) {
-            result = result.filter(d => d.syncStatus === selectedStatus);
-        }
-
-        return result;
-    }, [allDatasets, searchQuery, selectedCategory, selectedStatus]);
+    }, []);
 
     // ============================================
-    // CLIENT-SIDE PAGINATION
+    // INITIAL LOAD + FILTER CHANGES
     // ============================================
 
-    const totalPages = Math.ceil(filteredDatasets.length / ITEMS_PER_PAGE);
-
-    const paginatedDatasets = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        const end = start + ITEMS_PER_PAGE;
-        return filteredDatasets.slice(start, end);
-    }, [filteredDatasets, currentPage]);
-
-    // Reset to page 1 when filters change
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery, selectedCategory, selectedStatus]);
+        setPage(1);
+        setDatasets([]);
+        fetchDatasets(1, debouncedSearch, selectedCategory, false);
+    }, [debouncedSearch, selectedCategory, fetchDatasets]);
+
+    // Load categories once
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     // ============================================
-    // DYNAMIC CATEGORIES FROM DATA
+    // INFINITE SCROLL - INTERSECTION OBSERVER
     // ============================================
 
-    const categories = useMemo(() => {
-        const counts: Record<string, number> = {};
-        allDatasets.forEach(d => {
-            const cat = d.category || 'أخرى';
-            counts[cat] = (counts[cat] || 0) + 1;
-        });
+    useEffect(() => {
+        // Disconnect previous observer
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+        }
 
-        return Object.entries(counts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count);
-    }, [allDatasets]);
+        // Create new observer
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                const [entry] = entries;
+                if (entry.isIntersecting && hasMore && !loadingMore && !loading) {
+                    console.log('🔄 Loading more...');
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    fetchDatasets(nextPage, debouncedSearch, selectedCategory, true);
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        // Observe load more element
+        if (loadMoreRef.current) {
+            observerRef.current.observe(loadMoreRef.current);
+        }
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, [hasMore, loadingMore, loading, page, debouncedSearch, selectedCategory, fetchDatasets]);
 
     // ============================================
     // HANDLERS
     // ============================================
 
-    const handlePageChange = (newPage: number) => {
-        if (newPage < 1 || newPage > totalPages) return;
-        setCurrentPage(newPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleRefresh = () => {
+        setPage(1);
+        setDatasets([]);
+        fetchDatasets(1, debouncedSearch, selectedCategory, false);
+        fetchCategories();
     };
 
     const clearFilters = () => {
         setSearchQuery('');
+        setDebouncedSearch('');
         setSelectedCategory(null);
-        setSelectedStatus(null);
     };
 
-    const hasFilters = searchQuery || selectedCategory || selectedStatus;
+    const hasFilters = searchQuery || selectedCategory;
 
-    // Format date
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '-';
         const date = new Date(dateStr);
@@ -248,7 +286,6 @@ const DatasetsPage: React.FC = () => {
         });
     };
 
-    // Get category icon
     const getCategoryIcon = (category: string) => {
         return CATEGORY_ICONS[category] || CATEGORY_ICONS['default'];
     };
@@ -256,18 +293,6 @@ const DatasetsPage: React.FC = () => {
     // ============================================
     // RENDER
     // ============================================
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                    <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-600 font-medium">جاري تحميل مجموعات البيانات...</p>
-                    <p className="text-gray-400 text-sm mt-2">يتم تحميل جميع البيانات مرة واحدة للفلترة السريعة</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -280,7 +305,10 @@ const DatasetsPage: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl lg:text-4xl font-black">مجموعات البيانات</h1>
-                            <p className="text-blue-100 mt-1">استكشف البيانات المفتوحة من المصادر الحكومية السعودية</p>
+                            <p className="text-blue-100 mt-1 flex items-center gap-2">
+                                <Zap size={16} className="text-yellow-300" />
+                                بيانات حية من قاعدة البيانات
+                            </p>
                         </div>
                     </div>
 
@@ -288,11 +316,11 @@ const DatasetsPage: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">إجمالي المجموعات</p>
-                            <p className="text-3xl font-black mt-1">{allDatasets.length.toLocaleString('ar-SA')}</p>
+                            <p className="text-3xl font-black mt-1">{totalCount.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                            <p className="text-blue-100 text-sm">نتائج البحث</p>
-                            <p className="text-3xl font-black mt-1">{filteredDatasets.length.toLocaleString('ar-SA')}</p>
+                            <p className="text-blue-100 text-sm">تم تحميل</p>
+                            <p className="text-3xl font-black mt-1">{datasets.length.toLocaleString('ar-SA')}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">التصنيفات</p>
@@ -301,8 +329,8 @@ const DatasetsPage: React.FC = () => {
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <p className="text-blue-100 text-sm">المصدر</p>
                             <p className="text-lg font-bold mt-1 flex items-center gap-2">
-                                البيانات المفتوحة
-                                <Globe size={16} />
+                                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                                Database حي
                             </p>
                         </div>
                     </div>
@@ -314,7 +342,7 @@ const DatasetsPage: React.FC = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="ابحث في مجموعات البيانات... (الفلترة فورية)"
+                            placeholder="ابحث في مجموعات البيانات... (يبحث في Database مباشرة)"
                             className="w-full bg-white text-gray-900 rounded-xl py-4 pr-12 pl-4 text-lg shadow-lg focus:ring-4 focus:ring-white/30 outline-none"
                         />
                         {searchQuery && (
@@ -334,16 +362,13 @@ const DatasetsPage: React.FC = () => {
                     {/* Sidebar - Categories */}
                     <aside className="lg:w-72 shrink-0">
                         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden sticky top-4">
-                            {/* Header */}
                             <div className="p-4 border-b border-gray-100 bg-gray-50">
                                 <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                     <Filter size={18} className="text-blue-600" />
                                     التصنيفات
-                                    <span className="text-xs text-gray-500 font-normal">(فلترة فورية)</span>
                                 </h3>
                             </div>
 
-                            {/* Categories List */}
                             <div className="p-2 max-h-[60vh] overflow-y-auto">
                                 <button
                                     onClick={() => setSelectedCategory(null)}
@@ -358,7 +383,7 @@ const DatasetsPage: React.FC = () => {
                                         <span className="font-medium">جميع التصنيفات</span>
                                     </span>
                                     <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full">
-                                        {allDatasets.length}
+                                        {totalCount}
                                     </span>
                                 </button>
 
@@ -399,8 +424,8 @@ const DatasetsPage: React.FC = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <p className="text-gray-600">
-                                    <span className="font-bold text-gray-900">{filteredDatasets.length}</span> مجموعة بيانات
-                                    {totalPages > 1 && <span className="text-gray-400"> (صفحة {currentPage} من {totalPages})</span>}
+                                    <span className="font-bold text-gray-900">{datasets.length}</span>
+                                    <span className="text-gray-400"> / {totalCount.toLocaleString()}</span>
                                     {hasFilters && (
                                         <button
                                             onClick={clearFilters}
@@ -414,10 +439,10 @@ const DatasetsPage: React.FC = () => {
 
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => loadAllDatasets()}
+                                    onClick={handleRefresh}
                                     disabled={loading}
                                     className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 disabled:opacity-50"
-                                    title="إعادة تحميل البيانات"
+                                    title="تحديث البيانات"
                                 >
                                     <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                                 </button>
@@ -454,15 +479,6 @@ const DatasetsPage: React.FC = () => {
                                         </button>
                                     </span>
                                 )}
-                                {selectedStatus && (
-                                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
-                                        <CheckCircle2 size={14} />
-                                        {selectedStatus === 'SUCCESS' ? 'متزامن' : selectedStatus === 'PENDING' ? 'قيد الانتظار' : 'فشل'}
-                                        <button onClick={() => setSelectedStatus(null)} className="hover:bg-green-200 rounded-full p-0.5">
-                                            <X size={14} />
-                                        </button>
-                                    </span>
-                                )}
                                 {searchQuery && (
                                     <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-medium">
                                         <Search size={14} />
@@ -475,116 +491,80 @@ const DatasetsPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Dataset Grid/List */}
-                        {paginatedDatasets.length === 0 ? (
+                        {/* Initial Loading */}
+                        {loading && datasets.length === 0 ? (
+                            <div className="flex items-center justify-center min-h-[40vh]">
+                                <div className="text-center">
+                                    <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+                                    <p className="text-gray-600 font-medium">جاري التحميل من Database...</p>
+                                </div>
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-16">
+                                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <X size={40} className="text-red-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">حدث خطأ</h3>
+                                <p className="text-gray-600 mb-6">{error}</p>
+                                <button
+                                    onClick={handleRefresh}
+                                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
+                                >
+                                    <RefreshCw size={18} />
+                                    إعادة المحاولة
+                                </button>
+                            </div>
+                        ) : datasets.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Database size={40} className="text-gray-400" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                    {hasFilters ? 'لا توجد نتائج للبحث' : 'لا توجد بيانات'}
-                                </h3>
-                                <p className="text-gray-600 mb-6">
-                                    {hasFilters
-                                        ? 'جرب تغيير معايير البحث أو إزالة الفلاتر'
-                                        : 'جرب إعادة المحاولة لتحميل البيانات'}
-                                </p>
-                                {hasFilters ? (
-                                    <button
-                                        onClick={clearFilters}
-                                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                    >
-                                        <X size={18} />
-                                        إزالة الفلاتر
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={loadAllDatasets}
-                                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                    >
-                                        <RefreshCw size={18} />
-                                        إعادة المحاولة
-                                    </button>
-                                )}
-                            </div>
-                        ) : viewMode === 'grid' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                {paginatedDatasets.map(dataset => (
-                                    <DatasetCard key={dataset.id} dataset={dataset} formatDate={formatDate} />
-                                ))}
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">لا توجد نتائج</h3>
+                                <p className="text-gray-600 mb-6">جرب تغيير معايير البحث</p>
+                                <button
+                                    onClick={clearFilters}
+                                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
+                                >
+                                    <X size={18} />
+                                    إزالة الفلاتر
+                                </button>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {paginatedDatasets.map(dataset => (
-                                    <DatasetListItem key={dataset.id} dataset={dataset} formatDate={formatDate} />
-                                ))}
-                            </div>
-                        )}
+                            <>
+                                {/* Dataset Grid/List */}
+                                {viewMode === 'grid' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                        {datasets.map(dataset => (
+                                            <DatasetCard key={dataset.id} dataset={dataset} formatDate={formatDate} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {datasets.map(dataset => (
+                                            <DatasetListItem key={dataset.id} dataset={dataset} formatDate={formatDate} />
+                                        ))}
+                                    </div>
+                                )}
 
-                        {/* Pagination - Client-side */}
-                        {totalPages > 1 && (
-                            <div className="mt-8 flex items-center justify-center gap-2 flex-wrap">
-                                <button
-                                    onClick={() => handlePageChange(1)}
-                                    disabled={currentPage === 1}
-                                    className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                >
-                                    الأولى
-                                </button>
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight size={18} />
-                                    <span>السابق</span>
-                                </button>
-
-                                <div className="flex items-center gap-1">
-                                    {/* Page numbers */}
-                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                        let pageNum;
-                                        if (totalPages <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage >= totalPages - 2) {
-                                            pageNum = totalPages - 4 + i;
-                                        } else {
-                                            pageNum = currentPage - 2 + i;
-                                        }
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => handlePageChange(pageNum)}
-                                                className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                                                    currentPage === pageNum
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'border border-gray-200 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
+                                {/* Infinite Scroll Trigger */}
+                                <div ref={loadMoreRef} className="py-8 flex justify-center">
+                                    {loadingMore ? (
+                                        <div className="flex items-center gap-3 text-gray-500">
+                                            <Loader2 size={24} className="animate-spin" />
+                                            <span>جاري تحميل المزيد...</span>
+                                        </div>
+                                    ) : hasMore ? (
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                            <ChevronDown size={20} className="animate-bounce" />
+                                            <span>انزل لتحميل المزيد</span>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-400">
+                                            ✅ تم تحميل جميع البيانات ({datasets.length.toLocaleString()})
+                                        </p>
+                                    )}
                                 </div>
-
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage >= totalPages}
-                                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <span>التالي</span>
-                                    <ChevronLeft size={18} />
-                                </button>
-                                <button
-                                    onClick={() => handlePageChange(totalPages)}
-                                    disabled={currentPage === totalPages}
-                                    className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                >
-                                    الأخيرة
-                                </button>
-                            </div>
+                            </>
                         )}
                     </main>
                 </div>
@@ -593,41 +573,41 @@ const DatasetsPage: React.FC = () => {
     );
 };
 
+// ============================================
 // Dataset Card Component
+// ============================================
+
 const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer">
-            {/* Header */}
             <div className="p-5 border-b border-gray-100">
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-100 text-green-700">
-                        متزامن
+                        متاح
                     </span>
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded truncate max-w-[120px]">
-                        {dataset.category}
+                        {dataset.category || 'عام'}
                     </span>
                 </div>
 
                 <h3 className="font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {dataset.nameAr || dataset.name}
+                    {dataset.titleAr || dataset.titleEn}
                 </h3>
             </div>
 
-            {/* Body */}
             <div className="p-5">
                 <p className="text-sm text-gray-600 line-clamp-3 mb-4 leading-relaxed">
-                    {dataset.descriptionAr || dataset.description || 'لا يوجد وصف'}
+                    {dataset.descriptionAr || dataset.descriptionEn || 'لا يوجد وصف'}
                 </p>
 
-                {/* Meta */}
                 <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-500">
                         <Globe size={14} className="text-blue-500" />
-                        <span className="truncate">{dataset.source}</span>
+                        <span className="truncate">{dataset.organization || 'البوابة الوطنية'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
                         <Calendar size={14} className="text-green-500" />
-                        <span>{formatDate(dataset.lastSyncAt)}</span>
+                        <span>{formatDate(dataset.updatedAt)}</span>
                     </div>
                     {dataset.recordCount > 0 && (
                         <div className="flex items-center gap-2 text-gray-500">
@@ -638,9 +618,8 @@ const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => strin
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">ID: {dataset.externalId?.slice(0, 8)}...</span>
+                <span className="text-xs text-gray-400">ID: {dataset.id?.slice(0, 8)}...</span>
                 <button className="flex items-center gap-1 text-blue-600 text-sm font-medium hover:gap-2 transition-all">
                     <span>استعراض</span>
                     <ArrowUpRight size={14} />
@@ -650,50 +629,44 @@ const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => strin
     );
 };
 
+// ============================================
 // Dataset List Item Component
+// ============================================
+
 const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all p-5 flex gap-5 group cursor-pointer">
-            {/* Icon */}
             <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
                 <Database size={24} className="text-blue-600" />
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-2">
                     <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                        {dataset.nameAr || dataset.name}
+                        {dataset.titleAr || dataset.titleEn}
                     </h3>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-green-100 text-green-700">
-                        متزامن
+                        متاح
                     </span>
                 </div>
 
                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                    {dataset.descriptionAr || dataset.description || 'لا يوجد وصف'}
+                    {dataset.descriptionAr || dataset.descriptionEn || 'لا يوجد وصف'}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                    <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-[150px]">{dataset.category}</span>
+                    <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-[150px]">{dataset.category || 'عام'}</span>
                     <span className="flex items-center gap-1">
                         <Globe size={12} />
-                        {dataset.source}
+                        {dataset.organization || 'البوابة الوطنية'}
                     </span>
                     <span className="flex items-center gap-1">
                         <Calendar size={12} />
-                        {formatDate(dataset.lastSyncAt)}
+                        {formatDate(dataset.updatedAt)}
                     </span>
-                    {dataset.recordCount > 0 && (
-                        <span className="flex items-center gap-1">
-                            <FileSpreadsheet size={12} />
-                            {dataset.recordCount.toLocaleString('ar-SA')} سجل
-                        </span>
-                    )}
                 </div>
             </div>
 
-            {/* Action */}
             <button className="self-center p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors">
                 <ArrowUpRight size={20} />
             </button>

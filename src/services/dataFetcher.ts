@@ -271,10 +271,53 @@ export async function fetchDatasetsList(options: {
 } = {}): Promise<DatasetListResult> {
   const { page = 1, limit = 100, category, search, forceRefresh = false } = options;
 
-  // Skip browser cache - always fetch fresh from Backend API
-  // This ensures we always get the latest data from database
-
   console.log(`🌐 Fetching datasets list (page: ${page}, limit: ${limit})`);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 0. For large requests (>5000), use /saudi/all endpoint
+  // ═══════════════════════════════════════════════════════════════════
+  if (limit >= 5000 && !search && !category) {
+    try {
+      console.log(`   🚀 Using /saudi/all endpoint for bulk fetch...`);
+
+      const response = await fetch(`${BACKEND_API}/datasets/saudi/all`, {
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.success && data.data?.datasets?.length > 0) {
+          const datasets: DatasetInfo[] = data.data.datasets.map((d: any) => ({
+            id: d.id,
+            titleAr: d.titleAr,
+            titleEn: d.titleEn,
+            descriptionAr: d.descriptionAr,
+            descriptionEn: d.descriptionEn,
+            category: d.category,
+            organization: d.organization,
+            recordCount: d.recordCount,
+            updatedAt: d.updatedAt,
+          }));
+
+          console.log(`   ✅ Got ALL ${datasets.length} datasets from /saudi/all`);
+
+          // Cache locally for faster subsequent loads
+          saveListToCache(datasets, datasets.length);
+
+          return {
+            datasets,
+            total: datasets.length,
+            page: 1,
+            hasMore: false,
+            source: 'api',
+          };
+        }
+      }
+    } catch (e: any) {
+      console.warn(`   ⚠️ /saudi/all failed: ${e.message}, falling back to paginated`);
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   // 1. Try Backend API FIRST (reads from Supabase database)
