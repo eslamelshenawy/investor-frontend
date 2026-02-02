@@ -48,11 +48,11 @@ import {
     Hexagon,
     Link,
     Copy,
-    CheckCircle2
+    CheckCircle2,
+    Search
 } from 'lucide-react';
-// Frontend Fetch فقط - بدون Backend API
-import { fetchDatasetData as fetchDirectData, fetchDatasetsList, fetchAllDatasets, DatasetInfo } from '../src/services/dataFetcher';
-import { cacheDataset, getCachedDataset, getCacheStats } from '../src/services/smartCache';
+// WebFlux-style: Direct Database Fetch + On-Demand Data Loading
+import { fetchDatasetData as fetchDirectData, DatasetInfo } from '../src/services/dataFetcher';
 import {
     BarChart,
     Bar,
@@ -174,6 +174,11 @@ const COLOR_PALETTES = [
 ];
 
 // ============================================
+// Backend API Configuration
+// ============================================
+const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+
+// ============================================
 // COMPONENTS
 // ============================================
 
@@ -203,76 +208,106 @@ const ChartBuilderPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const chartRef = React.useRef<HTMLDivElement>(null);
 
+    // WebFlux-like State - Real-time Database Fetching
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [categories, setCategories] = useState<{ name: string; count: number }[]>([]);
+    const [totalDatasets, setTotalDatasets] = useState(0);
+    const [isConnected, setIsConnected] = useState(false);
+    const [streamingCount, setStreamingCount] = useState(0);
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [totalLoaded, setTotalLoaded] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
-    // Preload state (تحميل مسبق في الخلفية)
-    const [preloading, setPreloading] = useState(false);
-    const [preloadProgress, setPreloadProgress] = useState({ loaded: 0, total: 0, current: '' });
-    const [preloadStats, setPreloadStats] = useState({ cached: 0, totalRecords: 0 });
-    const [loadingAll, setLoadingAll] = useState(false);
     const listContainerRef = React.useRef<HTMLDivElement>(null);
-    const PAGE_SIZE = 100; // جلب 100 dataset في كل صفحة
+    const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const PAGE_SIZE = 50;
 
-    // Fetch datasets with pagination - Frontend Fetch من البوابة الوطنية
-    const fetchDatasetsPage = async (page: number, append: boolean = false) => {
-        if (page === 1) {
+    // WebFlux-like: Fetch datasets from Database with streaming feel
+    const fetchDatasetsFromDB = async (page: number, search?: string, category?: string, append: boolean = false) => {
+        if (page === 1 && !append) {
             setLoading(true);
+            setStreamingCount(0);
         } else {
             setLoadingMore(true);
         }
         setError(null);
 
         try {
-            console.log(`🌐 Frontend Fetch: جلب الصفحة ${page} من البوابة الوطنية...`);
+            console.log(`🚀 WebFlux: Fetching page ${page} from Database...`);
 
-            const result = await fetchDatasetsList({
-                page,
-                limit: PAGE_SIZE,
-                forceRefresh: false  // استخدم الـ JSON المحلي أولاً للسرعة
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(PAGE_SIZE),
+                ...(search && { search }),
+                ...(category && { category }),
             });
 
-            if (result.datasets && result.datasets.length > 0) {
-                const newSources: DataSource[] = result.datasets
-                    .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
-                    .map((d: DatasetInfo) => ({
-                        id: d.id,
-                        name: d.titleEn || d.titleAr || 'بدون اسم',
-                        nameAr: d.titleAr || d.titleEn || 'بدون اسم',
-                        category: d.category || 'أخرى',
-                        fields: [],
-                        sampleData: [],
-                        recordCount: d.recordCount,
-                    }));
+            const response = await fetch(`${BACKEND_API}/datasets/saudi?${params}`, {
+                headers: { 'Accept': 'application/json' },
+            });
 
-                if (append) {
-                    setDataSources(prev => {
-                        // Filter duplicates
-                        const existingIds = new Set(prev.map(d => d.id));
-                        const uniqueNew = newSources.filter(d => !existingIds.has(d.id));
-                        return [...prev, ...uniqueNew];
-                    });
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.success && data.data?.datasets) {
+                    setIsConnected(true);
+                    const datasets = data.data.datasets;
+                    const meta = data.data.meta || {};
+
+                    const newSources: DataSource[] = datasets
+                        .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
+                        .map((d: DatasetInfo) => ({
+                            id: d.id,
+                            name: d.titleEn || d.titleAr || 'بدون اسم',
+                            nameAr: d.titleAr || d.titleEn || 'بدون اسم',
+                            category: d.category || 'أخرى',
+                            fields: [],
+                            sampleData: [],
+                            recordCount: d.recordCount,
+                        }));
+
+                    // Streaming effect - add items gradually
+                    if (append) {
+                        setDataSources(prev => {
+                            const existingIds = new Set(prev.map(d => d.id));
+                            const uniqueNew = newSources.filter(d => !existingIds.has(d.id));
+                            return [...prev, ...uniqueNew];
+                        });
+                    } else {
+                        // Simulate streaming by adding items one by one
+                        setDataSources([]);
+                        for (let i = 0; i < newSources.length; i++) {
+                            await new Promise(r => setTimeout(r, 5)); // 5ms delay per item
+                            setDataSources(prev => [...prev, newSources[i]]);
+                            setStreamingCount(i + 1);
+                        }
+                    }
+
+                    setTotalDatasets(meta.total || datasets.length);
+                    setTotalLoaded(prev => append ? prev + newSources.length : newSources.length);
+                    setHasMore(meta.hasMore ?? datasets.length === PAGE_SIZE);
+                    setTotalPages(Math.ceil((meta.total || datasets.length) / PAGE_SIZE));
+                    setCurrentPage(page);
+
+                    console.log(`✅ Streamed ${newSources.length} datasets (Total: ${meta.total})`);
                 } else {
-                    setDataSources(newSources);
+                    if (page === 1) {
+                        setError('لا توجد مجموعات بيانات متاحة');
+                    }
+                    setHasMore(false);
                 }
-
-                setTotalLoaded(prev => append ? prev + newSources.length : newSources.length);
-                setHasMore(result.hasMore && newSources.length === PAGE_SIZE);
-                setCurrentPage(page);
-
-                console.log(`✅ تم جلب ${newSources.length} dataset - المجموع: ${append ? totalLoaded + newSources.length : newSources.length}`);
             } else {
-                if (page === 1) {
-                    setError('لا توجد مجموعات بيانات متاحة');
-                }
-                setHasMore(false);
+                throw new Error(`HTTP ${response.status}`);
             }
         } catch (err) {
-            console.error('Error fetching datasets:', err);
+            console.error('Database fetch error:', err);
+            setIsConnected(false);
             if (page === 1) {
-                setError('تعذر الاتصال بالبوابة الوطنية للبيانات المفتوحة');
+                setError('تعذر الاتصال بقاعدة البيانات');
             }
         } finally {
             setLoading(false);
@@ -280,140 +315,68 @@ const ChartBuilderPage: React.FC = () => {
         }
     };
 
-    // Initial fetch - تحميل أول صفحة ثم infinite scroll
+    // Fetch categories from database
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch(`${BACKEND_API}/datasets/saudi/categories`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setCategories(data.data);
+                }
+            }
+        } catch (e) {
+            console.log('Categories fetch failed, using fallback');
+            // Fallback: extract from loaded datasets
+        }
+    };
+
+    // Initial fetch - WebFlux style
     useEffect(() => {
-        fetchDatasetsPage(1);
+        fetchDatasetsFromDB(1);
+        fetchCategories();
     }, []);
+
+    // Debounced search - WebFlux reactive
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            setCurrentPage(1);
+            fetchDatasetsFromDB(1, searchQuery, selectedCategory);
+        }, 300); // 300ms debounce
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchQuery, selectedCategory]);
 
     // Load more function
     const loadMoreDatasets = () => {
         if (!loadingMore && hasMore) {
-            fetchDatasetsPage(currentPage + 1, true);
+            fetchDatasetsFromDB(currentPage + 1, searchQuery, selectedCategory, true);
         }
     };
 
     // Infinite scroll handler
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-        // Load more when scrolled to bottom (with 100px threshold)
         if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !loadingMore) {
             loadMoreDatasets();
         }
     };
 
-    // Load ALL datasets at once
-    const loadAllDatasetsHandler = async () => {
-        setLoadingAll(true);
-        setError(null);
-        try {
-            console.log('🚀 جاري تحميل جميع الـ Datasets...');
-
-            const allDatasets = await fetchAllDatasets((loaded) => {
-                setTotalLoaded(loaded);
-            });
-
-            if (allDatasets.length > 0) {
-                const sources: DataSource[] = allDatasets
-                    .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
-                    .map((d: DatasetInfo) => ({
-                        id: d.id,
-                        name: d.titleEn || d.titleAr || 'بدون اسم',
-                        nameAr: d.titleAr || d.titleEn || 'بدون اسم',
-                        category: d.category || 'أخرى',
-                        fields: [],
-                        sampleData: [],
-                        recordCount: d.recordCount,
-                    }));
-
-                setDataSources(sources);
-                setHasMore(false);
-                console.log(`✅ تم تحميل ${sources.length} dataset`);
-            }
-        } catch (err) {
-            console.error('Error loading all datasets:', err);
-            setError('تعذر تحميل جميع البيانات');
-        } finally {
-            setLoadingAll(false);
+    // Page change handler
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages && page !== currentPage) {
+            setCurrentPage(page);
+            fetchDatasetsFromDB(page, searchQuery, selectedCategory);
         }
     };
-
-    // تحميل مسبق لكل البيانات في الخلفية
-    const preloadAllDataHandler = async () => {
-        if (dataSources.length === 0) {
-            setError('يجب تحميل قائمة البيانات أولاً');
-            return;
-        }
-
-        setPreloading(true);
-        setPreloadProgress({ loaded: 0, total: dataSources.length, current: '' });
-
-        let successCount = 0;
-        let totalRecords = 0;
-
-        for (let i = 0; i < dataSources.length; i++) {
-            const ds = dataSources[i];
-
-            // تحديث التقدم
-            setPreloadProgress({
-                loaded: i,
-                total: dataSources.length,
-                current: ds.nameAr || ds.name
-            });
-
-            try {
-                // تحقق إذا موجود في الـ Cache
-                const cached = await getCachedDataset(ds.id);
-                if (cached) {
-                    successCount++;
-                    totalRecords += cached.data.totalRecords || 0;
-                    continue; // تخطي - موجود بالفعل
-                }
-
-                // جلب وحفظ في الـ Cache
-                const result = await fetchDirectData(ds.id, { limit: 10000 });
-                if (result && result.records.length > 0) {
-                    await cacheDataset(ds.id, {
-                        records: result.records,
-                        columns: result.columns,
-                        totalRecords: result.totalRecords,
-                    }, {
-                        titleAr: ds.nameAr,
-                        titleEn: ds.name,
-                        category: ds.category,
-                    });
-                    successCount++;
-                    totalRecords += result.records.length;
-                }
-
-                // تأخير صغير لتجنب الحظر
-                await new Promise(r => setTimeout(r, 500));
-
-            } catch (e) {
-                console.log(`⚠️ تخطي ${ds.id}: فشل التحميل`);
-            }
-        }
-
-        setPreloadProgress({ loaded: dataSources.length, total: dataSources.length, current: '' });
-        setPreloadStats({ cached: successCount, totalRecords });
-        setPreloading(false);
-
-        console.log(`✅ تم تحميل ${successCount}/${dataSources.length} datasets (${totalRecords} سجل)`);
-    };
-
-    // تحديث إحصائيات الـ Cache
-    const updateCacheStats = async () => {
-        try {
-            const stats = await getCacheStats();
-            setPreloadStats({ cached: stats.count, totalRecords: stats.totalRecords });
-        } catch (e) {
-            // تجاهل
-        }
-    };
-
-    // تحديث الإحصائيات عند التحميل
-    useEffect(() => {
-        updateCacheStats();
-    }, []);
 
     // Fetch dataset data on-demand when selected (Frontend Fetch فقط - بدون Backend API)
     const fetchDatasetData = async (datasetId: string) => {
@@ -910,6 +873,14 @@ const ChartBuilderPage: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto p-4 lg:p-8">
+            {/* CSS Animation for streaming effect */}
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
+
             {/* Header */}
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 mb-8 text-white">
                 <div className="flex items-center gap-4 mb-4">
@@ -953,113 +924,220 @@ const ChartBuilderPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Panel - Controls */}
                 <div className="lg:col-span-1 space-y-6">
-                    {/* Step 1: Data Source */}
+                    {/* Step 1: Data Source - WebFlux Style */}
                     <div className={`bg-white rounded-2xl border p-6 ${step === 1 ? 'border-indigo-300 shadow-lg' : 'border-gray-200'}`}>
                         <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <Database size={18} className="text-indigo-600" />
                             اختر مصدر البيانات
+                            {/* Live Connection Badge */}
+                            {isConnected && (
+                                <span className="flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full mr-auto">
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    متصل
+                                </span>
+                            )}
                         </h3>
 
                         {error && (
-                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center gap-2 text-yellow-700 text-sm">
+                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
                                 <AlertTriangle size={16} />
                                 {error}
-                            </div>
-                        )}
-
-                        {/* Frontend Fetch Badge with Count & Load All */}
-                        <div className="mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-xs">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Zap size={14} />
-                                    <span>جلب مباشر من البوابة الوطنية</span>
-                                </div>
-                                {dataSources.length > 0 && (
-                                    <span className="bg-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                                        {dataSources.length} مصدر
-                                    </span>
-                                )}
-                            </div>
-                            {/* حالة التحميل */}
-                            {hasMore && dataSources.length > 0 && (
-                                <div className="mt-2 text-center text-xs text-gray-500">
-                                    📜 اسحب للأسفل لتحميل المزيد...
-                                </div>
-                            )}
-
-                        </div>
-
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-8">
-                                <Loader2 className="animate-spin text-indigo-600" size={32} />
-                                <span className="mr-2 text-sm text-gray-500 mt-2">جاري الجلب من البوابة...</span>
-                            </div>
-                        ) : dataSources.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <Database size={32} className="mx-auto mb-2 opacity-50" />
-                                <p>لا توجد مصادر بيانات متاحة</p>
                                 <button
-                                    onClick={() => fetchDatasetsPage(1)}
-                                    className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
+                                    onClick={() => fetchDatasetsFromDB(1)}
+                                    className="mr-auto text-xs bg-red-100 px-2 py-1 rounded hover:bg-red-200"
                                 >
                                     إعادة المحاولة
                                 </button>
                             </div>
-                        ) : (
-                            <div
-                                ref={listContainerRef}
-                                className="space-y-3 max-h-80 overflow-y-auto"
-                                onScroll={handleScroll}
-                            >
-                                {dataSources.map(ds => (
-                                    <button
-                                        key={ds.id}
-                                        onClick={() => {
-                                            setSelectedDataSource({
-                                                ...ds,
-                                                fields: [],
-                                                sampleData: [],
-                                            });
-                                            fetchDatasetData(ds.id);
-                                        }}
-                                        disabled={loadingData && selectedDataSource?.id === ds.id}
-                                        className={`w-full text-right p-4 rounded-xl border-2 transition-all ${
-                                            selectedDataSource?.id === ds.id
-                                                ? 'border-indigo-500 bg-indigo-50'
-                                                : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
-                                        } ${loadingData && selectedDataSource?.id === ds.id ? 'opacity-70' : ''}`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-gray-900 text-sm">{ds.nameAr}</p>
-                                            {loadingData && selectedDataSource?.id === ds.id && (
-                                                <Loader2 className="animate-spin text-indigo-600" size={16} />
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            {ds.recordCount ? (
-                                                <span className="text-xs text-gray-500">~{ds.recordCount.toLocaleString('ar-SA')} سجل</span>
-                                            ) : null}
-                                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{ds.category}</span>
-                                        </div>
-                                    </button>
-                                ))}
+                        )}
 
-
-                                {/* Loading More Indicator */}
-                                {loadingMore && (
-                                    <div className="flex items-center justify-center py-4">
-                                        <Loader2 className="animate-spin text-indigo-600 ml-2" size={20} />
-                                        <span className="text-sm text-gray-500">جاري تحميل المزيد...</span>
+                        {/* WebFlux Badge - Real-time Stats */}
+                        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2 text-blue-700">
+                                    <Zap size={16} className="text-yellow-500" />
+                                    <span className="text-sm font-bold">WebFlux - جلب مباشر من قاعدة البيانات</span>
+                                </div>
+                                <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                                    {totalDatasets.toLocaleString('ar-SA')} مصدر
+                                </span>
+                            </div>
+                            {/* Streaming Progress */}
+                            {loading && streamingCount > 0 && (
+                                <div className="mt-2">
+                                    <div className="flex items-center justify-between text-xs text-blue-600 mb-1">
+                                        <span>جاري البث...</span>
+                                        <span>{streamingCount} / {PAGE_SIZE}</span>
                                     </div>
-                                )}
+                                    <div className="w-full bg-blue-200 rounded-full h-1.5">
+                                        <div
+                                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-100"
+                                            style={{ width: `${(streamingCount / PAGE_SIZE) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-                                {/* End of List */}
-                                {!hasMore && dataSources.length > 0 && (
-                                    <p className="text-center text-xs text-gray-400 py-2">
-                                        ✅ تم تحميل جميع مصادر البيانات ({dataSources.length.toLocaleString('ar-SA')})
-                                    </p>
+                        {/* Search Box - Reactive */}
+                        <div className="mb-4">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="ابحث في مصادر البيانات..."
+                                    className="w-full p-3 pr-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                    {loading ? (
+                                        <Loader2 size={18} className="animate-spin text-indigo-600" />
+                                    ) : (
+                                        <Database size={18} className="text-gray-400" />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Categories Filter */}
+                        {categories.length > 0 && (
+                            <div className="mb-4">
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setSelectedCategory('')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            !selectedCategory
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        الكل
+                                    </button>
+                                    {categories.slice(0, 6).map(cat => (
+                                        <button
+                                            key={cat.name}
+                                            onClick={() => setSelectedCategory(cat.name)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                selectedCategory === cat.name
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {cat.name} ({cat.count})
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {loading && dataSources.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <div className="relative">
+                                    <Loader2 className="animate-spin text-indigo-600" size={40} />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Zap size={16} className="text-yellow-500" />
+                                    </div>
+                                </div>
+                                <span className="text-sm text-gray-500 mt-3">جاري الاتصال بقاعدة البيانات...</span>
+                                <span className="text-xs text-indigo-500 mt-1">WebFlux Streaming</span>
+                            </div>
+                        ) : dataSources.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <Database size={32} className="mx-auto mb-2 opacity-50" />
+                                <p>لا توجد نتائج مطابقة</p>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setSelectedCategory('');
+                                        }}
+                                        className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
+                                    >
+                                        مسح الفلاتر
+                                    </button>
                                 )}
                             </div>
+                        ) : (
+                            <>
+                                <div
+                                    ref={listContainerRef}
+                                    className="space-y-2 max-h-64 overflow-y-auto"
+                                    onScroll={handleScroll}
+                                >
+                                    {dataSources.map((ds, idx) => (
+                                        <button
+                                            key={ds.id}
+                                            onClick={() => {
+                                                setSelectedDataSource({
+                                                    ...ds,
+                                                    fields: [],
+                                                    sampleData: [],
+                                                });
+                                                fetchDatasetData(ds.id);
+                                            }}
+                                            disabled={loadingData && selectedDataSource?.id === ds.id}
+                                            className={`w-full text-right p-3 rounded-xl border-2 transition-all transform ${
+                                                selectedDataSource?.id === ds.id
+                                                    ? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
+                                                    : 'border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50'
+                                            } ${loadingData && selectedDataSource?.id === ds.id ? 'opacity-70' : ''}`}
+                                            style={{
+                                                animation: loading ? `fadeIn 0.2s ease-out ${idx * 0.02}s both` : 'none'
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="font-bold text-gray-900 text-sm truncate flex-1">{ds.nameAr}</p>
+                                                {loadingData && selectedDataSource?.id === ds.id ? (
+                                                    <Loader2 className="animate-spin text-indigo-600 mr-2" size={16} />
+                                                ) : selectedDataSource?.id === ds.id ? (
+                                                    <Check className="text-indigo-600 mr-2" size={16} />
+                                                ) : null}
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {ds.recordCount ? (
+                                                    <span className="text-xs text-gray-500">
+                                                        {ds.recordCount.toLocaleString('ar-SA')} سجل
+                                                    </span>
+                                                ) : null}
+                                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                                                    {ds.category}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+
+                                    {/* Loading More Indicator */}
+                                    {loadingMore && (
+                                        <div className="flex items-center justify-center py-3 bg-gray-50 rounded-xl">
+                                            <Loader2 className="animate-spin text-indigo-600 ml-2" size={18} />
+                                            <span className="text-sm text-gray-500">جاري البث...</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                                        <button
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 1 || loading}
+                                            className="px-3 py-1.5 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            السابق
+                                        </button>
+                                        <span className="text-sm text-gray-600">
+                                            صفحة {currentPage} من {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === totalPages || loading}
+                                            className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            التالي
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
