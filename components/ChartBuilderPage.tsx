@@ -280,10 +280,9 @@ const ChartBuilderPage: React.FC = () => {
         }
     };
 
-    // Initial fetch - تحميل جميع الـ datasets أوتوماتيك
+    // Initial fetch - تحميل أول صفحة ثم infinite scroll
     useEffect(() => {
-        // تحميل الكل مباشرة بدون انتظار
-        loadAllDatasetsHandler();
+        fetchDatasetsPage(1);
     }, []);
 
     // Load more function
@@ -981,28 +980,26 @@ const ChartBuilderPage: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            {/* عدد المصادر المحملة */}
-                            {!hasMore && dataSources.length > 0 && (
-                                <div className="mt-2 text-center text-xs text-emerald-600 font-bold">
-                                    ✅ تم تحميل {dataSources.length.toLocaleString('ar-SA')} مصدر بيانات
+                            {/* حالة التحميل */}
+                            {hasMore && dataSources.length > 0 && (
+                                <div className="mt-2 text-center text-xs text-gray-500">
+                                    📜 اسحب للأسفل لتحميل المزيد...
                                 </div>
                             )}
 
                         </div>
 
-                        {loading || loadingAll ? (
+                        {loading ? (
                             <div className="flex flex-col items-center justify-center py-8">
                                 <Loader2 className="animate-spin text-indigo-600" size={32} />
-                                <span className="mr-2 text-sm text-gray-500 mt-2">
-                                    {loadingAll ? `جاري تحميل جميع البيانات... (${totalLoaded})` : 'جاري الجلب من البوابة...'}
-                                </span>
+                                <span className="mr-2 text-sm text-gray-500 mt-2">جاري الجلب من البوابة...</span>
                             </div>
                         ) : dataSources.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 <Database size={32} className="mx-auto mb-2 opacity-50" />
                                 <p>لا توجد مصادر بيانات متاحة</p>
                                 <button
-                                    onClick={loadAllDatasetsHandler}
+                                    onClick={() => fetchDatasetsPage(1)}
                                     className="mt-3 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-200"
                                 >
                                     إعادة المحاولة
@@ -1012,6 +1009,7 @@ const ChartBuilderPage: React.FC = () => {
                             <div
                                 ref={listContainerRef}
                                 className="space-y-3 max-h-80 overflow-y-auto"
+                                onScroll={handleScroll}
                             >
                                 {dataSources.map(ds => (
                                     <button
@@ -1047,7 +1045,20 @@ const ChartBuilderPage: React.FC = () => {
                                 ))}
 
 
-                                {/* End of List - لا حاجة لزر التحميل لأن الكل يتحمل أوتوماتيك */}
+                                {/* Loading More Indicator */}
+                                {loadingMore && (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="animate-spin text-indigo-600 ml-2" size={20} />
+                                        <span className="text-sm text-gray-500">جاري تحميل المزيد...</span>
+                                    </div>
+                                )}
+
+                                {/* End of List */}
+                                {!hasMore && dataSources.length > 0 && (
+                                    <p className="text-center text-xs text-gray-400 py-2">
+                                        ✅ تم تحميل جميع مصادر البيانات ({dataSources.length.toLocaleString('ar-SA')})
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>
