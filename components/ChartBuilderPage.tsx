@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 // WebFlux-style: Direct Database Fetch + On-Demand Data Loading
 import { fetchDatasetData as fetchDirectData, DatasetInfo } from '../src/services/dataFetcher';
+import * as Papa from 'papaparse';
 import {
     BarChart,
     Bar,
@@ -111,6 +112,13 @@ interface ChartConfig {
     showGrid: boolean;
 }
 
+interface DatasetResource {
+    id: string;
+    name: string;
+    format: string;
+    url: string;
+}
+
 interface DataSource {
     id: string;
     name: string;
@@ -119,6 +127,7 @@ interface DataSource {
     fields: string[];
     sampleData: Record<string, unknown>[];
     recordCount?: number;
+    resources?: DatasetResource[];  // روابط الملفات المحفوظة
 }
 
 const CHART_TYPES = [
@@ -260,7 +269,7 @@ const ChartBuilderPage: React.FC = () => {
 
                     const newSources: DataSource[] = datasets
                         .filter((d: DatasetInfo) => d.id && (d.titleAr || d.titleEn))
-                        .map((d: DatasetInfo) => ({
+                        .map((d: any) => ({
                             id: d.id,
                             name: d.titleEn || d.titleAr || 'بدون اسم',
                             nameAr: d.titleAr || d.titleEn || 'بدون اسم',
@@ -268,6 +277,13 @@ const ChartBuilderPage: React.FC = () => {
                             fields: [],
                             sampleData: [],
                             recordCount: d.recordCount,
+                            // حفظ روابط الملفات للاستخدام المباشر
+                            resources: d.resources?.map((r: any) => ({
+                                id: r.id || '',
+                                name: r.name || r.title || 'Resource',
+                                format: (r.format || '').toUpperCase(),
+                                url: r.url || r.downloadUrl || '',
+                            })) || [],
                         }));
 
                     // Streaming effect - add items gradually
@@ -378,14 +394,101 @@ const ChartBuilderPage: React.FC = () => {
         }
     };
 
-    // Fetch dataset data on-demand when selected (Frontend Fetch فقط - بدون Backend API)
-    const fetchDatasetData = async (datasetId: string) => {
+    // WebFlux: Fetch dataset data using stored resource URLs
+    const fetchDatasetData = async (datasetId: string, resources?: DatasetResource[]) => {
         setLoadingData(true);
         setDataSource(null);
         setError(null);
+
         try {
-            // Frontend Fetch فقط - جلب مباشر من المصدر (بدون Backend)
-            console.log(`🌐 Frontend Fetch: جلب البيانات مباشرة لـ ${datasetId}`);
+            // 1. أولاً: جرب استخدام الروابط المحفوظة مباشرة
+            if (resources && resources.length > 0) {
+                console.log(`🔗 WebFlux: استخدام الروابط المحفوظة (${resources.length} ملفات)`);
+
+                // ابحث عن CSV أو Excel
+                const csvResource = resources.find(r =>
+                    r.format === 'CSV' || r.url?.toLowerCase().includes('.csv')
+                );
+                const excelResource = resources.find(r =>
+                    ['XLS', 'XLSX'].includes(r.format) || r.url?.toLowerCase().match(/\.xlsx?/)
+                );
+                const jsonResource = resources.find(r =>
+                    r.format === 'JSON' || r.url?.toLowerCase().includes('.json')
+                );
+
+                const resource = csvResource || jsonResource || excelResource;
+
+                if (resource?.url) {
+                    console.log(`📥 جلب من: ${resource.url.substring(0, 60)}...`);
+
+                    try {
+                        // جلب CSV مباشرة
+                        if (resource.format === 'CSV' || resource.url.toLowerCase().includes('.csv')) {
+                            const records = await new Promise<Record<string, unknown>[]>((resolve, reject) => {
+                                Papa.parse(resource.url, {
+                                    download: true,
+                                    header: true,
+                                    skipEmptyLines: true,
+                                    dynamicTyping: true,
+                                    complete: (results) => {
+                                        if (results.data && results.data.length > 0) {
+                                            resolve(results.data.slice(0, 100) as Record<string, unknown>[]);
+                                        } else {
+                                            reject(new Error('No data in CSV'));
+                                        }
+                                    },
+                                    error: (err) => reject(err),
+                                });
+                            });
+
+                            if (records.length > 0) {
+                                const columns = Object.keys(records[0] || {});
+                                setSelectedDataSource(prev => prev ? {
+                                    ...prev,
+                                    fields: columns,
+                                    sampleData: records,
+                                } : null);
+                                setXAxis(columns[0]);
+                                setYAxis(columns[1] || columns[0]);
+                                setDataSource('api');
+                                setStep(2);
+                                console.log(`✅ WebFlux: تم جلب ${records.length} سجل من الرابط المحفوظ`);
+                                return;
+                            }
+                        }
+
+                        // جلب JSON مباشرة
+                        if (resource.format === 'JSON' || resource.url.toLowerCase().includes('.json')) {
+                            const response = await fetch(resource.url);
+                            if (response.ok) {
+                                const jsonData = await response.json();
+                                const records = Array.isArray(jsonData) ? jsonData.slice(0, 100) :
+                                               jsonData.data ? jsonData.data.slice(0, 100) : [];
+
+                                if (records.length > 0) {
+                                    const columns = Object.keys(records[0] || {});
+                                    setSelectedDataSource(prev => prev ? {
+                                        ...prev,
+                                        fields: columns,
+                                        sampleData: records,
+                                    } : null);
+                                    setXAxis(columns[0]);
+                                    setYAxis(columns[1] || columns[0]);
+                                    setDataSource('api');
+                                    setStep(2);
+                                    console.log(`✅ WebFlux: تم جلب ${records.length} سجل من JSON`);
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (urlErr) {
+                        console.log(`⚠️ فشل جلب من الرابط المحفوظ: ${urlErr}`);
+                    }
+                }
+            }
+
+            // 2. Fallback: استخدم dataFetcher service
+            console.log(`🔄 Fallback: جلب من dataFetcher service...`);
             const result = await fetchDirectData(datasetId, { limit: 100 });
 
             if (result && result.records.length > 0) {
@@ -401,15 +504,13 @@ const ChartBuilderPage: React.FC = () => {
                 setYAxis(columns[1] || columns[0]);
                 setDataSource(result.source === 'cache' ? 'cache' : 'api');
                 setStep(2);
-                console.log(`✅ Frontend Fetch: تم جلب ${result.records.length} سجل (${result.source})`);
+                console.log(`✅ Fallback: تم جلب ${result.records.length} سجل`);
             } else {
-                // No backend fallback - show error directly
-                console.log('⚠️ Frontend Fetch: لا توجد بيانات متاحة');
-                setError('لا توجد بيانات متاحة لهذا المصدر. تأكد من وجود ملف CSV.');
+                setError('هذا المصدر لا يحتوي على بيانات قابلة للعرض. جرب مصدر آخر.');
             }
         } catch (err) {
             console.error('Error fetching dataset data:', err);
-            setError('تعذر جلب البيانات من المصدر مباشرة');
+            setError('تعذر جلب البيانات. تحقق من اتصالك بالإنترنت.');
         } finally {
             setLoadingData(false);
         }
@@ -1073,7 +1174,8 @@ const ChartBuilderPage: React.FC = () => {
                                                     fields: [],
                                                     sampleData: [],
                                                 });
-                                                fetchDatasetData(ds.id);
+                                                // تمرير الروابط المحفوظة للاستخدام المباشر
+                                                fetchDatasetData(ds.id, ds.resources);
                                             }}
                                             disabled={loadingData && selectedDataSource?.id === ds.id}
                                             className={`w-full text-right p-3 rounded-xl border-2 transition-all transform ${
@@ -1094,6 +1196,20 @@ const ChartBuilderPage: React.FC = () => {
                                                 ) : null}
                                             </div>
                                             <div className="flex items-center gap-2 mt-1">
+                                                {/* علامة وجود ملفات CSV/Excel */}
+                                                {ds.resources && ds.resources.some(r =>
+                                                    ['CSV', 'XLS', 'XLSX', 'JSON'].includes(r.format) ||
+                                                    r.url?.match(/\.(csv|xlsx?|json)$/i)
+                                                ) ? (
+                                                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                        <Table size={10} />
+                                                        بيانات
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">
+                                                        metadata
+                                                    </span>
+                                                )}
                                                 {ds.recordCount ? (
                                                     <span className="text-xs text-gray-500">
                                                         {ds.recordCount.toLocaleString('ar-SA')} سجل
