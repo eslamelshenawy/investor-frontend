@@ -334,7 +334,7 @@ const ChartBuilderPage: React.FC = () => {
     // Fetch categories from database
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${BACKEND_API}/datasets/saudi/categories`);
+            const response = await fetch(`${BACKEND_API}/datasets/categories`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data) {
