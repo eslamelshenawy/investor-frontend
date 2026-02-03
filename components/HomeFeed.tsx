@@ -58,16 +58,32 @@ interface StatsData {
     totalDatasets: number;
     totalCategories: number;
     totalSignals: number;
+    activeSignals: number;
     totalUsers: number;
-    todayViews: number;
+    totalContent: number;
+    totalViews: number;
+    newThisWeek: number;
     weeklyGrowth: number;
+    isRealData: boolean;
 }
 
 interface TrendingTopic {
     tag: string;
-    count: string;
-    trend: string;
+    count: number;
+    countFormatted: string;
+    type: string;
     color: string;
+}
+
+interface QuickStats {
+    todaySignals: number;
+    newReports: number;
+    opportunities: number;
+}
+
+interface UserStats {
+    favorites: number;
+    dashboards: number;
 }
 
 // Animated Counter Component
@@ -228,20 +244,20 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Dynamic Stats State
-    const [stats, setStats] = useState<StatsData>({
-        totalDatasets: 0,
-        totalCategories: 0,
-        totalSignals: 0,
-        totalUsers: 0,
-        todayViews: 0,
-        weeklyGrowth: 0
-    });
+    // Dynamic Stats State - ALL REAL DATA
+    const [stats, setStats] = useState<StatsData | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
+    const [statsError, setStatsError] = useState(false);
 
-    // Trending Topics State
+    // Trending Topics State - ALL REAL DATA
     const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
     const [trendingLoading, setTrendingLoading] = useState(true);
+
+    // Quick Stats State - REAL DATA from recent activity
+    const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
+
+    // User Stats State - REAL DATA from API
+    const [userStats, setUserStats] = useState<UserStats | null>(null);
 
     // Animation States
     const [heroVisible, setHeroVisible] = useState(false);
@@ -250,76 +266,88 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     // Current time for live updates
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    // --- FETCH STATS ---
+    // --- FETCH STATS (100% REAL DATA - NO FALLBACKS) ---
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
+        setStatsError(false);
         try {
-            // Try to fetch real stats from API
             const response = await api.get('/stats/overview');
-            if (response.success && response.data) {
+            if (response.success && response.data && response.data.isRealData) {
                 setStats({
-                    totalDatasets: response.data.totalDatasets || 15847,
-                    totalCategories: response.data.totalCategories || 38,
-                    totalSignals: response.data.totalSignals || 1247,
-                    totalUsers: response.data.totalUsers || 8932,
-                    todayViews: response.data.todayViews || 24567,
-                    weeklyGrowth: response.data.weeklyGrowth || 12.5
+                    totalDatasets: response.data.totalDatasets,
+                    totalCategories: response.data.totalCategories,
+                    totalSignals: response.data.totalSignals,
+                    activeSignals: response.data.activeSignals,
+                    totalUsers: response.data.totalUsers,
+                    totalContent: response.data.totalContent,
+                    totalViews: response.data.totalViews,
+                    newThisWeek: response.data.newThisWeek,
+                    weeklyGrowth: response.data.weeklyGrowth,
+                    isRealData: true
                 });
             } else {
-                // Fallback to realistic mock data
-                setStats({
-                    totalDatasets: 15847,
-                    totalCategories: 38,
-                    totalSignals: 1247,
-                    totalUsers: 8932,
-                    todayViews: 24567,
-                    weeklyGrowth: 12.5
-                });
+                setStatsError(true);
+                setStats(null);
             }
         } catch (error) {
-            // Use fallback data on error
-            setStats({
-                totalDatasets: 15847,
-                totalCategories: 38,
-                totalSignals: 1247,
-                totalUsers: 8932,
-                todayViews: 24567,
-                weeklyGrowth: 12.5
-            });
+            console.error('Failed to fetch stats:', error);
+            setStatsError(true);
+            setStats(null);
         } finally {
             setStatsLoading(false);
         }
     }, []);
 
-    // --- FETCH TRENDING ---
+    // --- FETCH TRENDING (100% REAL DATA - NO FALLBACKS) ---
     const fetchTrending = useCallback(async () => {
         setTrendingLoading(true);
         try {
-            const response = await api.get('/content/trending');
-            if (response.success && response.data?.topics) {
-                setTrendingTopics(response.data.topics);
+            const response = await api.get('/stats/trending');
+            if (response.success && response.data?.isRealData) {
+                // Use combined topics from real categories and tags
+                setTrendingTopics(response.data.topics || []);
             } else {
-                // Fallback trending topics
-                setTrendingTopics([
-                    { tag: '#رؤية_2030', count: '2.4K', trend: '+12%', color: 'blue' },
-                    { tag: '#الطاقة_المتجددة', count: '1.8K', trend: '+8%', color: 'green' },
-                    { tag: '#الذكاء_الاصطناعي', count: '3.1K', trend: '+24%', color: 'purple' },
-                    { tag: '#التعدين', count: '892', trend: '+5%', color: 'amber' },
-                    { tag: '#الاستثمار_الأجنبي', count: '1.2K', trend: '+15%', color: 'indigo' }
-                ]);
+                setTrendingTopics([]);
             }
         } catch (error) {
-            setTrendingTopics([
-                { tag: '#رؤية_2030', count: '2.4K', trend: '+12%', color: 'blue' },
-                { tag: '#الطاقة_المتجددة', count: '1.8K', trend: '+8%', color: 'green' },
-                { tag: '#الذكاء_الاصطناعي', count: '3.1K', trend: '+24%', color: 'purple' },
-                { tag: '#التعدين', count: '892', trend: '+5%', color: 'amber' },
-                { tag: '#الاستثمار_الأجنبي', count: '1.2K', trend: '+15%', color: 'indigo' }
-            ]);
+            console.error('Failed to fetch trending:', error);
+            setTrendingTopics([]);
         } finally {
             setTrendingLoading(false);
         }
     }, []);
+
+    // --- FETCH QUICK STATS (REAL DATA from recent activity) ---
+    const fetchQuickStats = useCallback(async () => {
+        try {
+            const response = await api.get('/stats/activity');
+            if (response.success && response.data?.isRealData) {
+                setQuickStats({
+                    todaySignals: response.data.signals?.count || 0,
+                    newReports: response.data.content?.count || 0,
+                    opportunities: response.data.datasets?.count || 0
+                });
+            }
+        } catch (error) {
+            console.error('Failed to fetch quick stats:', error);
+        }
+    }, []);
+
+    // --- FETCH USER STATS (REAL DATA - requires auth) ---
+    const fetchUserStats = useCallback(async () => {
+        if (!user) return;
+        try {
+            const response = await api.get('/stats/user');
+            if (response.success && response.data?.isRealData) {
+                setUserStats({
+                    favorites: response.data.stats?.favorites || 0,
+                    dashboards: response.data.stats?.dashboards || 0
+                });
+            }
+        } catch (error) {
+            // User might not be authenticated, silently fail
+        }
+    }, [user]);
 
     // --- EFFECTS ---
     useEffect(() => {
@@ -331,7 +359,12 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     useEffect(() => {
         fetchStats();
         fetchTrending();
-    }, [fetchStats, fetchTrending]);
+        fetchQuickStats();
+    }, [fetchStats, fetchTrending, fetchQuickStats]);
+
+    useEffect(() => {
+        fetchUserStats();
+    }, [fetchUserStats]);
 
     // Update time every minute
     useEffect(() => {
@@ -342,7 +375,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     // --- REFRESH HANDLER ---
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        await Promise.all([fetchStats(), fetchTrending()]);
+        await Promise.all([fetchStats(), fetchTrending(), fetchQuickStats(), fetchUserStats()]);
         setTimeout(() => setIsRefreshing(false), 1000);
     };
 
@@ -488,58 +521,77 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                             </div>
                         </div>
 
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                            <StatsCard
-                                icon={Database}
-                                label="مجموعة بيانات"
-                                value={stats.totalDatasets}
-                                trend="+2.5K"
-                                trendPositive
-                                color="blue"
-                                delay={100}
-                            />
-                            <StatsCard
-                                icon={Layers}
-                                label="تصنيف"
-                                value={stats.totalCategories}
-                                color="purple"
-                                delay={200}
-                            />
-                            <StatsCard
-                                icon={Zap}
-                                label="إشارة ذكية"
-                                value={stats.totalSignals}
-                                trend="+18%"
-                                trendPositive
-                                color="amber"
-                                delay={300}
-                            />
-                            <StatsCard
-                                icon={Users}
-                                label="مستخدم نشط"
-                                value={stats.totalUsers}
-                                trend="+324"
-                                trendPositive
-                                color="green"
-                                delay={400}
-                            />
-                            <StatsCard
-                                icon={Eye}
-                                label="مشاهدة اليوم"
-                                value={stats.todayViews}
-                                color="cyan"
-                                delay={500}
-                            />
-                            <StatsCard
-                                icon={TrendingUp}
-                                label="نمو أسبوعي"
-                                value={stats.weeklyGrowth}
-                                suffix="%"
-                                color="rose"
-                                delay={600}
-                            />
-                        </div>
+                        {/* Stats Grid - 100% REAL DATA */}
+                        {statsLoading ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                                {[1,2,3,4,5,6].map(i => (
+                                    <div key={i} className="bg-white/10 rounded-2xl p-4 sm:p-5 animate-pulse">
+                                        <div className="w-10 h-10 bg-white/20 rounded-xl mb-3 skeleton" />
+                                        <div className="h-8 bg-white/20 rounded w-2/3 mb-2 skeleton" />
+                                        <div className="h-4 bg-white/20 rounded w-1/2 skeleton" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : statsError || !stats ? (
+                            <div className="bg-white/10 rounded-2xl p-6 mb-6 sm:mb-8 text-center">
+                                <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+                                <p className="text-white/80 text-sm">فشل في جلب الإحصائيات - يرجى المحاولة لاحقاً</p>
+                                <button onClick={handleRefresh} className="mt-3 text-blue-300 hover:text-blue-200 text-sm font-bold">
+                                    إعادة المحاولة
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                                <StatsCard
+                                    icon={Database}
+                                    label="مجموعة بيانات"
+                                    value={stats.totalDatasets}
+                                    trend={stats.newThisWeek > 0 ? `+${stats.newThisWeek}` : undefined}
+                                    trendPositive
+                                    color="blue"
+                                    delay={100}
+                                />
+                                <StatsCard
+                                    icon={Layers}
+                                    label="تصنيف"
+                                    value={stats.totalCategories}
+                                    color="purple"
+                                    delay={200}
+                                />
+                                <StatsCard
+                                    icon={Zap}
+                                    label="إشارة نشطة"
+                                    value={stats.activeSignals}
+                                    trend={stats.totalSignals > 0 ? `${stats.totalSignals} إجمالي` : undefined}
+                                    trendPositive
+                                    color="amber"
+                                    delay={300}
+                                />
+                                <StatsCard
+                                    icon={Users}
+                                    label="مستخدم"
+                                    value={stats.totalUsers}
+                                    color="green"
+                                    delay={400}
+                                />
+                                <StatsCard
+                                    icon={Eye}
+                                    label="إجمالي المشاهدات"
+                                    value={stats.totalViews}
+                                    color="cyan"
+                                    delay={500}
+                                />
+                                <StatsCard
+                                    icon={TrendingUp}
+                                    label="نمو أسبوعي"
+                                    value={stats.weeklyGrowth}
+                                    suffix="%"
+                                    trendPositive={stats.weeklyGrowth > 0}
+                                    color="rose"
+                                    delay={600}
+                                />
+                            </div>
+                        )}
 
                         {/* Search Bar */}
                         <div className="relative group animate-fadeInUp delay-300">
@@ -548,7 +600,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-focus-within:text-blue-300 transition-colors w-5 h-5" />
                                 <input
                                     type="text"
-                                    placeholder="ابحث في 15,000+ مجموعة بيانات، تقارير، وتحليلات..."
+                                    placeholder={stats ? `ابحث في ${stats.totalDatasets.toLocaleString('ar-SA')}+ مجموعة بيانات، تقارير، وتحليلات...` : 'ابحث في البيانات والتقارير والتحليلات...'}
                                     className="w-full pl-12 pr-12 py-4 rounded-2xl bg-white/10 backdrop-blur-xl border-2 border-white/20 text-white placeholder-white/50 focus:bg-white/15 focus:border-blue-400/50 focus:ring-4 focus:ring-blue-400/20 outline-none text-sm sm:text-base font-medium transition-all"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -564,23 +616,25 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                             </div>
                         </div>
 
-                        {/* Quick Actions */}
-                        <div className="flex flex-wrap gap-2 sm:gap-3 mt-6 animate-fadeInUp delay-500">
-                            {[
-                                { icon: Signal, label: 'إشارات اليوم', count: 12 },
-                                { icon: PieChart, label: 'تقارير جديدة', count: 8 },
-                                { icon: Target, label: 'فرص استثمارية', count: 5 },
-                            ].map((action, idx) => (
-                                <button
-                                    key={idx}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white/80 hover:text-white text-sm font-medium transition-all border border-white/10 hover:border-white/20 group"
-                                >
-                                    <action.icon size={16} className="group-hover:scale-110 transition-transform" />
-                                    <span>{action.label}</span>
-                                    <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{action.count}</span>
-                                </button>
-                            ))}
-                        </div>
+                        {/* Quick Actions - REAL DATA */}
+                        {quickStats && (
+                            <div className="flex flex-wrap gap-2 sm:gap-3 mt-6 animate-fadeInUp delay-500">
+                                {[
+                                    { icon: Signal, label: 'إشارات حديثة', count: quickStats.todaySignals },
+                                    { icon: PieChart, label: 'محتوى جديد', count: quickStats.newReports },
+                                    { icon: Target, label: 'بيانات جديدة', count: quickStats.opportunities },
+                                ].filter(action => action.count > 0).map((action, idx) => (
+                                    <button
+                                        key={idx}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white/80 hover:text-white text-sm font-medium transition-all border border-white/10 hover:border-white/20 group"
+                                    >
+                                        <action.icon size={16} className="group-hover:scale-110 transition-transform" />
+                                        <span>{action.label}</span>
+                                        <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{action.count}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -782,21 +836,23 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                                 <h3 className="font-bold text-white text-center mb-1 text-lg">{user.name}</h3>
                                 <p className="text-xs text-white/80 font-medium text-center mb-4 bg-white/10 inline-block px-3 py-1 rounded-full mx-auto">{user.role}</p>
 
-                                {/* Quick Stats */}
-                                <div className="grid grid-cols-3 gap-2 mt-6">
-                                    {[
-                                        { value: 12, label: 'اشتراك' },
-                                        { value: 48, label: 'محفوظ' },
-                                        { value: 156, label: 'إعجاب' }
-                                    ].map((stat, idx) => (
-                                        <div key={idx} className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer group/stat">
+                                {/* Quick Stats - REAL USER DATA */}
+                                {userStats && (
+                                    <div className="grid grid-cols-2 gap-2 mt-6">
+                                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer group/stat">
                                             <p className="text-xl font-black group-hover/stat:scale-110 transition-transform">
-                                                <AnimatedCounter end={stat.value} duration={1500} />
+                                                <AnimatedCounter end={userStats.favorites} duration={1500} />
                                             </p>
-                                            <p className="text-[10px] text-white/70 font-bold uppercase">{stat.label}</p>
+                                            <p className="text-[10px] text-white/70 font-bold uppercase">المفضلة</p>
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:bg-white/20 transition-colors cursor-pointer group/stat">
+                                            <p className="text-xl font-black group-hover/stat:scale-110 transition-transform">
+                                                <AnimatedCounter end={userStats.dashboards} duration={1500} />
+                                            </p>
+                                            <p className="text-[10px] text-white/70 font-bold uppercase">لوحات التحكم</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
@@ -841,6 +897,11 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                                     </div>
                                 ))}
                             </div>
+                        ) : trendingTopics.length === 0 ? (
+                            <div className="text-center py-6 text-gray-400 text-sm">
+                                <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                <p>لا توجد مواضيع رائجة حالياً</p>
+                            </div>
                         ) : (
                             <div className="space-y-2 stagger-children">
                                 {trendingTopics.map((item, idx) => (
@@ -858,11 +919,19 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                                                 <p className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
                                                     {item.tag}
                                                 </p>
-                                                <p className="text-[10px] text-gray-400">{item.count} منشور</p>
+                                                <p className="text-[10px] text-gray-400">
+                                                    {item.countFormatted} {item.type === 'category' ? 'مجموعة بيانات' : 'منشور'}
+                                                </p>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100 group-hover:scale-110 transition-transform">
-                                            {item.trend}
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border group-hover:scale-110 transition-transform ${
+                                            item.color === 'blue' ? 'text-blue-600 bg-blue-50 border-blue-100' :
+                                            item.color === 'green' ? 'text-green-600 bg-green-50 border-green-100' :
+                                            item.color === 'purple' ? 'text-purple-600 bg-purple-50 border-purple-100' :
+                                            item.color === 'amber' ? 'text-amber-600 bg-amber-50 border-amber-100' :
+                                            'text-indigo-600 bg-indigo-50 border-indigo-100'
+                                        }`}>
+                                            {item.type === 'category' ? 'تصنيف' : 'وسم'}
                                         </span>
                                     </button>
                                 ))}
@@ -875,34 +944,56 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                         </button>
                     </div>
 
-                    {/* Market Pulse Widget */}
-                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl shadow-xl text-white animate-fadeInLeft delay-400">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-sm flex items-center gap-2">
-                                <Activity size={16} className="text-green-400 animate-pulse" />
-                                نبض السوق
-                            </h3>
-                            <LiveIndicator />
-                        </div>
+                    {/* Platform Stats Widget - REAL DATA */}
+                    {stats && stats.isRealData && (
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl shadow-xl text-white animate-fadeInLeft delay-400">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-sm flex items-center gap-2">
+                                    <Activity size={16} className="text-green-400 animate-pulse" />
+                                    إحصائيات المنصة
+                                </h3>
+                                <LiveIndicator />
+                            </div>
 
-                        <div className="space-y-3">
-                            {[
-                                { label: 'تاسي', value: '12,456.32', change: '+1.24%', positive: true },
-                                { label: 'نمو', value: '24,891.05', change: '+0.87%', positive: true },
-                                { label: 'الدولار/ريال', value: '3.75', change: '-0.01%', positive: false },
-                            ].map((item, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group">
-                                    <span className="text-white/70 text-sm font-medium">{item.label}</span>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group">
+                                    <span className="text-white/70 text-sm font-medium">إجمالي البيانات</span>
                                     <div className="text-right">
-                                        <p className="font-bold text-white group-hover:scale-105 transition-transform">{item.value}</p>
-                                        <p className={`text-xs font-bold ${item.positive ? 'text-green-400' : 'text-red-400'}`}>
-                                            {item.change}
+                                        <p className="font-bold text-white group-hover:scale-105 transition-transform">
+                                            {stats.totalDatasets.toLocaleString('ar-SA')}
+                                        </p>
+                                        {stats.newThisWeek > 0 && (
+                                            <p className="text-xs font-bold text-green-400">
+                                                +{stats.newThisWeek} هذا الأسبوع
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group">
+                                    <span className="text-white/70 text-sm font-medium">الإشارات النشطة</span>
+                                    <div className="text-right">
+                                        <p className="font-bold text-white group-hover:scale-105 transition-transform">
+                                            {stats.activeSignals.toLocaleString('ar-SA')}
+                                        </p>
+                                        <p className="text-xs font-bold text-blue-400">
+                                            من {stats.totalSignals} إجمالي
                                         </p>
                                     </div>
                                 </div>
-                            ))}
+                                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group">
+                                    <span className="text-white/70 text-sm font-medium">المحتوى المنشور</span>
+                                    <div className="text-right">
+                                        <p className="font-bold text-white group-hover:scale-105 transition-transform">
+                                            {stats.totalContent.toLocaleString('ar-SA')}
+                                        </p>
+                                        <p className="text-xs font-bold text-cyan-400">
+                                            {stats.totalViews.toLocaleString('ar-SA')} مشاهدة
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
