@@ -64,6 +64,7 @@ import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
 import OfficialDashboardsPage from './components/OfficialDashboardsPage';
+import DashboardDetailPage from './components/DashboardDetailPage';
 import ExpertBuilderPage from './components/ExpertBuilderPage';
 import ExpertBuilderWrapper from './components/ExpertBuilderWrapper';
 import FavoritesPage from './components/FavoritesPage';
@@ -861,6 +862,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
             <Route path="/dashboards" element={<OfficialDashboardsWrapper userRole={currentUser.role} />} />
+            <Route path="/dashboards/:id" element={<DashboardDetailPage />} />
             <Route path="/signals" element={<AISignalsPage />} />
             <Route path="/timeline" element={<TimelineWrapper />} />
             <Route path="/followers" element={<FollowersWrapper />} />

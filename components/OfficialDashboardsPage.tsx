@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     LayoutGrid,
     List,
@@ -161,11 +161,16 @@ interface OfficialDashboardsPageProps {
 }
 
 const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets, userRole }) => {
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     const [favorites, setFavorites] = useState<string[]>(['odb1', 'odb3_mining']);
-    const [selectedDash, setSelectedDash] = useState<ExtendedDashboard | null>(null);
+
+    // Navigate to dashboard detail page
+    const handleDashboardClick = (dashId: string) => {
+        navigate(`/dashboards/${dashId}`);
+    };
 
     // Filter Logic
     const filteredDashboards = useMemo(() => {
@@ -194,7 +199,7 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
             {filteredDashboards.map(dash => (
                 <div
                     key={dash.id}
-                    onClick={() => setSelectedDash(dash)}
+                    onClick={() => handleDashboardClick(dash.id)}
                     className="group relative bg-white rounded-[2rem] border border-gray-100/80 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1.5 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-[380px]"
                 >
                     {/* 1. Header: Visual Context & Actions */}
@@ -292,7 +297,7 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
             {filteredDashboards.map(dash => (
                 <div
                     key={dash.id}
-                    onClick={() => setSelectedDash(dash)}
+                    onClick={() => handleDashboardClick(dash.id)}
                     className="group flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100"
                 >
                     {/* Icon */}
@@ -352,7 +357,7 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
             {filteredDashboards.map(dash => (
                 <div
                     key={dash.id}
-                    onClick={() => setSelectedDash(dash)}
+                    onClick={() => handleDashboardClick(dash.id)}
                     className="group bg-white rounded-2xl border border-gray-100 hover:border-blue-300 p-4 hover:shadow-lg transition-all cursor-pointer text-center relative"
                 >
                     <button
@@ -496,75 +501,6 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
                     </div>
                 )}
             </div>
-
-            {/* Dashboard Modal (Placeholder - Visual Enhancement) */}
-            {selectedDash && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
-                    <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl animate-scaleIn flex flex-col md:flex-row">
-
-                        {/* Sidebar Info */}
-                        <div className="w-full md:w-80 bg-slate-50 p-8 border-l border-gray-100 flex flex-col order-2 md:order-1">
-                            <div className={`w-14 h-14 rounded-2xl bg-${selectedDash.color}-100 flex items-center justify-center text-${selectedDash.color}-600 mb-6`}>
-                                <BarChart2 size={28} />
-                            </div>
-
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">{selectedDash.name}</h2>
-                            <p className="text-gray-500 text-sm leading-relaxed mb-6">{selectedDash.description}</p>
-
-                            <div className="space-y-4 mb-8">
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">التصنيف</p>
-                                    <span className="inline-block px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-bold">
-                                        {DASHBOARD_CATEGORIES.find(c => c.id === selectedDash.category)?.label}
-                                    </span>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">تكرار البيانات</p>
-                                    <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
-                                        {selectedDash.dataFreq === 'daily' ? 'يومي' : 'شهري'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="mt-auto pt-6 border-t border-gray-200">
-                                <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20 mb-3 flex items-center justify-center gap-2">
-                                    فتح اللوحة الكاملة <ArrowUpRight size={18} />
-                                </button>
-                                <button onClick={() => setSelectedDash(null)} className="w-full py-3 text-gray-500 hover:text-gray-800 font-bold">
-                                    إلغاء
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Main Content Preview */}
-                        <div className="flex-1 p-8 bg-white relative order-1 md:order-2 flex flex-col items-center justify-center">
-                            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.4]"></div>
-
-                            <div className="relative text-center max-w-lg">
-                                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                                    <PieChart size={40} className="text-blue-400" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">معاينة تفاعلية</h3>
-                                <p className="text-gray-500 mb-8">
-                                    تحتوي هذه اللوحة على {selectedDash.keyMetrics.length} مؤشرات رئيسية، بما في ذلك
-                                    <span className="font-bold text-gray-800 mx-1">
-                                        {selectedDash.keyMetrics.join('، ')}
-                                    </span>.
-                                </p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center">
-                                        <span className="text-xs text-gray-400 font-bold">CHART 1</span>
-                                    </div>
-                                    <div className="h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center">
-                                        <span className="text-xs text-gray-400 font-bold">CHART 2</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            )}
 
         </div>
     );

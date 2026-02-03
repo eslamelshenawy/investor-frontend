@@ -1,0 +1,1222 @@
+/**
+ * ============================================
+ * DASHBOARD DETAIL PAGE
+ * ============================================
+ *
+ * صفحة تفاصيل اللوحة - تصميم مطابق للمثال
+ * تتضمن: Hero، تبويبات، Sidebar، محتوى تفاعلي
+ */
+
+import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import {
+  BarChart,
+  Bar as RechartsBar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import {
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  Database,
+  Star,
+  Download,
+  Globe,
+  ShieldCheck,
+  RefreshCw,
+  Tag,
+  Eye,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  User,
+  MoreHorizontal,
+  Reply,
+  ThumbsUp,
+  BarChart3,
+  TrendingUp,
+  PieChart,
+  MapPin,
+  ArrowUpRight,
+  Building2,
+  Wallet,
+  Landmark,
+  Zap,
+  Briefcase,
+  ArrowRight
+} from 'lucide-react';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+// ============================================
+// TYPES & MOCK DATA
+// ============================================
+
+interface ExtendedDashboard {
+  id: string;
+  name: string;
+  category: string;
+  views: number;
+  lastUpdated: string;
+  isFavorite: boolean;
+  color: string;
+  trend: number;
+  type: 'official' | 'user';
+  description: string;
+  keyMetrics: string[];
+  dataFreq: 'daily' | 'monthly' | 'quarterly' | 'yearly';
+  publisher?: string;
+  contributors?: string[];
+  createdDate?: string;
+  updatedDate?: string;
+  license?: string;
+  language?: string;
+  downloads?: number;
+  rating?: number;
+}
+
+const DASHBOARD_CATEGORIES = [
+  { id: 'all', label: 'الكل' },
+  { id: 'economy', label: 'الاقتصاد الكلي' },
+  { id: 'energy', label: 'الطاقة والتعدين' },
+  { id: 'real_estate', label: 'العقار والإسكان' },
+  { id: 'investment', label: 'الاستثمار' },
+  { id: 'labor', label: 'سوق العمل' }
+];
+
+const MOCK_DASHBOARDS: ExtendedDashboard[] = [
+  {
+    id: 'odb1',
+    name: 'مؤشرات الاستثمار الأجنبي المباشر',
+    category: 'investment',
+    views: 45200,
+    lastUpdated: 'منذ ساعتين',
+    isFavorite: true,
+    color: 'blue',
+    trend: 12,
+    type: 'official',
+    description: 'رصد شامل لتدفقات الاستثمار الأجنبي وتوزيعها حسب القطاعات والمناطق الإدارية. تعتمد هذه اللوحة على بيانات وزارة الاستثمار والهيئة العامة للإحصاء لتقديم صورة شاملة عن حركة الاستثمارات الأجنبية في المملكة.',
+    keyMetrics: ['صافي الاستثمار', 'التراخيص الجديدة', 'توزيع الدول'],
+    dataFreq: 'quarterly',
+    publisher: 'وزارة الاستثمار',
+    contributors: ['الهيئة العامة للإحصاء', 'وزارة التجارة'],
+    createdDate: '2024-01-15',
+    updatedDate: '2025-02-01',
+    license: 'رخصة البيانات المفتوحة',
+    language: 'العربية',
+    downloads: 1204,
+    rating: 4
+  },
+  {
+    id: 'odb2',
+    name: 'لوحة الرقم القياسي لأسعار المستهلك (التضخم)',
+    category: 'economy',
+    views: 32100,
+    lastUpdated: 'منذ يوم',
+    isFavorite: false,
+    color: 'green',
+    trend: 5,
+    type: 'official',
+    description: 'تحليل شهري لتغيرات أسعار السلع والخدمات وتأثيرها على القوة الشرائية. تشمل البيانات جميع فئات المنتجات الاستهلاكية مع تحليل مفصل لكل قطاع.',
+    keyMetrics: ['معدل التضخم', 'النقل', 'الأغذية والمشروبات', 'السكن'],
+    dataFreq: 'monthly',
+    publisher: 'الهيئة العامة للإحصاء',
+    contributors: ['وزارة المالية'],
+    createdDate: '2023-06-01',
+    updatedDate: '2025-01-28',
+    license: 'رخصة البيانات المفتوحة',
+    language: 'العربية',
+    downloads: 3456,
+    rating: 5
+  },
+  {
+    id: 'odb3_mining',
+    name: 'المرصد الوطني للتعدين',
+    category: 'energy',
+    views: 56000,
+    lastUpdated: 'مباشر',
+    isFavorite: true,
+    color: 'amber',
+    trend: 24,
+    type: 'official',
+    description: 'خريطة تفاعلية للموارد المعدنية، الرخص التعدينية، وحجم الإنتاج الفعلي. تغطي جميع المناطق الإدارية مع تفاصيل عن أنواع المعادن والإنتاج السنوي.',
+    keyMetrics: ['الرخص النشطة', 'إنتاج الذهب', 'الاستكشاف'],
+    dataFreq: 'daily',
+    publisher: 'وزارة الصناعة والثروة المعدنية',
+    contributors: ['هيئة المساحة الجيولوجية'],
+    createdDate: '2024-03-01',
+    updatedDate: '2025-02-03',
+    license: 'رخصة البيانات المفتوحة',
+    language: 'العربية',
+    downloads: 2890,
+    rating: 4
+  },
+  ...Array.from({ length: 27 }).map((_, i) => {
+    const catsLines = [
+      { c: 'economy', desc: 'متابعة الأداء الاقتصادي الكلي ومؤشرات النمو والناتج المحلي.', metrics: ['GDP', 'الدين العام', 'الايرادات'] },
+      { c: 'energy', desc: 'إحصائيات تفصيلية لاستهلاك وتصدير الطاقة ومشاريع الطاقة المتجددة.', metrics: ['الإنتاج', 'الصادرات', 'الاستهلاك المحلي'] },
+      { c: 'real_estate', desc: 'رصد دقيق لحركة السوق العقاري والصفقات وكود البناء.', metrics: ['المبيعات', 'المتوسط السعري', 'المخططات'] },
+      { c: 'investment', desc: 'تحليل الفرص الاستثمارية ونمو الشركات وتسهيلات الأعمال.', metrics: ['السجلات', 'رأس المال', 'النمو'] },
+      { c: 'labor', desc: 'مؤشرات التوطين ومعدلات البطالة ومتوسط الأجور في القطاع الخاص.', metrics: ['معدل البطالة', 'الرواتب', 'القوى العاملة'] }
+    ];
+    const item = catsLines[i % catsLines.length];
+    const colors = ['blue', 'green', 'amber', 'purple', 'rose', 'indigo', 'cyan'];
+    const names = [
+      'تقرير سوق العمل المتعمق', 'التبادل التجاري الدولي', 'أداء القطاع الصناعي', 'مشاريع سكني', 'السياحة الوافدة',
+      'التجارة الإلكترونية', 'الشركات الصغيرة والمتوسطة', 'القطاع المالي والمصرفي', 'سلاسل الإمداد والخدمات اللوجستية',
+      'التعليم وسوق العمل', 'الرعاية الصحية', 'التحول الرقمي الحكومي', 'منظومة النقل', 'الأمن الغذائي والزراعة',
+      'قطاع الترفيه وجودة الحياة', 'أسواق المال وتداول', 'الطاقة المتجددة', 'المحتوى المحلي',
+    ];
+
+    return {
+      id: `dash_${i + 4}`,
+      name: names[i % 18] + ` ${2025}`,
+      category: item.c,
+      views: Math.floor(Math.random() * 50000) + 1000,
+      lastUpdated: ['منذ ساعة', 'منذ يومين', 'أسبوعي', 'شهري'][i % 4],
+      isFavorite: Math.random() > 0.8,
+      color: colors[i % colors.length],
+      trend: Math.floor(Math.random() * 30) - 5,
+      type: 'official' as const,
+      description: item.desc,
+      keyMetrics: item.metrics,
+      dataFreq: (['daily', 'monthly', 'quarterly'] as const)[i % 3],
+      publisher: 'الهيئة العامة للإحصاء',
+      contributors: ['وزارة الاقتصاد والتخطيط'],
+      createdDate: '2024-01-01',
+      updatedDate: '2025-01-15',
+      license: 'رخصة البيانات المفتوحة',
+      language: 'العربية',
+      downloads: Math.floor(Math.random() * 5000) + 500,
+      rating: Math.floor(Math.random() * 2) + 4
+    };
+  })
+];
+
+const DATASET_TAGS = [
+  { label: 'Investment', lang: 'en' },
+  { label: 'Economy', lang: 'en' },
+  { label: 'Statistics', lang: 'en' },
+  { label: 'الاستثمار', lang: 'ar' },
+  { label: 'الاقتصاد', lang: 'ar' },
+];
+
+const ACTIVITY_DATA = [
+  { date: '2024-09', views: 120, downloads: 45 },
+  { date: '2024-10', views: 132, downloads: 55 },
+  { date: '2024-11', views: 101, downloads: 40 },
+  { date: '2024-12', views: 154, downloads: 60 },
+  { date: '2025-01', views: 190, downloads: 85 },
+  { date: '2025-02', views: 230, downloads: 100 },
+];
+
+// ============================================
+// SUB-COMPONENTS
+// ============================================
+
+// --- Accordion Item ---
+const AccordionItem: React.FC<{
+  title: string;
+  isOpen: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ title, isOpen, onClick, children }) => (
+  <div className="border border-gray-200 rounded-lg mb-3 overflow-hidden">
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+    >
+      <span className="font-bold text-gray-700">{title}</span>
+      {isOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+    </button>
+    {isOpen && (
+      <div className="p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-600">
+        {children}
+      </div>
+    )}
+  </div>
+);
+
+// --- Activity Chart ---
+const ActivityChart: React.FC = () => (
+  <div className="h-64 w-full mt-4" dir="ltr">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={ACTIVITY_DATA}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+        <XAxis
+          dataKey="date"
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <RechartsTooltip
+          cursor={{ fill: '#F3F4F6' }}
+          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+        />
+        <RechartsBar dataKey="downloads" fill="#003F70" radius={[4, 4, 0, 0]} barSize={20} name="التنزيلات" />
+        <RechartsBar dataKey="views" fill="#00A3E0" radius={[4, 4, 0, 0]} barSize={20} name="المشاهدات" />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+// --- Metric Card ---
+const MetricCard: React.FC<{
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  icon: React.ReactNode;
+  color: string;
+}> = ({ title, value, change, isPositive, icon, color }) => {
+  const bgColors: Record<string, string> = {
+    blue: 'bg-blue-50',
+    emerald: 'bg-emerald-50',
+    amber: 'bg-amber-50',
+    indigo: 'bg-indigo-50',
+  };
+
+  return (
+    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-2 rounded-lg ${bgColors[color] || 'bg-gray-50'}`}>
+          {icon}
+        </div>
+        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {isPositive ? <TrendingUp size={12} /> : <TrendingUp size={12} className="rotate-180" />}
+          {change}
+        </div>
+      </div>
+      <div>
+        <p className="text-gray-500 text-sm mb-1">{title}</p>
+        <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+      </div>
+    </div>
+  );
+};
+
+// --- Comments Section ---
+interface Comment {
+  id: number;
+  user: string;
+  role?: string;
+  date: string;
+  content: string;
+  replies?: number;
+}
+
+const INITIAL_COMMENTS: Comment[] = [
+  {
+    id: 1,
+    user: "عبدالله العتيبي",
+    role: "باحث بيانات",
+    date: "منذ ساعتين",
+    content: "هل هذه البيانات تشمل العمليات التجارية للمناطق الحرة؟ أبحث عن تفاصيل التصدير وإعادة التصدير تحديداً.",
+    replies: 1
+  },
+  {
+    id: 2,
+    user: "سارة محمد",
+    date: "منذ يوم واحد",
+    content: "شكراً على توفير البيانات. نلاحظ تحسناً كبيراً في جودة البيانات الوصفية مقارنة بالشهر الماضي.",
+    replies: 0
+  },
+  {
+    id: 3,
+    user: "فريق البيانات المفتوحة",
+    role: "مسؤول",
+    date: "منذ يومين",
+    content: "مرحباً بالجميع، تم تحديث ملف البيانات ليشمل الأعمدة الناقصة التي تم الإبلاغ عنها سابقاً.",
+    replies: 5
+  }
+];
+
+const CommentsSection: React.FC = () => {
+  const [comments, setComments] = useState<Comment[]>(INITIAL_COMMENTS);
+  const [newComment, setNewComment] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const comment: Comment = {
+      id: Date.now(),
+      user: "مستخدم جديد",
+      date: "الآن",
+      content: newComment,
+      replies: 0
+    };
+
+    setComments([comment, ...comments]);
+    setNewComment('');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <MessageSquare className="text-blue-700" size={24} />
+          التعليقات والمناقشات
+          <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{comments.length}</span>
+        </h3>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">إضافة تعليق جديد</label>
+            <textarea
+              id="comment"
+              rows={3}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none resize-none text-sm"
+              placeholder="شاركنا رأيك أو استفسارك حول هذه البيانات..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={!newComment.trim()}
+              className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Send size={16} />
+              نشر التعليق
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="space-y-4">
+        {comments.map((comment) => (
+          <div key={comment.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start gap-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${comment.role === 'مسؤول' ? 'bg-blue-700' : 'bg-gray-300'}`}>
+                {comment.role === 'مسؤول' ? <User size={18} /> : comment.user.charAt(0)}
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-800">{comment.user}</span>
+                    {comment.role && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${comment.role === 'مسؤول' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {comment.role}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-400">{comment.date}</span>
+                </div>
+
+                <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                  {comment.content}
+                </p>
+
+                <div className="flex items-center gap-4 border-t border-gray-50 pt-3">
+                  <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-700 transition-colors">
+                    <Reply size={14} />
+                    رد
+                  </button>
+                  {comment.replies ? (
+                    <button className="text-xs text-blue-700 font-medium hover:underline">
+                      عرض {comment.replies} ردود
+                    </button>
+                  ) : null}
+                  <button className="mr-auto text-gray-400 hover:text-gray-600">
+                    <MoreHorizontal size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- Reviews Section ---
+interface Review {
+  id: number;
+  user: string;
+  rating: number;
+  date: string;
+  content: string;
+  helpfulCount: number;
+}
+
+const INITIAL_REVIEWS: Review[] = [
+  {
+    id: 1,
+    user: "محمد السالم",
+    rating: 5,
+    date: "2025-01-15",
+    content: "بيانات دقيقة وشاملة للغاية، ساعدتني كثيراً في البحث الاقتصادي.",
+    helpfulCount: 12
+  },
+  {
+    id: 2,
+    user: "خالد العنزي",
+    rating: 4,
+    date: "2025-01-10",
+    content: "المحتوى ممتاز ولكن التنسيق يحتاج إلى بعض التحسين لتسهيل المعالجة الآلية.",
+    helpfulCount: 5
+  },
+  {
+    id: 3,
+    user: "User_882",
+    rating: 5,
+    date: "2025-01-02",
+    content: "تحديث سريع وممتاز.",
+    helpfulCount: 2
+  }
+];
+
+const ReviewsSection: React.FC = () => {
+  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+  const [newRating, setNewRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [newReviewText, setNewReviewText] = useState('');
+
+  const totalReviews = reviews.length;
+  const averageRating = (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviews).toFixed(1);
+
+  const distribution = [5, 4, 3, 2, 1].map(stars => {
+    const count = reviews.filter(r => r.rating === stars).length;
+    const percentage = (count / totalReviews) * 100;
+    return { stars, count, percentage };
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newRating === 0) return;
+
+    const review: Review = {
+      id: Date.now(),
+      user: "مستخدم",
+      rating: newRating,
+      date: new Date().toISOString().split('T')[0],
+      content: newReviewText,
+      helpfulCount: 0
+    };
+
+    setReviews([review, ...reviews]);
+    setNewRating(0);
+    setNewReviewText('');
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-8 items-center">
+        <div className="flex flex-col items-center justify-center min-w-[150px]">
+          <div className="text-5xl font-bold text-gray-800 mb-2">{averageRating}</div>
+          <div className="flex text-yellow-400 mb-2">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star key={s} size={20} fill={s <= Math.round(Number(averageRating)) ? "currentColor" : "none"} className={s > Math.round(Number(averageRating)) ? "text-gray-300" : ""} />
+            ))}
+          </div>
+          <div className="text-sm text-gray-500">{totalReviews} تقييم</div>
+        </div>
+
+        <div className="flex-1 w-full space-y-2">
+          {distribution.map((item) => (
+            <div key={item.stars} className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1 w-12 text-gray-600 font-medium">
+                {item.stars} <Star size={12} className="text-gray-400" />
+              </div>
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-400 rounded-full"
+                  style={{ width: `${item.percentage}%` }}
+                />
+              </div>
+              <div className="w-8 text-left text-gray-400 text-xs">
+                {item.percentage > 0 ? `${Math.round(item.percentage)}%` : '0%'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+        <h3 className="font-bold text-gray-800 mb-4">أضف تقييمك</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 ml-2">التقييم العام:</span>
+              <div className="flex gap-1" onMouseLeave={() => setHoveredRating(0)}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewRating(star)}
+                    onMouseEnter={() => setHoveredRating(star)}
+                    className="focus:outline-none transition-colors"
+                  >
+                    <Star
+                      size={28}
+                      className={(hoveredRating || newRating) >= star ? "text-yellow-400" : "text-gray-300"}
+                      fill={(hoveredRating || newRating) >= star ? "currentColor" : "none"}
+                    />
+                  </button>
+                ))}
+              </div>
+              <span className="text-sm font-medium text-yellow-600 mr-2">
+                {newRating > 0 ? (newRating === 5 ? "ممتاز" : newRating === 4 ? "جيد جداً" : newRating === 3 ? "جيد" : newRating === 2 ? "مقبول" : "ضعيف") : ""}
+              </span>
+            </div>
+
+            <textarea
+              rows={3}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none resize-none text-sm bg-white"
+              placeholder="اكتب تجربتك مع هذه المجموعة من البيانات..."
+              value={newReviewText}
+              onChange={(e) => setNewReviewText(e.target.value)}
+            />
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={newRating === 0}
+                className="bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                إرسال التقييم
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div className="space-y-6">
+        <h3 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-2">جميع المراجعات ({totalReviews})</h3>
+
+        {reviews.map((review) => (
+          <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                  <User size={16} />
+                </div>
+                <div>
+                  <div className="font-bold text-gray-800 text-sm">{review.user}</div>
+                  <div className="flex text-yellow-400 text-xs mt-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={12} fill={s <= review.rating ? "currentColor" : "none"} className={s > review.rating ? "text-gray-300" : ""} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">{review.date}</span>
+            </div>
+
+            <p className="text-gray-600 text-sm mt-3 mb-4 leading-relaxed">
+              {review.content || <span className="text-gray-400 italic">بدون تعليق نصي</span>}
+            </p>
+
+            <div className="flex items-center gap-4">
+              <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-700 transition-colors group">
+                <ThumbsUp size={14} className="group-hover:scale-110 transition-transform" />
+                مفيد ({review.helpfulCount})
+              </button>
+              <button className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                إبلاغ
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- Dashboard Embed (Charts) ---
+const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard }) => {
+  const lineChartData = {
+    labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+    datasets: [
+      {
+        label: 'حجم الاستثمار (مليار ريال)',
+        data: [150, 165, 180, 210, 245, 280],
+        borderColor: '#003F70',
+        backgroundColor: 'rgba(0, 63, 112, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#003F70',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ],
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        align: 'end' as const,
+        labels: { font: { family: 'inherit' }, boxWidth: 10, usePointStyle: true },
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#1f2937',
+        bodyColor: '#4b5563',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: false,
+      },
+    },
+    scales: {
+      y: { grid: { color: '#f3f4f6' }, border: { display: false }, beginAtZero: false },
+      x: { grid: { display: false }, border: { display: false } },
+    },
+    interaction: { mode: 'nearest' as const, axis: 'x' as const, intersect: false },
+  };
+
+  const doughnutChartData = {
+    labels: ['سكني', 'تجاري', 'مكتبي', 'صناعي', 'أخرى'],
+    datasets: [
+      {
+        data: [45, 25, 15, 10, 5],
+        backgroundColor: ['#003F70', '#3B82F6', '#10B981', '#F59E0B', '#94A3B8'],
+        borderWidth: 0,
+        hoverOffset: 4,
+      },
+    ],
+  };
+
+  const doughnutChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: { position: 'right' as const, labels: { font: { family: 'inherit', size: 12 }, usePointStyle: true, padding: 20 } },
+      tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        bodyColor: '#4b5563',
+        borderColor: '#e5e7eb',
+        borderWidth: 1,
+        callbacks: { label: (context: any) => ` ${context.label}: ${context.raw}%` }
+      },
+    },
+  };
+
+  const barChartData = {
+    labels: ['الرياض', 'مكة المكرمة', 'الشرقية', 'المدينة', 'عسير'],
+    datasets: [
+      { label: 'عدد الصفقات (بالآلاف)', data: [120, 95, 78, 45, 30], backgroundColor: '#3B82F6', borderRadius: 4, barThickness: 24 },
+      { label: 'متوسط السعر (مليون ريال)', data: [2.5, 1.8, 1.5, 1.2, 0.9], backgroundColor: '#003F70', borderRadius: 4, barThickness: 24 },
+    ],
+  };
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' as const, align: 'end' as const, labels: { font: { family: 'inherit' }, usePointStyle: true, boxWidth: 8 } },
+      tooltip: { backgroundColor: 'rgba(255, 255, 255, 0.9)', titleColor: '#1f2937', bodyColor: '#4b5563', borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 8 },
+    },
+    scales: {
+      y: { grid: { color: '#f3f4f6' }, border: { display: false } },
+      x: { grid: { display: false }, border: { display: false } },
+    },
+  };
+
+  return (
+    <div className="bg-gray-50 min-h-[600px] p-6 rounded-xl">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <BarChart3 className="text-blue-700" />
+            تحليل {dashboard.name}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">نظرة شاملة على مؤشرات الأداء والتحليلات التفصيلية</p>
+        </div>
+        <div className="flex gap-2">
+          <span className="bg-white px-3 py-1 rounded-full text-xs font-semibold text-gray-600 border border-gray-200">
+            آخر تحديث: {dashboard.lastUpdated}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <MetricCard title="إجمالي التداولات" value="280 مليار" change="+14.2%" isPositive={true} icon={<Wallet className="text-blue-600" size={20} />} color="blue" />
+        <MetricCard title="عدد الصفقات" value="345,000" change="+5.8%" isPositive={true} icon={<Building2 className="text-emerald-600" size={20} />} color="emerald" />
+        <MetricCard title="متوسط سعر المتر" value="4,200 ريال" change="-2.1%" isPositive={false} icon={<MapPin className="text-amber-600" size={20} />} color="amber" />
+        <MetricCard title="المشاريع الجديدة" value="1,240" change="+8.5%" isPositive={true} icon={<TrendingUp className="text-indigo-600" size={20} />} color="indigo" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-800">نمو حجم الاستثمار</h3>
+            <button className="text-gray-400 hover:text-blue-700 transition-colors"><ArrowUpRight size={18} /></button>
+          </div>
+          <div className="h-[300px]">
+            <Line data={lineChartData} options={lineChartOptions as any} />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-800">توزيع القطاعات</h3>
+            <PieChart className="text-gray-400" size={18} />
+          </div>
+          <div className="h-[300px] flex items-center justify-center relative">
+            <Doughnut data={doughnutChartData} options={doughnutChartOptions as any} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-gray-800">100%</span>
+              <span className="text-xs text-gray-400">الإجمالي</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-3 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-800">حركة السوق حسب المناطق</h3>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-blue-500"></span>صفقات</div>
+              <div className="flex items-center gap-1 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-blue-900"></span>أسعار</div>
+            </div>
+          </div>
+          <div className="h-[300px]">
+            <Bar data={barChartData} options={barChartOptions as any} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Dataset Content ---
+const DatasetContent: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard }) => {
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    publisher: true,
+    meta: true,
+    sources: false,
+    classifications: false,
+  });
+
+  const toggleAccordion = (key: string) => {
+    setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <h2 className="text-2xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+          عن مجموعة البيانات
+        </h2>
+        <div className="prose prose-lg text-gray-600 leading-relaxed max-w-none">
+          <p>{dashboard.description}</p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">البيانات الوصفية</h2>
+
+        <AccordionItem title="الناشر" isOpen={openAccordions.publisher} onClick={() => toggleAccordion('publisher')}>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
+              <span className="text-gray-500">الناشر الأساسي</span>
+              <span className="font-semibold text-gray-800">{dashboard.publisher}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
+              <span className="text-gray-500">الجهات المشاركة</span>
+              <span className="font-semibold text-gray-800 text-left">{dashboard.contributors?.join('، ')}</span>
+            </div>
+          </div>
+        </AccordionItem>
+
+        <AccordionItem title="تفاصيل إضافية" isOpen={openAccordions.meta} onClick={() => toggleAccordion('meta')}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500">تاريخ الإنشاء</span>
+              <span className="font-medium" dir="ltr">{dashboard.createdDate}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500">تاريخ التحديث</span>
+              <span className="font-medium" dir="ltr">{dashboard.updatedDate}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500">تكرار البيانات</span>
+              <span className="font-medium">{dashboard.dataFreq === 'daily' ? 'يومي' : dashboard.dataFreq === 'monthly' ? 'شهري' : dashboard.dataFreq === 'quarterly' ? 'ربع سنوي' : 'سنوي'}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500">رابط المصدر</span>
+              <a href="#" className="flex items-center gap-1 text-blue-700 hover:underline">
+                زيارة الموقع
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
+        </AccordionItem>
+
+        <AccordionItem title="المصادر" isOpen={openAccordions.sources} onClick={() => toggleAccordion('sources')}>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
+              <span className="text-gray-500">اسم المصدر</span>
+              <span className="font-semibold text-gray-800">بوابة البيانات الوطنية</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
+              <span className="text-gray-500">رابط الوصول</span>
+              <a href="#" className="flex items-center gap-1 text-blue-700 hover:underline">
+                عرض المصدر
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
+        </AccordionItem>
+
+        <AccordionItem title="التصنيفات" isOpen={openAccordions.classifications} onClick={() => toggleAccordion('classifications')}>
+          <div className="flex flex-col gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">المواضيع</h4>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm border border-blue-100">{DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label}</span>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">الكلمات المفتاحية</h4>
+              <div className="flex flex-wrap gap-2">
+                {dashboard.keyMetrics.map((metric, idx) => (
+                  <span key={idx} className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded">{metric}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </AccordionItem>
+      </section>
+
+      <section className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">نظرة عامة على النشاط</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
+            <div className="bg-white p-3 rounded-full shadow-sm text-blue-600"><Eye size={24} /></div>
+            <div>
+              <div className="text-2xl font-bold text-gray-800">{(dashboard.views / 1000).toFixed(1)}k</div>
+              <div className="text-sm text-gray-500">المشاهدات</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
+            <div className="bg-white p-3 rounded-full shadow-sm text-blue-700"><Download size={24} /></div>
+            <div>
+              <div className="text-2xl font-bold text-gray-800">{dashboard.downloads?.toLocaleString()}</div>
+              <div className="text-sm text-gray-500">التنزيلات</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
+            <div className="bg-white p-3 rounded-full shadow-sm text-yellow-500"><Star size={24} /></div>
+            <div>
+              <div className="text-2xl font-bold text-gray-800">{dashboard.rating}</div>
+              <div className="text-sm text-gray-500">التقييم</div>
+            </div>
+          </div>
+        </div>
+
+        <ActivityChart />
+      </section>
+
+      <section className="bg-gray-50 rounded-xl p-6 border border-gray-200 flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-gray-800 mb-1">تقييم محتوى الصفحة</h3>
+          <p className="text-sm text-gray-500">ساعدنا في تحسين جودة البيانات المفتوحة</p>
+        </div>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button key={star} className="text-gray-300 hover:text-yellow-400 transition-colors">
+              <Star size={28} fill="currentColor" />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// ============================================
+// MAIN PAGE COMPONENT
+// ============================================
+
+const TABS = [
+  { id: 'dataset', label: 'معلومات البيانات' },
+  { id: 'dashboard', label: 'بيانات الرادار' },
+  { id: 'comments', label: 'التعليقات' },
+  { id: 'reviews', label: 'التقييم والمراجعة' },
+];
+
+const DashboardDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('dataset');
+
+  const dashboard = useMemo(() => {
+    return MOCK_DASHBOARDS.find(d => d.id === id);
+  }, [id]);
+
+  if (!dashboard) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <Database size={64} className="text-gray-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">اللوحة غير موجودة</h2>
+          <p className="text-gray-500 mb-6">لم نتمكن من العثور على اللوحة المطلوبة</p>
+          <button
+            onClick={() => navigate('/dashboards')}
+            className="bg-blue-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors"
+          >
+            العودة إلى اللوحات
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isFullWidthTab = activeTab === 'dashboard';
+
+  const getCategoryIcon = () => {
+    switch (dashboard.category) {
+      case 'economy': return <Landmark size={48} className="text-blue-300" />;
+      case 'energy': return <Zap size={48} className="text-blue-300" />;
+      case 'investment': return <TrendingUp size={48} className="text-blue-300" />;
+      case 'real_estate': return <Building2 size={48} className="text-blue-300" />;
+      case 'labor': return <Briefcase size={48} className="text-blue-300" />;
+      default: return <Database size={48} className="text-blue-300" />;
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 font-sans text-right pb-8" dir="rtl">
+
+      {/* Hero Section */}
+      <div className="bg-blue-700 text-white pt-8 pb-12 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-sm text-blue-200 mb-6">
+            <a href="#/" className="hover:text-white transition-colors">الرئيسية</a>
+            <ChevronLeft size={14} />
+            <a href="#/dashboards" className="hover:text-white transition-colors">اللوحات الرسمية</a>
+            <ChevronLeft size={14} />
+            <span className="text-white font-medium">{dashboard.name}</span>
+          </nav>
+
+          {/* Title Area */}
+          <div className="flex flex-col md:flex-row gap-6 items-start">
+            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+              {getCategoryIcon()}
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+                {dashboard.name}
+              </h1>
+              <div className="flex flex-wrap gap-4 text-sm text-blue-100">
+                <span className={`px-3 py-1 rounded-full border ${dashboard.dataFreq === 'daily' ? 'bg-green-500/20 text-green-200 border-green-500/30' : 'bg-blue-500/20 text-blue-200 border-blue-500/30'}`}>
+                  {dashboard.dataFreq === 'daily' ? 'محدثة مباشرة' : 'محدثة'}
+                </span>
+                <span className="flex items-center gap-2">
+                  • {DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 bg-white sticky top-0 z-30">
+        <div className="container mx-auto px-4">
+          <div className="flex gap-8 overflow-x-auto no-scrollbar">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-blue-700 text-blue-700'
+                  : 'border-transparent text-gray-500 hover:text-blue-700 hover:border-gray-300'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className={`flex flex-col ${isFullWidthTab ? '' : 'lg:flex-row'} gap-8`}>
+
+          {/* Main Content Area */}
+          <div className={`w-full ${isFullWidthTab ? '' : 'lg:w-2/3'} order-2 lg:order-1`}>
+            {activeTab === 'dataset' ? (
+              <DatasetContent dashboard={dashboard} />
+            ) : activeTab === 'dashboard' ? (
+              <DashboardEmbed dashboard={dashboard} />
+            ) : activeTab === 'comments' ? (
+              <CommentsSection />
+            ) : activeTab === 'reviews' ? (
+              <ReviewsSection />
+            ) : (
+              <div className="p-12 text-center text-gray-400 bg-white rounded-xl border border-gray-200">
+                <p className="text-lg">المحتوى قيد التطوير لهذا التبويب</p>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar (Only shown if NOT full width tab) */}
+          {!isFullWidthTab && (
+            <aside className="w-full lg:w-1/3 order-1 lg:order-2">
+              <div className="flex flex-col gap-6">
+                {/* Main Info Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-700">
+                    خصائص البيانات
+                  </div>
+
+                  <div className="divide-y divide-gray-50">
+                    <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><Star size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">التقييم</span>
+                      </div>
+                      <div className="flex text-yellow-400">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} size={16} fill={s <= (dashboard.rating || 0) ? "currentColor" : "none"} className={s > (dashboard.rating || 0) ? "text-gray-300" : ""} />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Download size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">عدد التحميلات</span>
+                      </div>
+                      <span className="font-bold text-gray-800">{dashboard.downloads?.toLocaleString()}</span>
+                    </div>
+
+                    <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><Globe size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">لغة البيانات</span>
+                      </div>
+                      <span className="font-bold text-gray-800">{dashboard.language}</span>
+                    </div>
+
+                    <div className="p-4 flex flex-col gap-3 group hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 text-green-600 rounded-lg"><ShieldCheck size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">الرخصة</span>
+                      </div>
+                      <a href="#" className="text-xs text-blue-700 hover:underline mr-11">
+                        {dashboard.license}
+                      </a>
+                    </div>
+
+                    <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><RefreshCw size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">التحديث الدوري</span>
+                      </div>
+                      <span className="font-bold text-gray-800">
+                        {dashboard.dataFreq === 'daily' ? 'يومي' : dashboard.dataFreq === 'monthly' ? 'شهري' : dashboard.dataFreq === 'quarterly' ? 'ربع سنوي' : 'سنوي'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tags Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 flex items-center gap-2">
+                    <Tag size={18} />
+                    الوسوم
+                  </div>
+                  <div className="p-4 flex flex-wrap gap-2">
+                    {DATASET_TAGS.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${tag.lang === 'en'
+                          ? 'bg-gray-50 text-gray-600 border-gray-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-100'
+                          }`}
+                      >
+                        {tag.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Back Button */}
+                <button
+                  onClick={() => navigate('/dashboards')}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors"
+                >
+                  <ArrowRight size={18} />
+                  العودة إلى اللوحات
+                </button>
+              </div>
+            </aside>
+          )}
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default DashboardDetailPage;
