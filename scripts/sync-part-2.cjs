@@ -1,21 +1,14 @@
 /**
  * Parallel Sync - Part 2 of 5
  * Categories 11-20
- *
- * يحفظ النتائج في Database مباشرة
  */
 
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const puppeteer = require('puppeteer');
 const { Pool } = require('pg');
-
-puppeteer.use(StealthPlugin());
 
 const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres.udtuzktclvvjaqffvnfp:NiYqO4slVgX9k26s@aws-1-eu-west-1.pooler.supabase.com:6543/postgres";
 const BASE_URL = 'https://open.data.gov.sa';
 const PAGE_SIZE = 100;
-const FETCH_RESOURCES = true;
-const RESOURCE_DELAY = 150;
 
 // Part 2: Categories 11-20
 const CATEGORIES = [
@@ -37,7 +30,14 @@ const pool = new Pool({
   max: 3
 });
 
-let resourcesUpdated = 0;
+let totalSaved = 0;
+let cookies = '';
+let deviceFingerprint = '';
+let page = null;
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function saveDataset(ds) {
   const query = `
@@ -52,194 +52,158 @@ async function saveDataset(ds) {
   return pool.query(query, [ds.id, ds.titleEn || ds.title, ds.title, ds.description || '', ds.category, ds.sourceUrl]);
 }
 
-async function fetchDatasetDetails(page, datasetId) {
+async function fetchCategoryPage(categoryId, pageNum) {
+  const url = `${BASE_URL}/api/datasets/list?size=${PAGE_SIZE}&page=${pageNum}&sort=updatedAt,DESC`;
+
+  const headers = {
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'ar',
+    'content-language': 'ar',
+    'content-type': 'application/json',
+    'cookie': cookies,
+    'origin': BASE_URL,
+    'referer': `${BASE_URL}/ar/datasets`,
+    'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'x-device-fingerprint': deviceFingerprint
+  };
+
+  const body = JSON.stringify({
+    categories: [categoryId],
+    tags: [],
+    publishers: [],
+    formats: [],
+    languages: [],
+    datasetTypes: [],
+    publishDate: { fromDate: null, toDate: null }
+  });
+
   try {
-    return await page.evaluate(async (id, baseUrl) => {
+    const response = await page.evaluate(async (url, headers, body) => {
       try {
-        const response = await fetch(`${baseUrl}/api/datasets/${id}`, {
-          headers: { 'accept': 'application/json', 'accept-language': 'ar' }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: body,
+          credentials: 'include'
         });
-        if (!response.ok) return { error: `HTTP ${response.status}` };
-        const text = await response.text();
-        if (text.startsWith('<')) return { error: 'blocked' };
+
+        const text = await res.text();
+        if (text.startsWith('<')) {
+          return { error: 'blocked', status: res.status };
+        }
         return JSON.parse(text);
       } catch (e) {
         return { error: e.message };
       }
-    }, datasetId, BASE_URL);
-  } catch (e) {
-    return { error: e.message };
+    }, url, headers, body);
+
+    return response;
+  } catch (error) {
+    return { error: error.message };
   }
 }
 
-async function updateDatasetFull(externalId, apiResponse) {
-  const resources = apiResponse.resources || [];
-  const formattedResources = resources.map(r => ({
-    id: r.resourceID, url: r.url, name: r.name, format: r.format, columns: r.columns || []
-  }));
-  const csvResource = resources.find(r => r.format === 'CSV');
-  const columns = csvResource?.columns?.map(c => c.name) || [];
+async function syncCategory(category) {
+  const info = await fetchCategoryPage(category.id, 0);
 
-  const query = `
-    UPDATE datasets SET
-      name = $2, name_ar = $3, description = $4, description_ar = $5,
-      source = $6, resources = $7, columns = $8, metadata = $9, updated_at = NOW()
-    WHERE external_id = $1
-  `;
-  await pool.query(query, [
-    externalId, apiResponse.titleEn || '', apiResponse.titleAr || '',
-    apiResponse.descriptionEn || '', apiResponse.descriptionAr || '',
-    apiResponse.publisherNameAr || 'open.data.gov.sa',
-    JSON.stringify(formattedResources), JSON.stringify(columns), JSON.stringify(apiResponse)
-  ]);
-}
-
-async function fetchAndSaveResources(page, datasetId) {
-  const details = await fetchDatasetDetails(page, datasetId);
-  if (details.error) return false;
-  await updateDatasetFull(datasetId, details);
-  if ((details.resources || []).length > 0) resourcesUpdated++;
-  return true;
-}
-
-async function fetchCategoryPage(page, categoryId, pageNum) {
-  return page.evaluate(async (baseUrl, catId, pNum, pSize) => {
-    try {
-      const res = await fetch(`${baseUrl}/api/datasets/list?size=${pSize}&page=${pNum}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ categories: [catId] })
-      });
-      if (!res.ok) return { error: res.status };
-      const text = await res.text();
-      if (text.startsWith('<')) return { error: 'blocked' };
-      return JSON.parse(text);
-    } catch (e) {
-      return { error: e.message };
-    }
-  }, BASE_URL, categoryId, pageNum, PAGE_SIZE);
-}
-
-async function refreshSession(page) {
-  console.log('   🔄 Refreshing session...');
-  await page.goto(`${BASE_URL}/ar/datasets`, { waitUntil: 'networkidle2', timeout: 60000 });
-  await new Promise(r => setTimeout(r, 10000));
-}
-
-async function syncCategory(page, category) {
-  const info = await fetchCategoryPage(page, category.id, 0);
   if (info.error) {
     console.log(`   ⚠️ Error: ${info.error}`);
     return { saved: 0, error: info.error };
   }
+
   if (!info.totalElements) {
-    console.log(`   ⚠️ No data returned (totalElements missing)`);
-    console.log(`   📋 Response keys: ${Object.keys(info).join(', ')}`);
-    return { saved: 0, error: 'no_data' };
+    console.log(`   ⚠️ No data (totalElements: ${info.totalElements})`);
+    return { saved: 0, total: 0 };
   }
 
   const totalPages = Math.ceil(info.totalElements / PAGE_SIZE);
   let saved = 0;
 
   for (let p = 0; p < totalPages; p++) {
-    const pageData = p === 0 ? info : await fetchCategoryPage(page, category.id, p);
+    const pageData = p === 0 ? info : await fetchCategoryPage(category.id, p);
+
     if (pageData.error || !pageData.content) {
-      await refreshSession(page);
-      const retry = await fetchCategoryPage(page, category.id, p);
-      if (retry.error || !retry.content) break;
-      pageData.content = retry.content;
+      console.log(`   ⚠️ Page ${p} error, skipping...`);
+      continue;
     }
 
     for (const item of pageData.content || []) {
       const id = item.datasetID || item.datasetId || item.id;
       if (!id) continue;
+
       try {
         await saveDataset({
-          id, title: item.titleAr || item.titleEn || id, titleEn: item.titleEn || '',
-          description: item.descriptionAr || '', category: category.name,
+          id,
+          title: item.titleAr || item.titleEn || id,
+          titleEn: item.titleEn || '',
+          description: item.descriptionAr || '',
+          category: category.name,
           sourceUrl: `${BASE_URL}/ar/datasets/view/${id}`
         });
         saved++;
-        if (FETCH_RESOURCES) {
-          await fetchAndSaveResources(page, id);
-          await new Promise(r => setTimeout(r, RESOURCE_DELAY));
-        }
+        totalSaved++;
       } catch (e) {}
     }
-    await new Promise(r => setTimeout(r, 1000));
+
+    await delay(1000);
   }
+
   return { saved, total: info.totalElements };
 }
 
 async function main() {
-  console.log('═'.repeat(50));
+  console.log('══════════════════════════════════════════════════');
   console.log('🚀 PART 2/5 - Categories 11-20');
-  console.log('═'.repeat(50));
+  console.log('══════════════════════════════════════════════════');
 
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-infobars',
-      '--window-size=1920,1080'
-    ]
-  });
-  const page = await browser.newPage();
-
-  // Stealth: Remove webdriver flag
-  await page.evaluateOnNewDocument(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-    Object.defineProperty(navigator, 'languages', { get: () => ['ar', 'en-US', 'en'] });
-    window.chrome = { runtime: {} };
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--window-size=1920,1080'],
   });
 
-  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-  await page.setExtraHTTPHeaders({
-    'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-  });
+  page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
   await page.setViewport({ width: 1920, height: 1080 });
 
-  console.log('🔐 Getting session...');
+  page.on('request', (request) => {
+    const headers = request.headers();
+    if (headers['x-device-fingerprint']) deviceFingerprint = headers['x-device-fingerprint'];
+  });
+
+  console.log('🔐 Getting session and cookies...');
   await page.goto(`${BASE_URL}/ar/datasets`, { waitUntil: 'networkidle2', timeout: 60000 });
-  console.log('⏳ Waiting for WAF bypass...');
-  await new Promise(r => setTimeout(r, 15000));
+  await delay(3000);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await delay(2000);
 
-  // Test API access
-  const testResult = await page.evaluate(async (baseUrl) => {
-    try {
-      const res = await fetch(`${baseUrl}/api/datasets/list?size=1&page=0`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ categories: [] })
-      });
-      const text = await res.text();
-      return { status: res.status, isHtml: text.startsWith('<'), sample: text.substring(0, 200) };
-    } catch (e) {
-      return { error: e.message };
-    }
-  }, BASE_URL);
-  console.log('🔍 API Test:', JSON.stringify(testResult));
+  const allCookies = await page.cookies();
+  cookies = allCookies.map(c => `${c.name}=${c.value}`).join('; ');
 
-  let total = 0;
+  const fpCookie = allCookies.find(c => c.name === 'device_fingerprint');
+  if (fpCookie && !deviceFingerprint) deviceFingerprint = fpCookie.value;
+  if (!deviceFingerprint) deviceFingerprint = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+  console.log(`   ✅ Got ${allCookies.length} cookies`);
+  console.log(`   🔑 Fingerprint: ${deviceFingerprint.substring(0, 16)}...`);
+
   for (let i = 0; i < CATEGORIES.length; i++) {
     const cat = CATEGORIES[i];
     console.log(`[${i + 1}/${CATEGORIES.length}] 📂 ${cat.name}`);
-    const result = await syncCategory(page, cat);
+    const result = await syncCategory(cat);
     console.log(`   ✅ ${result.saved}/${result.total || '?'}`);
-    total += result.saved;
-    if ((i + 1) % 3 === 0) await refreshSession(page);
-    await new Promise(r => setTimeout(r, 2000));
+    await delay(2000);
   }
 
   await browser.close();
-  console.log('═'.repeat(50));
-  console.log(`✅ PART 2 COMPLETE - ${total} datasets, ${resourcesUpdated} resources`);
-  console.log('═'.repeat(50));
+  console.log('══════════════════════════════════════════════════');
+  console.log(`✅ PART 2 COMPLETE - ${totalSaved} datasets saved`);
+  console.log('══════════════════════════════════════════════════');
   await pool.end();
 }
 
