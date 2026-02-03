@@ -125,7 +125,15 @@ async function refreshSession(page) {
 
 async function syncCategory(page, category) {
   const info = await fetchCategoryPage(page, category.id, 0);
-  if (info.error || !info.totalElements) return { saved: 0, error: info.error };
+  if (info.error) {
+    console.log(`   ⚠️ Error: ${info.error}`);
+    return { saved: 0, error: info.error };
+  }
+  if (!info.totalElements) {
+    console.log(`   ⚠️ No data returned (totalElements missing)`);
+    console.log(`   📋 Response keys: ${Object.keys(info).join(', ')}`);
+    return { saved: 0, error: 'no_data' };
+  }
 
   const totalPages = Math.ceil(info.totalElements / PAGE_SIZE);
   let saved = 0;
@@ -174,7 +182,24 @@ async function main() {
 
   console.log('🔐 Getting session...');
   await page.goto(`${BASE_URL}/ar/datasets`, { waitUntil: 'networkidle2', timeout: 60000 });
-  await new Promise(r => setTimeout(r, 5000));
+  console.log('⏳ Waiting for WAF bypass...');
+  await new Promise(r => setTimeout(r, 15000));
+
+  // Test API access
+  const testResult = await page.evaluate(async (baseUrl) => {
+    try {
+      const res = await fetch(`${baseUrl}/api/datasets/list?size=1&page=0`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ categories: [] })
+      });
+      const text = await res.text();
+      return { status: res.status, isHtml: text.startsWith('<'), sample: text.substring(0, 200) };
+    } catch (e) {
+      return { error: e.message };
+    }
+  }, BASE_URL);
+  console.log('🔍 API Test:', JSON.stringify(testResult));
 
   let total = 0;
   for (let i = 0; i < CATEGORIES.length; i++) {
