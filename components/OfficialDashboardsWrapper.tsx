@@ -48,19 +48,19 @@ interface OfficialDashboardsWrapperProps {
     userRole: UserRole;
 }
 
-const CATEGORIES = [
-    { id: 'all', label: 'الكل' },
-    { id: 'economy', label: 'الاقتصاد' },
-    { id: 'real_estate', label: 'العقار' },
-    { id: 'investment', label: 'الاستثمار' },
-    { id: 'energy', label: 'الطاقة' },
-    { id: 'labor', label: 'سوق العمل' },
-];
+interface APICategory {
+    id: string;
+    label: string;
+    labelEn: string;
+    count: number;
+}
 
 const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ userRole }) => {
     const navigate = useNavigate();
     const [dashboards, setDashboards] = useState<APIDashboard[]>([]);
+    const [categories, setCategories] = useState<APICategory[]>([]);
     const [loading, setLoading] = useState(true);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -68,6 +68,21 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+
+    const fetchCategories = async () => {
+        setCategoriesLoading(true);
+        try {
+            const response = await api.getDashboardCategories();
+            if (response.success && response.data) {
+                setCategories(response.data as APICategory[]);
+            }
+        } catch (err) {
+            console.error('Error fetching categories:', err);
+        } finally {
+            setCategoriesLoading(false);
+        }
+    };
 
     const fetchDashboards = async () => {
         setLoading(true);
@@ -84,6 +99,7 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                 setDashboards(response.data as APIDashboard[]);
                 if (response.meta) {
                     setTotalPages(response.meta.totalPages || 1);
+                    setTotalCount(response.meta.total || 0);
                 }
             } else {
                 setError('تعذر جلب اللوحات');
@@ -95,6 +111,10 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         fetchDashboards();
@@ -148,7 +168,7 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                         اللوحات الرسمية
                     </h1>
                     <p className="text-gray-500">
-                        {loading ? 'جاري التحميل...' : `${filteredDashboards.length} لوحة بيانات متاحة`}
+                        {loading ? 'جاري التحميل...' : `${totalCount.toLocaleString()} لوحة بيانات متاحة`}
                     </p>
                 </div>
 
@@ -192,24 +212,41 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                 </div>
             </div>
 
-            {/* Categories */}
+            {/* Categories - Dynamic from API */}
             <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
-                {CATEGORIES.map(cat => (
-                    <button
-                        key={cat.id}
-                        onClick={() => {
-                            setSelectedCategory(cat.id);
-                            setPage(1);
-                        }}
-                        className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${
-                            selectedCategory === cat.id
-                                ? 'bg-blue-600 text-white shadow-lg'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                    >
-                        {cat.label}
-                    </button>
-                ))}
+                {categoriesLoading ? (
+                    <div className="flex gap-2">
+                        {[1,2,3,4,5].map(i => (
+                            <div key={i} className="h-10 w-24 bg-gray-100 rounded-xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    categories.map(cat => (
+                        <button
+                            key={`${cat.id}-${cat.label}`}
+                            onClick={() => {
+                                setSelectedCategory(cat.id === 'all' ? 'all' : cat.label);
+                                setPage(1);
+                            }}
+                            className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+                                (cat.id === 'all' && selectedCategory === 'all') ||
+                                (cat.id !== 'all' && selectedCategory === cat.label)
+                                    ? 'bg-blue-600 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                        >
+                            {cat.label}
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                (cat.id === 'all' && selectedCategory === 'all') ||
+                                (cat.id !== 'all' && selectedCategory === cat.label)
+                                    ? 'bg-white/20'
+                                    : 'bg-gray-200'
+                            }`}>
+                                {cat.count?.toLocaleString()}
+                            </span>
+                        </button>
+                    ))
+                )}
             </div>
 
             {/* Loading State */}
