@@ -53,6 +53,7 @@ interface APICategory {
     label: string;
     labelEn: string;
     count: number;
+    filterValue: string;
 }
 
 const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ userRole }) => {
@@ -225,20 +226,18 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                         <button
                             key={`${cat.id}-${cat.label}`}
                             onClick={() => {
-                                setSelectedCategory(cat.id === 'all' ? 'all' : cat.label);
+                                setSelectedCategory(cat.filterValue || cat.label);
                                 setPage(1);
                             }}
                             className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
-                                (cat.id === 'all' && selectedCategory === 'all') ||
-                                (cat.id !== 'all' && selectedCategory === cat.label)
+                                selectedCategory === (cat.filterValue || cat.label)
                                     ? 'bg-blue-600 text-white shadow-lg'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                         >
                             {cat.label}
                             <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                (cat.id === 'all' && selectedCategory === 'all') ||
-                                (cat.id !== 'all' && selectedCategory === cat.label)
+                                selectedCategory === (cat.filterValue || cat.label)
                                     ? 'bg-white/20'
                                     : 'bg-gray-200'
                             }`}>
