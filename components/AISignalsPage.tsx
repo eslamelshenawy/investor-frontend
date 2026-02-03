@@ -518,34 +518,18 @@ const AISignalsPage: React.FC = () => {
         try {
             console.log('🔄 WebFlux: Triggering signal generation...');
 
-            // Try to trigger analysis (this endpoint generates real signals)
-            const response = await fetch(`${API_BASE}/signals/analyze`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            // Use api service to include auth token automatically
+            const response = await api.post('/signals/analyze');
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ WebFlux: Signals generated:', data);
-
+            if (response.success) {
+                console.log('✅ WebFlux: Signals generated:', response.data);
                 // Reload signals after generation
                 await fetchSignals();
-            } else if (response.status === 401 || response.status === 403) {
-                // Try public generate endpoint
-                const publicResponse = await fetch(`${API_BASE}/sync/trigger`, {
-                    method: 'POST',
-                });
-
-                if (publicResponse.ok) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await fetchSignals();
-                } else {
-                    throw new Error('غير مصرح');
-                }
+            } else if (response.error?.includes('unauthorized') || response.error?.includes('Unauthorized')) {
+                // User not authorized - show appropriate message
+                setError('يجب تسجيل الدخول كمسؤول لتوليد الإشارات');
             } else {
-                throw new Error('فشل في توليد الإشارات');
+                throw new Error(response.errorAr || response.error || 'فشل في توليد الإشارات');
             }
         } catch (err) {
             console.error('❌ WebFlux: Generation failed:', err);
