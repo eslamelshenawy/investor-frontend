@@ -10,12 +10,8 @@ import {
     List,
     Star,
     Search,
-    Filter,
     BarChart2,
     ArrowUpRight,
-    Eye,
-    TrendingUp,
-    TrendingDown,
     Loader2,
     RefreshCw,
     Calendar,
@@ -32,16 +28,20 @@ interface APIDashboard {
     nameEn?: string;
     description: string;
     category: string;
+    categoryLabel?: string;
     source: string;
-    views: number;
-    lastUpdated: string;
-    isFavorite: boolean;
+    sourceUrl?: string;
     color: string;
-    trend: number;
-    keyMetrics: string[];
-    dataFreq: string;
+    // Real data from database
     recordCount: number;
+    columns: string[];
     syncStatus: string;
+    lastSyncAt: string | null;
+    lastUpdated: string | null;
+    createdAt: string;
+    updatedAt: string;
+    datasetId: string;
+    externalId?: string;
 }
 
 interface OfficialDashboardsWrapperProps {
@@ -279,34 +279,31 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                                             {dashboard.description}
                                         </p>
 
-                                        {/* Metrics */}
+                                        {/* Columns/Metrics from real data */}
                                         <div className="flex flex-wrap gap-2 mb-4">
-                                            {dashboard.keyMetrics.slice(0, 2).map((metric, i) => (
+                                            {(dashboard.columns || []).slice(0, 3).map((col, i) => (
                                                 <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
-                                                    {metric}
+                                                    {col}
                                                 </span>
                                             ))}
                                         </div>
 
-                                        {/* Footer */}
+                                        {/* Footer - Real data only */}
                                         <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-100">
                                             <div className="flex items-center gap-1">
-                                                <Eye size={14} />
-                                                <span>{dashboard.views.toLocaleString()}</span>
+                                                <Database size={14} />
+                                                <span>{(dashboard.recordCount || 0).toLocaleString()} سجل</span>
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                {dashboard.trend > 0 ? (
-                                                    <TrendingUp size={14} className="text-green-500" />
-                                                ) : (
-                                                    <TrendingDown size={14} className="text-red-500" />
-                                                )}
-                                                <span className={dashboard.trend > 0 ? 'text-green-600' : 'text-red-600'}>
-                                                    {dashboard.trend > 0 ? '+' : ''}{dashboard.trend}%
-                                                </span>
+                                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${
+                                                dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
+                                                dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
+                                                'bg-gray-100 text-gray-600'
+                                            }`}>
+                                                <span>{dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Calendar size={14} />
-                                                <span>{dashboard.lastUpdated}</span>
+                                                <span>{dashboard.lastUpdated || 'غير محدث'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -327,12 +324,15 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 shrink-0">
                                         <span className="flex items-center gap-1">
-                                            <Eye size={14} />
-                                            {dashboard.views.toLocaleString()}
+                                            <Database size={14} />
+                                            {(dashboard.recordCount || 0).toLocaleString()} سجل
                                         </span>
-                                        <span className={`flex items-center gap-1 ${dashboard.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {dashboard.trend > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                            {dashboard.trend}%
+                                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                                            dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
+                                            dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
+                                            'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}
                                         </span>
                                         <ArrowUpRight size={18} className="text-gray-400" />
                                     </div>
