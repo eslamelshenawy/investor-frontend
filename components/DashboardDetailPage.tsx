@@ -3,11 +3,11 @@
  * DASHBOARD DETAIL PAGE
  * ============================================
  *
- * صفحة تفاصيل اللوحة - تصميم مطابق للمثال
+ * صفحة تفاصيل اللوحة - تجلب البيانات من الـ API
  * تتضمن: Hero، تبويبات، Sidebar، محتوى تفاعلي
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -61,8 +61,10 @@ import {
   Landmark,
   Zap,
   Briefcase,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
+import { api } from '../src/services/api';
 
 // Register ChartJS components
 ChartJS.register(
@@ -79,22 +81,63 @@ ChartJS.register(
 );
 
 // ============================================
-// TYPES & MOCK DATA
+// TYPES
 // ============================================
 
-interface ExtendedDashboard {
+interface ActivityItem {
+  date: string;
+  views: number;
+  downloads: number;
+}
+
+interface Comment {
+  id: number | string;
+  user: string;
+  role?: string;
+  date: string;
+  content: string;
+  replies?: number;
+}
+
+interface Review {
+  id: number | string;
+  user: string;
+  rating: number;
+  date: string;
+  content: string;
+  helpfulCount: number;
+}
+
+interface ChartDataset {
+  label: string;
+  data: number[];
+  borderColor?: string;
+  backgroundColor?: string;
+  tension?: number;
+  fill?: boolean;
+}
+
+interface ChartConfig {
+  labels: string[];
+  datasets: ChartDataset[];
+}
+
+interface DashboardData {
   id: string;
   name: string;
+  nameEn?: string;
+  description: string;
   category: string;
+  source: string;
   views: number;
   lastUpdated: string;
   isFavorite: boolean;
   color: string;
   trend: number;
-  type: 'official' | 'user';
-  description: string;
   keyMetrics: string[];
-  dataFreq: 'daily' | 'monthly' | 'quarterly' | 'yearly';
+  dataFreq: string;
+  recordCount: number;
+  syncStatus: string;
   publisher?: string;
   contributors?: string[];
   createdDate?: string;
@@ -103,6 +146,15 @@ interface ExtendedDashboard {
   language?: string;
   downloads?: number;
   rating?: number;
+  // Data from API
+  activity?: ActivityItem[];
+  comments?: Comment[];
+  reviews?: Review[];
+  chartData?: {
+    line?: ChartConfig;
+    doughnut?: { labels: string[]; data: number[]; colors?: string[] };
+    bar?: ChartConfig;
+  };
 }
 
 const DASHBOARD_CATEGORIES = [
@@ -114,131 +166,6 @@ const DASHBOARD_CATEGORIES = [
   { id: 'labor', label: 'سوق العمل' }
 ];
 
-const MOCK_DASHBOARDS: ExtendedDashboard[] = [
-  {
-    id: 'odb1',
-    name: 'مؤشرات الاستثمار الأجنبي المباشر',
-    category: 'investment',
-    views: 45200,
-    lastUpdated: 'منذ ساعتين',
-    isFavorite: true,
-    color: 'blue',
-    trend: 12,
-    type: 'official',
-    description: 'رصد شامل لتدفقات الاستثمار الأجنبي وتوزيعها حسب القطاعات والمناطق الإدارية. تعتمد هذه اللوحة على بيانات وزارة الاستثمار والهيئة العامة للإحصاء لتقديم صورة شاملة عن حركة الاستثمارات الأجنبية في المملكة.',
-    keyMetrics: ['صافي الاستثمار', 'التراخيص الجديدة', 'توزيع الدول'],
-    dataFreq: 'quarterly',
-    publisher: 'وزارة الاستثمار',
-    contributors: ['الهيئة العامة للإحصاء', 'وزارة التجارة'],
-    createdDate: '2024-01-15',
-    updatedDate: '2025-02-01',
-    license: 'رخصة البيانات المفتوحة',
-    language: 'العربية',
-    downloads: 1204,
-    rating: 4
-  },
-  {
-    id: 'odb2',
-    name: 'لوحة الرقم القياسي لأسعار المستهلك (التضخم)',
-    category: 'economy',
-    views: 32100,
-    lastUpdated: 'منذ يوم',
-    isFavorite: false,
-    color: 'green',
-    trend: 5,
-    type: 'official',
-    description: 'تحليل شهري لتغيرات أسعار السلع والخدمات وتأثيرها على القوة الشرائية. تشمل البيانات جميع فئات المنتجات الاستهلاكية مع تحليل مفصل لكل قطاع.',
-    keyMetrics: ['معدل التضخم', 'النقل', 'الأغذية والمشروبات', 'السكن'],
-    dataFreq: 'monthly',
-    publisher: 'الهيئة العامة للإحصاء',
-    contributors: ['وزارة المالية'],
-    createdDate: '2023-06-01',
-    updatedDate: '2025-01-28',
-    license: 'رخصة البيانات المفتوحة',
-    language: 'العربية',
-    downloads: 3456,
-    rating: 5
-  },
-  {
-    id: 'odb3_mining',
-    name: 'المرصد الوطني للتعدين',
-    category: 'energy',
-    views: 56000,
-    lastUpdated: 'مباشر',
-    isFavorite: true,
-    color: 'amber',
-    trend: 24,
-    type: 'official',
-    description: 'خريطة تفاعلية للموارد المعدنية، الرخص التعدينية، وحجم الإنتاج الفعلي. تغطي جميع المناطق الإدارية مع تفاصيل عن أنواع المعادن والإنتاج السنوي.',
-    keyMetrics: ['الرخص النشطة', 'إنتاج الذهب', 'الاستكشاف'],
-    dataFreq: 'daily',
-    publisher: 'وزارة الصناعة والثروة المعدنية',
-    contributors: ['هيئة المساحة الجيولوجية'],
-    createdDate: '2024-03-01',
-    updatedDate: '2025-02-03',
-    license: 'رخصة البيانات المفتوحة',
-    language: 'العربية',
-    downloads: 2890,
-    rating: 4
-  },
-  ...Array.from({ length: 27 }).map((_, i) => {
-    const catsLines = [
-      { c: 'economy', desc: 'متابعة الأداء الاقتصادي الكلي ومؤشرات النمو والناتج المحلي.', metrics: ['GDP', 'الدين العام', 'الايرادات'] },
-      { c: 'energy', desc: 'إحصائيات تفصيلية لاستهلاك وتصدير الطاقة ومشاريع الطاقة المتجددة.', metrics: ['الإنتاج', 'الصادرات', 'الاستهلاك المحلي'] },
-      { c: 'real_estate', desc: 'رصد دقيق لحركة السوق العقاري والصفقات وكود البناء.', metrics: ['المبيعات', 'المتوسط السعري', 'المخططات'] },
-      { c: 'investment', desc: 'تحليل الفرص الاستثمارية ونمو الشركات وتسهيلات الأعمال.', metrics: ['السجلات', 'رأس المال', 'النمو'] },
-      { c: 'labor', desc: 'مؤشرات التوطين ومعدلات البطالة ومتوسط الأجور في القطاع الخاص.', metrics: ['معدل البطالة', 'الرواتب', 'القوى العاملة'] }
-    ];
-    const item = catsLines[i % catsLines.length];
-    const colors = ['blue', 'green', 'amber', 'purple', 'rose', 'indigo', 'cyan'];
-    const names = [
-      'تقرير سوق العمل المتعمق', 'التبادل التجاري الدولي', 'أداء القطاع الصناعي', 'مشاريع سكني', 'السياحة الوافدة',
-      'التجارة الإلكترونية', 'الشركات الصغيرة والمتوسطة', 'القطاع المالي والمصرفي', 'سلاسل الإمداد والخدمات اللوجستية',
-      'التعليم وسوق العمل', 'الرعاية الصحية', 'التحول الرقمي الحكومي', 'منظومة النقل', 'الأمن الغذائي والزراعة',
-      'قطاع الترفيه وجودة الحياة', 'أسواق المال وتداول', 'الطاقة المتجددة', 'المحتوى المحلي',
-    ];
-
-    return {
-      id: `dash_${i + 4}`,
-      name: names[i % 18] + ` ${2025}`,
-      category: item.c,
-      views: Math.floor(Math.random() * 50000) + 1000,
-      lastUpdated: ['منذ ساعة', 'منذ يومين', 'أسبوعي', 'شهري'][i % 4],
-      isFavorite: Math.random() > 0.8,
-      color: colors[i % colors.length],
-      trend: Math.floor(Math.random() * 30) - 5,
-      type: 'official' as const,
-      description: item.desc,
-      keyMetrics: item.metrics,
-      dataFreq: (['daily', 'monthly', 'quarterly'] as const)[i % 3],
-      publisher: 'الهيئة العامة للإحصاء',
-      contributors: ['وزارة الاقتصاد والتخطيط'],
-      createdDate: '2024-01-01',
-      updatedDate: '2025-01-15',
-      license: 'رخصة البيانات المفتوحة',
-      language: 'العربية',
-      downloads: Math.floor(Math.random() * 5000) + 500,
-      rating: Math.floor(Math.random() * 2) + 4
-    };
-  })
-];
-
-const DATASET_TAGS = [
-  { label: 'Investment', lang: 'en' },
-  { label: 'Economy', lang: 'en' },
-  { label: 'Statistics', lang: 'en' },
-  { label: 'الاستثمار', lang: 'ar' },
-  { label: 'الاقتصاد', lang: 'ar' },
-];
-
-const ACTIVITY_DATA = [
-  { date: '2024-09', views: 120, downloads: 45 },
-  { date: '2024-10', views: 132, downloads: 55 },
-  { date: '2024-11', views: 101, downloads: 40 },
-  { date: '2024-12', views: 154, downloads: 60 },
-  { date: '2025-01', views: 190, downloads: 85 },
-  { date: '2025-02', views: 230, downloads: 100 },
-];
 
 // ============================================
 // SUB-COMPONENTS
@@ -268,35 +195,45 @@ const AccordionItem: React.FC<{
 );
 
 // --- Activity Chart ---
-const ActivityChart: React.FC = () => (
-  <div className="h-64 w-full mt-4" dir="ltr">
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={ACTIVITY_DATA}
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 12, fill: '#6B7280' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 12, fill: '#6B7280' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <RechartsTooltip
-          cursor={{ fill: '#F3F4F6' }}
-          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-        />
-        <RechartsBar dataKey="downloads" fill="#003F70" radius={[4, 4, 0, 0]} barSize={20} name="التنزيلات" />
-        <RechartsBar dataKey="views" fill="#00A3E0" radius={[4, 4, 0, 0]} barSize={20} name="المشاهدات" />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
+const ActivityChart: React.FC<{ data?: ActivityItem[] }> = ({ data }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-64 w-full mt-4 flex items-center justify-center bg-gray-50 rounded-lg">
+        <p className="text-gray-400">لا تتوفر بيانات النشاط حالياً</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-64 w-full mt-4" dir="ltr">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 12, fill: '#6B7280' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 12, fill: '#6B7280' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <RechartsTooltip
+            cursor={{ fill: '#F3F4F6' }}
+            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+          />
+          <RechartsBar dataKey="downloads" fill="#003F70" radius={[4, 4, 0, 0]} barSize={20} name="التنزيلات" />
+          <RechartsBar dataKey="views" fill="#00A3E0" radius={[4, 4, 0, 0]} barSize={20} name="المشاهدات" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
 // --- Metric Card ---
 const MetricCard: React.FC<{
@@ -334,43 +271,8 @@ const MetricCard: React.FC<{
 };
 
 // --- Comments Section ---
-interface Comment {
-  id: number;
-  user: string;
-  role?: string;
-  date: string;
-  content: string;
-  replies?: number;
-}
-
-const INITIAL_COMMENTS: Comment[] = [
-  {
-    id: 1,
-    user: "عبدالله العتيبي",
-    role: "باحث بيانات",
-    date: "منذ ساعتين",
-    content: "هل هذه البيانات تشمل العمليات التجارية للمناطق الحرة؟ أبحث عن تفاصيل التصدير وإعادة التصدير تحديداً.",
-    replies: 1
-  },
-  {
-    id: 2,
-    user: "سارة محمد",
-    date: "منذ يوم واحد",
-    content: "شكراً على توفير البيانات. نلاحظ تحسناً كبيراً في جودة البيانات الوصفية مقارنة بالشهر الماضي.",
-    replies: 0
-  },
-  {
-    id: 3,
-    user: "فريق البيانات المفتوحة",
-    role: "مسؤول",
-    date: "منذ يومين",
-    content: "مرحباً بالجميع، تم تحديث ملف البيانات ليشمل الأعمدة الناقصة التي تم الإبلاغ عنها سابقاً.",
-    replies: 5
-  }
-];
-
-const CommentsSection: React.FC = () => {
-  const [comments, setComments] = useState<Comment[]>(INITIAL_COMMENTS);
+const CommentsSection: React.FC<{ initialComments?: Comment[] }> = ({ initialComments }) => {
+  const [comments, setComments] = useState<Comment[]>(initialComments || []);
   const [newComment, setNewComment] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -426,102 +328,75 @@ const CommentsSection: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {comments.map((comment) => (
-          <div key={comment.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${comment.role === 'مسؤول' ? 'bg-blue-700' : 'bg-gray-300'}`}>
-                {comment.role === 'مسؤول' ? <User size={18} /> : comment.user.charAt(0)}
-              </div>
-
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-800">{comment.user}</span>
-                    {comment.role && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${comment.role === 'مسؤول' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {comment.role}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-400">{comment.date}</span>
+        {comments.length === 0 ? (
+          <div className="bg-white p-8 rounded-xl border border-gray-100 text-center">
+            <MessageSquare size={48} className="text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">لا توجد تعليقات بعد. كن أول من يعلق!</p>
+          </div>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${comment.role === 'مسؤول' ? 'bg-blue-700' : 'bg-gray-300'}`}>
+                  {comment.role === 'مسؤول' ? <User size={18} /> : comment.user.charAt(0)}
                 </div>
 
-                <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                  {comment.content}
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-800">{comment.user}</span>
+                      {comment.role && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${comment.role === 'مسؤول' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {comment.role}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400">{comment.date}</span>
+                  </div>
 
-                <div className="flex items-center gap-4 border-t border-gray-50 pt-3">
-                  <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-700 transition-colors">
-                    <Reply size={14} />
-                    رد
-                  </button>
-                  {comment.replies ? (
-                    <button className="text-xs text-blue-700 font-medium hover:underline">
-                      عرض {comment.replies} ردود
+                  <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                    {comment.content}
+                  </p>
+
+                  <div className="flex items-center gap-4 border-t border-gray-50 pt-3">
+                    <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-700 transition-colors">
+                      <Reply size={14} />
+                      رد
                     </button>
-                  ) : null}
-                  <button className="mr-auto text-gray-400 hover:text-gray-600">
-                    <MoreHorizontal size={16} />
-                  </button>
+                    {comment.replies ? (
+                      <button className="text-xs text-blue-700 font-medium hover:underline">
+                        عرض {comment.replies} ردود
+                      </button>
+                    ) : null}
+                    <button className="mr-auto text-gray-400 hover:text-gray-600">
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
 };
 
 // --- Reviews Section ---
-interface Review {
-  id: number;
-  user: string;
-  rating: number;
-  date: string;
-  content: string;
-  helpfulCount: number;
-}
-
-const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 1,
-    user: "محمد السالم",
-    rating: 5,
-    date: "2025-01-15",
-    content: "بيانات دقيقة وشاملة للغاية، ساعدتني كثيراً في البحث الاقتصادي.",
-    helpfulCount: 12
-  },
-  {
-    id: 2,
-    user: "خالد العنزي",
-    rating: 4,
-    date: "2025-01-10",
-    content: "المحتوى ممتاز ولكن التنسيق يحتاج إلى بعض التحسين لتسهيل المعالجة الآلية.",
-    helpfulCount: 5
-  },
-  {
-    id: 3,
-    user: "User_882",
-    rating: 5,
-    date: "2025-01-02",
-    content: "تحديث سريع وممتاز.",
-    helpfulCount: 2
-  }
-];
-
-const ReviewsSection: React.FC = () => {
-  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+const ReviewsSection: React.FC<{ initialReviews?: Review[] }> = ({ initialReviews }) => {
+  const [reviews, setReviews] = useState<Review[]>(initialReviews || []);
   const [newRating, setNewRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [newReviewText, setNewReviewText] = useState('');
 
   const totalReviews = reviews.length;
-  const averageRating = (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviews).toFixed(1);
+  const averageRating = totalReviews > 0
+    ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviews).toFixed(1)
+    : '0.0';
 
   const distribution = [5, 4, 3, 2, 1].map(stars => {
     const count = reviews.filter(r => r.rating === stars).length;
-    const percentage = (count / totalReviews) * 100;
+    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
     return { stars, count, percentage };
   });
 
@@ -628,65 +503,55 @@ const ReviewsSection: React.FC = () => {
       <div className="space-y-6">
         <h3 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-2">جميع المراجعات ({totalReviews})</h3>
 
-        {reviews.map((review) => (
-          <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                  <User size={16} />
-                </div>
-                <div>
-                  <div className="font-bold text-gray-800 text-sm">{review.user}</div>
-                  <div className="flex text-yellow-400 text-xs mt-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={12} fill={s <= review.rating ? "currentColor" : "none"} className={s > review.rating ? "text-gray-300" : ""} />
-                    ))}
+        {reviews.length === 0 ? (
+          <div className="p-8 text-center">
+            <Star size={48} className="text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">لا توجد مراجعات بعد. كن أول من يقيم!</p>
+          </div>
+        ) : (
+          reviews.map((review) => (
+            <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                    <User size={16} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-800 text-sm">{review.user}</div>
+                    <div className="flex text-yellow-400 text-xs mt-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={12} fill={s <= review.rating ? "currentColor" : "none"} className={s > review.rating ? "text-gray-300" : ""} />
+                      ))}
+                    </div>
                   </div>
                 </div>
+                <span className="text-xs text-gray-400">{review.date}</span>
               </div>
-              <span className="text-xs text-gray-400">{review.date}</span>
-            </div>
 
-            <p className="text-gray-600 text-sm mt-3 mb-4 leading-relaxed">
-              {review.content || <span className="text-gray-400 italic">بدون تعليق نصي</span>}
-            </p>
+              <p className="text-gray-600 text-sm mt-3 mb-4 leading-relaxed">
+                {review.content || <span className="text-gray-400 italic">بدون تعليق نصي</span>}
+              </p>
 
-            <div className="flex items-center gap-4">
-              <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-700 transition-colors group">
-                <ThumbsUp size={14} className="group-hover:scale-110 transition-transform" />
-                مفيد ({review.helpfulCount})
-              </button>
-              <button className="text-xs text-gray-400 hover:text-red-500 transition-colors">
-                إبلاغ
-              </button>
+              <div className="flex items-center gap-4">
+                <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-700 transition-colors group">
+                  <ThumbsUp size={14} className="group-hover:scale-110 transition-transform" />
+                  مفيد ({review.helpfulCount})
+                </button>
+                <button className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                  إبلاغ
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
 };
 
 // --- Dashboard Embed (Charts) ---
-const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard }) => {
-  const lineChartData = {
-    labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
-    datasets: [
-      {
-        label: 'حجم الاستثمار (مليار ريال)',
-        data: [150, 165, 180, 210, 245, 280],
-        borderColor: '#003F70',
-        backgroundColor: 'rgba(0, 63, 112, 0.1)',
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#003F70',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
+const DashboardEmbed: React.FC<{ dashboard: DashboardData }> = ({ dashboard }) => {
+  const chartData = dashboard.chartData;
 
   const lineChartOptions = {
     responsive: true,
@@ -717,18 +582,6 @@ const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
     interaction: { mode: 'nearest' as const, axis: 'x' as const, intersect: false },
   };
 
-  const doughnutChartData = {
-    labels: ['سكني', 'تجاري', 'مكتبي', 'صناعي', 'أخرى'],
-    datasets: [
-      {
-        data: [45, 25, 15, 10, 5],
-        backgroundColor: ['#003F70', '#3B82F6', '#10B981', '#F59E0B', '#94A3B8'],
-        borderWidth: 0,
-        hoverOffset: 4,
-      },
-    ],
-  };
-
   const doughnutChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -745,14 +598,6 @@ const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
     },
   };
 
-  const barChartData = {
-    labels: ['الرياض', 'مكة المكرمة', 'الشرقية', 'المدينة', 'عسير'],
-    datasets: [
-      { label: 'عدد الصفقات (بالآلاف)', data: [120, 95, 78, 45, 30], backgroundColor: '#3B82F6', borderRadius: 4, barThickness: 24 },
-      { label: 'متوسط السعر (مليون ريال)', data: [2.5, 1.8, 1.5, 1.2, 0.9], backgroundColor: '#003F70', borderRadius: 4, barThickness: 24 },
-    ],
-  };
-
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -765,6 +610,45 @@ const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
       x: { grid: { display: false }, border: { display: false } },
     },
   };
+
+  // Build chart data from API response
+  const lineChartData = chartData?.line ? {
+    labels: chartData.line.labels,
+    datasets: chartData.line.datasets.map(ds => ({
+      ...ds,
+      borderColor: ds.borderColor || '#003F70',
+      backgroundColor: ds.backgroundColor || 'rgba(0, 63, 112, 0.1)',
+      tension: ds.tension ?? 0.4,
+      fill: ds.fill ?? true,
+      pointBackgroundColor: '#fff',
+      pointBorderColor: ds.borderColor || '#003F70',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    })),
+  } : null;
+
+  const doughnutChartData = chartData?.doughnut ? {
+    labels: chartData.doughnut.labels,
+    datasets: [{
+      data: chartData.doughnut.data,
+      backgroundColor: chartData.doughnut.colors || ['#003F70', '#3B82F6', '#10B981', '#F59E0B', '#94A3B8'],
+      borderWidth: 0,
+      hoverOffset: 4,
+    }],
+  } : null;
+
+  const barChartData = chartData?.bar ? {
+    labels: chartData.bar.labels,
+    datasets: chartData.bar.datasets.map((ds, idx) => ({
+      ...ds,
+      backgroundColor: ds.backgroundColor || (idx === 0 ? '#3B82F6' : '#003F70'),
+      borderRadius: 4,
+      barThickness: 24,
+    })),
+  } : null;
+
+  const hasAnyChartData = lineChartData || doughnutChartData || barChartData;
 
   return (
     <div className="bg-gray-50 min-h-[600px] p-6 rounded-xl">
@@ -784,56 +668,74 @@ const DashboardEmbed: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard title="إجمالي التداولات" value="280 مليار" change="+14.2%" isPositive={true} icon={<Wallet className="text-blue-600" size={20} />} color="blue" />
-        <MetricCard title="عدد الصفقات" value="345,000" change="+5.8%" isPositive={true} icon={<Building2 className="text-emerald-600" size={20} />} color="emerald" />
-        <MetricCard title="متوسط سعر المتر" value="4,200 ريال" change="-2.1%" isPositive={false} icon={<MapPin className="text-amber-600" size={20} />} color="amber" />
-        <MetricCard title="المشاريع الجديدة" value="1,240" change="+8.5%" isPositive={true} icon={<TrendingUp className="text-indigo-600" size={20} />} color="indigo" />
+        <MetricCard title="إجمالي السجلات" value={dashboard.recordCount?.toLocaleString() || '0'} change={`${dashboard.trend > 0 ? '+' : ''}${dashboard.trend}%`} isPositive={dashboard.trend > 0} icon={<Wallet className="text-blue-600" size={20} />} color="blue" />
+        <MetricCard title="المشاهدات" value={dashboard.views?.toLocaleString() || '0'} change={`${dashboard.trend > 0 ? '+' : ''}${Math.abs(dashboard.trend)}%`} isPositive={dashboard.trend > 0} icon={<Eye className="text-emerald-600" size={20} />} color="emerald" />
+        <MetricCard title="التنزيلات" value={dashboard.downloads?.toLocaleString() || '0'} change={`${dashboard.trend > 0 ? '+' : ''}${Math.abs(dashboard.trend)}%`} isPositive={dashboard.trend > 0} icon={<Download className="text-amber-600" size={20} />} color="amber" />
+        <MetricCard title="التقييم" value={`${dashboard.rating || 0}/5`} change={`${dashboard.trend > 0 ? '+' : ''}${Math.abs(dashboard.trend)}%`} isPositive={dashboard.trend > 0} icon={<Star className="text-indigo-600" size={20} />} color="indigo" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-800">نمو حجم الاستثمار</h3>
-            <button className="text-gray-400 hover:text-blue-700 transition-colors"><ArrowUpRight size={18} /></button>
-          </div>
-          <div className="h-[300px]">
-            <Line data={lineChartData} options={lineChartOptions as any} />
-          </div>
+      {!hasAnyChartData ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+          <BarChart3 size={48} className="text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-gray-600 mb-2">لا تتوفر بيانات الرسوم البيانية</h3>
+          <p className="text-gray-400">لم يتم تحميل بيانات الرسوم البيانية من الخادم بعد</p>
         </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-800">توزيع القطاعات</h3>
-            <PieChart className="text-gray-400" size={18} />
-          </div>
-          <div className="h-[300px] flex items-center justify-center relative">
-            <Doughnut data={doughnutChartData} options={doughnutChartOptions as any} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-bold text-gray-800">100%</span>
-              <span className="text-xs text-gray-400">الإجمالي</span>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {lineChartData && (
+            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-gray-800">نمو البيانات</h3>
+                <button className="text-gray-400 hover:text-blue-700 transition-colors"><ArrowUpRight size={18} /></button>
+              </div>
+              <div className="h-[300px]">
+                <Line data={lineChartData} options={lineChartOptions as any} />
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        <div className="lg:col-span-3 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-800">حركة السوق حسب المناطق</h3>
-            <div className="flex gap-2">
-              <div className="flex items-center gap-1 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-blue-500"></span>صفقات</div>
-              <div className="flex items-center gap-1 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-blue-900"></span>أسعار</div>
+          {doughnutChartData && (
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-gray-800">توزيع القطاعات</h3>
+                <PieChart className="text-gray-400" size={18} />
+              </div>
+              <div className="h-[300px] flex items-center justify-center relative">
+                <Doughnut data={doughnutChartData} options={doughnutChartOptions as any} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-bold text-gray-800">100%</span>
+                  <span className="text-xs text-gray-400">الإجمالي</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="h-[300px]">
-            <Bar data={barChartData} options={barChartOptions as any} />
-          </div>
+          )}
+
+          {barChartData && (
+            <div className={`${lineChartData || doughnutChartData ? 'lg:col-span-3' : ''} bg-white p-6 rounded-xl border border-gray-100 shadow-sm`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-gray-800">توزيع حسب المناطق</h3>
+                <div className="flex gap-2">
+                  {barChartData.datasets.map((ds: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ds.backgroundColor }}></span>
+                      {ds.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="h-[300px]">
+                <Bar data={barChartData} options={barChartOptions as any} />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 // --- Dataset Content ---
-const DatasetContent: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard }) => {
+const DatasetContent: React.FC<{ dashboard: DashboardData }> = ({ dashboard }) => {
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
     publisher: true,
     meta: true,
@@ -863,11 +765,11 @@ const DatasetContent: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
           <div className="flex flex-col gap-2">
             <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
               <span className="text-gray-500">الناشر الأساسي</span>
-              <span className="font-semibold text-gray-800">{dashboard.publisher}</span>
+              <span className="font-semibold text-gray-800">{dashboard.source || 'غير محدد'}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
-              <span className="text-gray-500">الجهات المشاركة</span>
-              <span className="font-semibold text-gray-800 text-left">{dashboard.contributors?.join('، ')}</span>
+              <span className="text-gray-500">عدد السجلات</span>
+              <span className="font-semibold text-gray-800">{dashboard.recordCount?.toLocaleString() || 0}</span>
             </div>
           </div>
         </AccordionItem>
@@ -875,55 +777,32 @@ const DatasetContent: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
         <AccordionItem title="تفاصيل إضافية" isOpen={openAccordions.meta} onClick={() => toggleAccordion('meta')}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-500">تاريخ الإنشاء</span>
-              <span className="font-medium" dir="ltr">{dashboard.createdDate}</span>
+              <span className="text-gray-500">التصنيف</span>
+              <span className="font-medium">{DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label || dashboard.category}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-500">تاريخ التحديث</span>
-              <span className="font-medium" dir="ltr">{dashboard.updatedDate}</span>
+              <span className="text-gray-500">آخر تحديث</span>
+              <span className="font-medium">{dashboard.lastUpdated}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500">تكرار البيانات</span>
               <span className="font-medium">{dashboard.dataFreq === 'daily' ? 'يومي' : dashboard.dataFreq === 'monthly' ? 'شهري' : dashboard.dataFreq === 'quarterly' ? 'ربع سنوي' : 'سنوي'}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-500">رابط المصدر</span>
-              <a href="#" className="flex items-center gap-1 text-blue-700 hover:underline">
-                زيارة الموقع
-                <ExternalLink size={14} />
-              </a>
+              <span className="text-gray-500">حالة المزامنة</span>
+              <span className={`font-medium ${dashboard.syncStatus === 'synced' ? 'text-green-600' : 'text-amber-600'}`}>
+                {dashboard.syncStatus === 'synced' ? 'متزامن' : 'قيد المزامنة'}
+              </span>
             </div>
           </div>
         </AccordionItem>
 
-        <AccordionItem title="المصادر" isOpen={openAccordions.sources} onClick={() => toggleAccordion('sources')}>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
-              <span className="text-gray-500">اسم المصدر</span>
-              <span className="font-semibold text-gray-800">بوابة البيانات الوطنية</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-200 last:border-0">
-              <span className="text-gray-500">رابط الوصول</span>
-              <a href="#" className="flex items-center gap-1 text-blue-700 hover:underline">
-                عرض المصدر
-                <ExternalLink size={14} />
-              </a>
-            </div>
-          </div>
-        </AccordionItem>
-
-        <AccordionItem title="التصنيفات" isOpen={openAccordions.classifications} onClick={() => toggleAccordion('classifications')}>
+        <AccordionItem title="التصنيفات والوسوم" isOpen={openAccordions.classifications} onClick={() => toggleAccordion('classifications')}>
           <div className="flex flex-col gap-4">
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">المواضيع</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">المؤشرات الرئيسية</h4>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm border border-blue-100">{DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label}</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">الكلمات المفتاحية</h4>
-              <div className="flex flex-wrap gap-2">
-                {dashboard.keyMetrics.map((metric, idx) => (
+                {dashboard.keyMetrics?.map((metric, idx) => (
                   <span key={idx} className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded">{metric}</span>
                 ))}
               </div>
@@ -939,27 +818,27 @@ const DatasetContent: React.FC<{ dashboard: ExtendedDashboard }> = ({ dashboard 
           <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
             <div className="bg-white p-3 rounded-full shadow-sm text-blue-600"><Eye size={24} /></div>
             <div>
-              <div className="text-2xl font-bold text-gray-800">{(dashboard.views / 1000).toFixed(1)}k</div>
+              <div className="text-2xl font-bold text-gray-800">{dashboard.views?.toLocaleString() || 0}</div>
               <div className="text-sm text-gray-500">المشاهدات</div>
             </div>
           </div>
           <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
             <div className="bg-white p-3 rounded-full shadow-sm text-blue-700"><Download size={24} /></div>
             <div>
-              <div className="text-2xl font-bold text-gray-800">{dashboard.downloads?.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-800">{dashboard.downloads?.toLocaleString() || 0}</div>
               <div className="text-sm text-gray-500">التنزيلات</div>
             </div>
           </div>
           <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-lg">
             <div className="bg-white p-3 rounded-full shadow-sm text-yellow-500"><Star size={24} /></div>
             <div>
-              <div className="text-2xl font-bold text-gray-800">{dashboard.rating}</div>
+              <div className="text-2xl font-bold text-gray-800">{dashboard.rating || 0}</div>
               <div className="text-sm text-gray-500">التقييم</div>
             </div>
           </div>
         </div>
 
-        <ActivityChart />
+        <ActivityChart data={dashboard.activity} />
       </section>
 
       <section className="bg-gray-50 rounded-xl p-6 border border-gray-200 flex items-center justify-between">
@@ -994,18 +873,56 @@ const DashboardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dataset');
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const dashboard = useMemo(() => {
-    return MOCK_DASHBOARDS.find(d => d.id === id);
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await api.getOfficialDashboard(id);
+
+        if (response.success && response.data) {
+          setDashboard(response.data as DashboardData);
+        } else {
+          setError(response.errorAr || response.error || 'تعذر جلب بيانات اللوحة');
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard:', err);
+        setError('تعذر الاتصال بالخادم');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
   }, [id]);
 
-  if (!dashboard) {
+  // Loading state
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-500">جاري تحميل بيانات اللوحة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !dashboard) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
         <div className="text-center">
           <Database size={64} className="text-gray-300 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">اللوحة غير موجودة</h2>
-          <p className="text-gray-500 mb-6">لم نتمكن من العثور على اللوحة المطلوبة</p>
+          <p className="text-gray-500 mb-6">{error || 'لم نتمكن من العثور على اللوحة المطلوبة'}</p>
           <button
             onClick={() => navigate('/dashboards')}
             className="bg-blue-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors"
@@ -1066,11 +983,14 @@ const DashboardDetailPage: React.FC = () => {
                 {dashboard.name}
               </h1>
               <div className="flex flex-wrap gap-4 text-sm text-blue-100">
-                <span className={`px-3 py-1 rounded-full border ${dashboard.dataFreq === 'daily' ? 'bg-green-500/20 text-green-200 border-green-500/30' : 'bg-blue-500/20 text-blue-200 border-blue-500/30'}`}>
-                  {dashboard.dataFreq === 'daily' ? 'محدثة مباشرة' : 'محدثة'}
+                <span className={`px-3 py-1 rounded-full border ${dashboard.syncStatus === 'synced' ? 'bg-green-500/20 text-green-200 border-green-500/30' : 'bg-amber-500/20 text-amber-200 border-amber-500/30'}`}>
+                  {dashboard.syncStatus === 'synced' ? 'متزامن' : 'قيد المزامنة'}
                 </span>
                 <span className="flex items-center gap-2">
-                  • {DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label}
+                  • {DASHBOARD_CATEGORIES.find(c => c.id === dashboard.category)?.label || dashboard.category}
+                </span>
+                <span className="flex items-center gap-2">
+                  • {dashboard.recordCount?.toLocaleString()} سجل
                 </span>
               </div>
             </div>
@@ -1109,9 +1029,9 @@ const DashboardDetailPage: React.FC = () => {
             ) : activeTab === 'dashboard' ? (
               <DashboardEmbed dashboard={dashboard} />
             ) : activeTab === 'comments' ? (
-              <CommentsSection />
+              <CommentsSection initialComments={dashboard.comments} />
             ) : activeTab === 'reviews' ? (
-              <ReviewsSection />
+              <ReviewsSection initialReviews={dashboard.reviews} />
             ) : (
               <div className="p-12 text-center text-gray-400 bg-white rounded-xl border border-gray-200">
                 <p className="text-lg">المحتوى قيد التطوير لهذا التبويب</p>
@@ -1147,25 +1067,23 @@ const DashboardDetailPage: React.FC = () => {
                         <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Download size={18} /></div>
                         <span className="text-sm font-medium text-gray-600">عدد التحميلات</span>
                       </div>
-                      <span className="font-bold text-gray-800">{dashboard.downloads?.toLocaleString()}</span>
+                      <span className="font-bold text-gray-800">{dashboard.downloads?.toLocaleString() || 0}</span>
                     </div>
 
                     <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><Globe size={18} /></div>
-                        <span className="text-sm font-medium text-gray-600">لغة البيانات</span>
+                        <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><Eye size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">المشاهدات</span>
                       </div>
-                      <span className="font-bold text-gray-800">{dashboard.language}</span>
+                      <span className="font-bold text-gray-800">{dashboard.views?.toLocaleString() || 0}</span>
                     </div>
 
                     <div className="p-4 flex flex-col gap-3 group hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 text-green-600 rounded-lg"><ShieldCheck size={18} /></div>
-                        <span className="text-sm font-medium text-gray-600">الرخصة</span>
+                        <div className="p-2 bg-green-100 text-green-600 rounded-lg"><Database size={18} /></div>
+                        <span className="text-sm font-medium text-gray-600">عدد السجلات</span>
                       </div>
-                      <a href="#" className="text-xs text-blue-700 hover:underline mr-11">
-                        {dashboard.license}
-                      </a>
+                      <span className="font-bold text-gray-800 mr-11">{dashboard.recordCount?.toLocaleString() || 0}</span>
                     </div>
 
                     <div className="p-4 flex items-center justify-between group hover:bg-gray-50 transition-colors">
@@ -1184,18 +1102,15 @@ const DashboardDetailPage: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   <div className="p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 flex items-center gap-2">
                     <Tag size={18} />
-                    الوسوم
+                    المؤشرات الرئيسية
                   </div>
                   <div className="p-4 flex flex-wrap gap-2">
-                    {DATASET_TAGS.map((tag, idx) => (
+                    {dashboard.keyMetrics?.map((metric, idx) => (
                       <span
                         key={idx}
-                        className={`px-3 py-1 rounded-full text-xs font-medium border ${tag.lang === 'en'
-                          ? 'bg-gray-50 text-gray-600 border-gray-200'
-                          : 'bg-blue-50 text-blue-700 border-blue-100'
-                          }`}
+                        className="px-3 py-1 rounded-full text-xs font-medium border bg-blue-50 text-blue-700 border-blue-100"
                       >
-                        {tag.label}
+                        {metric}
                       </span>
                     ))}
                   </div>
@@ -1214,7 +1129,6 @@ const DashboardDetailPage: React.FC = () => {
           )}
         </div>
       </div>
-
     </div>
   );
 };
