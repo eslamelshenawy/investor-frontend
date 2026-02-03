@@ -3,7 +3,7 @@
  * Fetches dashboards from API and displays them
  */
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutGrid,
@@ -71,31 +71,7 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-    const [showAllCategories, setShowAllCategories] = useState(false);
-    const [canScrollLeft, setCanScrollLeft] = useState(false);
-    const [canScrollRight, setCanScrollRight] = useState(false);
-    const categoriesRef = useRef<HTMLDivElement>(null);
-
-    // Check scroll position
-    const checkScroll = useCallback(() => {
-        if (categoriesRef.current) {
-            const { scrollLeft, scrollWidth, clientWidth } = categoriesRef.current;
-            setCanScrollLeft(scrollLeft > 0);
-            setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-        }
-    }, []);
-
-    // Scroll categories
-    const scrollCategories = (direction: 'left' | 'right') => {
-        if (categoriesRef.current) {
-            const scrollAmount = 300;
-            categoriesRef.current.scrollBy({
-                left: direction === 'right' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth'
-            });
-            setTimeout(checkScroll, 300);
-        }
-    };
+    const [showMoreCategories, setShowMoreCategories] = useState(false);
 
     // Sort categories by count (most important first)
     const sortedCategories = useMemo(() => {
@@ -107,10 +83,16 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
         return all ? [all, ...rest] : rest;
     }, [categories]);
 
-    // Top categories for collapsed view
-    const topCategories = useMemo(() => {
-        return sortedCategories.slice(0, 8);
-    }, [sortedCategories]);
+    // Top 10 categories for initial view
+    const displayedCategories = useMemo(() => {
+        return showMoreCategories ? sortedCategories : sortedCategories.slice(0, 10);
+    }, [sortedCategories, showMoreCategories]);
+
+    // Get selected category label
+    const selectedCategoryLabel = useMemo(() => {
+        const cat = sortedCategories.find(c => (c.filterValue || c.label) === selectedCategory);
+        return cat?.label || 'الكل';
+    }, [sortedCategories, selectedCategory]);
 
     const fetchCategories = async () => {
         setCategoriesLoading(true);
@@ -157,13 +139,6 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
     useEffect(() => {
         fetchCategories();
     }, []);
-
-    // Check scroll when categories load
-    useEffect(() => {
-        if (!categoriesLoading) {
-            setTimeout(checkScroll, 100);
-        }
-    }, [categoriesLoading, checkScroll, showAllCategories]);
 
     useEffect(() => {
         fetchDashboards();
@@ -261,100 +236,57 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                 </div>
             </div>
 
-            {/* Categories - Dynamic from API with Scroll */}
-            <div className="relative mb-6">
+            {/* Categories - Simple Flex Wrap */}
+            <div className="mb-6">
                 {categoriesLoading ? (
-                    <div className="flex gap-2 pb-4">
-                        {[1,2,3,4,5,6].map(i => (
-                            <div key={i} className="h-10 w-28 bg-gray-100 rounded-xl animate-pulse" />
+                    <div className="flex flex-wrap gap-2">
+                        {[1,2,3,4,5,6,7,8].map(i => (
+                            <div key={i} className="h-10 w-24 bg-gray-100 rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
-                    <>
-                        {/* Scroll Left Button */}
-                        {canScrollLeft && (
+                    <div className="flex flex-wrap gap-2">
+                        {displayedCategories.map(cat => (
                             <button
-                                onClick={() => scrollCategories('left')}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 border border-gray-200"
+                                key={`${cat.id}-${cat.label}`}
+                                onClick={() => {
+                                    setSelectedCategory(cat.filterValue || cat.label);
+                                    setPage(1);
+                                }}
+                                className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+                                    selectedCategory === (cat.filterValue || cat.label)
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
                             >
-                                <ChevronRight size={20} className="text-gray-600" />
+                                {cat.label}
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                    selectedCategory === (cat.filterValue || cat.label)
+                                        ? 'bg-white/20'
+                                        : 'bg-gray-200'
+                                }`}>
+                                    {cat.count?.toLocaleString()}
+                                </span>
+                            </button>
+                        ))}
+
+                        {/* Show More / Show Less Button */}
+                        {sortedCategories.length > 10 && (
+                            <button
+                                onClick={() => setShowMoreCategories(!showMoreCategories)}
+                                className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center gap-1"
+                            >
+                                {showMoreCategories ? (
+                                    <>عرض أقل</>
+                                ) : (
+                                    <>
+                                        المزيد ({sortedCategories.length - 10})
+                                        <ChevronDown size={16} />
+                                    </>
+                                )}
                             </button>
                         )}
-
-                        {/* Categories Container */}
-                        <div
-                            ref={categoriesRef}
-                            onScroll={checkScroll}
-                            className="flex gap-2 overflow-x-auto pb-4 px-1 scroll-smooth"
-                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                        >
-                            {(showAllCategories ? sortedCategories : topCategories).map(cat => (
-                                <button
-                                    key={`${cat.id}-${cat.label}`}
-                                    onClick={() => {
-                                        setSelectedCategory(cat.filterValue || cat.label);
-                                        setPage(1);
-                                    }}
-                                    className={`px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
-                                        selectedCategory === (cat.filterValue || cat.label)
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {cat.label}
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                        selectedCategory === (cat.filterValue || cat.label)
-                                            ? 'bg-white/20'
-                                            : 'bg-gray-200/80'
-                                    }`}>
-                                        {cat.count?.toLocaleString()}
-                                    </span>
-                                </button>
-                            ))}
-
-                            {/* Show More Button */}
-                            {!showAllCategories && sortedCategories.length > 8 && (
-                                <button
-                                    onClick={() => {
-                                        setShowAllCategories(true);
-                                        setTimeout(checkScroll, 100);
-                                    }}
-                                    className="px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center gap-1 shrink-0"
-                                >
-                                    المزيد ({sortedCategories.length - 8})
-                                    <ChevronDown size={16} />
-                                </button>
-                            )}
-
-                            {/* Show Less Button */}
-                            {showAllCategories && sortedCategories.length > 8 && (
-                                <button
-                                    onClick={() => setShowAllCategories(false)}
-                                    className="px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap bg-gray-200 text-gray-600 hover:bg-gray-300 flex items-center gap-1 shrink-0"
-                                >
-                                    أقل
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Scroll Right Button */}
-                        {canScrollRight && (
-                            <button
-                                onClick={() => scrollCategories('right')}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 border border-gray-200"
-                            >
-                                <ChevronLeft size={20} className="text-gray-600" />
-                            </button>
-                        )}
-
-                        {/* Gradient Overlays */}
-                        {canScrollLeft && (
-                            <div className="absolute left-10 top-0 bottom-4 w-8 bg-gradient-to-l from-transparent to-white pointer-events-none" />
-                        )}
-                        {canScrollRight && (
-                            <div className="absolute right-10 top-0 bottom-4 w-8 bg-gradient-to-r from-transparent to-white pointer-events-none" />
-                        )}
-                    </>
+                    </div>
                 )}
             </div>
 
