@@ -237,45 +237,65 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
             </div>
 
             {/* Categories Section */}
-            <div className="mb-8 bg-white rounded-2xl border border-gray-200 p-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-700">التصنيفات</h3>
-                    {sortedCategories.length > 10 && (
-                        <button
-                            onClick={() => setShowMoreCategories(!showMoreCategories)}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            <div className="mb-8 bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                    <h3 className="font-bold text-gray-700 text-lg">التصنيفات</h3>
+
+                    {/* Dropdown for easy selection */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => {
+                                setSelectedCategory(e.target.value);
+                                setPage(1);
+                            }}
+                            className="flex-1 sm:flex-none sm:w-64 px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-700 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer"
                         >
-                            {showMoreCategories ? 'عرض أقل' : `عرض الكل (${sortedCategories.length})`}
-                            <ChevronDown size={16} className={`transition-transform ${showMoreCategories ? 'rotate-180' : ''}`} />
-                        </button>
-                    )}
+                            {sortedCategories.map(cat => (
+                                <option key={`select-${cat.id}-${cat.label}`} value={cat.filterValue || cat.label}>
+                                    {cat.label} ({cat.count?.toLocaleString()})
+                                </option>
+                            ))}
+                        </select>
+
+                        {sortedCategories.length > 8 && (
+                            <button
+                                onClick={() => setShowMoreCategories(!showMoreCategories)}
+                                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 whitespace-nowrap"
+                            >
+                                {showMoreCategories ? 'إخفاء' : 'عرض الأزرار'}
+                                <ChevronDown size={16} className={`transition-transform ${showMoreCategories ? 'rotate-180' : ''}`} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
+                {/* Quick select buttons */}
                 {categoriesLoading ? (
                     <div className="flex flex-wrap gap-3">
-                        {[1,2,3,4,5,6,7,8].map(i => (
-                            <div key={i} className="h-12 w-32 bg-gray-100 rounded-xl animate-pulse" />
+                        {[1,2,3,4,5,6].map(i => (
+                            <div key={i} className="h-12 w-28 bg-gray-100 rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
                     <div className="flex flex-wrap gap-3">
-                        {displayedCategories.map(cat => {
+                        {(showMoreCategories ? sortedCategories : sortedCategories.slice(0, 8)).map(cat => {
                             const isSelected = selectedCategory === (cat.filterValue || cat.label);
                             return (
                                 <button
-                                    key={`${cat.id}-${cat.label}`}
+                                    key={`btn-${cat.id}-${cat.label}`}
                                     onClick={() => {
                                         setSelectedCategory(cat.filterValue || cat.label);
                                         setPage(1);
                                     }}
-                                    className={`px-5 py-3 rounded-xl font-bold text-base transition-all flex items-center gap-3 border-2 ${
+                                    className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 border-2 ${
                                         isSelected
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30 scale-105'
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30'
                                             : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:bg-blue-50'
                                     }`}
                                 >
                                     {cat.label}
-                                    <span className={`text-sm px-2.5 py-1 rounded-lg font-medium ${
+                                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${
                                         isSelected
                                             ? 'bg-white/20 text-white'
                                             : 'bg-gray-100 text-gray-500'
