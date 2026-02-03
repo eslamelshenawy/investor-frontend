@@ -236,56 +236,55 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                 </div>
             </div>
 
-            {/* Categories - Simple Flex Wrap */}
-            <div className="mb-6">
+            {/* Categories Section */}
+            <div className="mb-8 bg-white rounded-2xl border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-700">التصنيفات</h3>
+                    {sortedCategories.length > 10 && (
+                        <button
+                            onClick={() => setShowMoreCategories(!showMoreCategories)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                        >
+                            {showMoreCategories ? 'عرض أقل' : `عرض الكل (${sortedCategories.length})`}
+                            <ChevronDown size={16} className={`transition-transform ${showMoreCategories ? 'rotate-180' : ''}`} />
+                        </button>
+                    )}
+                </div>
+
                 {categoriesLoading ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                         {[1,2,3,4,5,6,7,8].map(i => (
-                            <div key={i} className="h-10 w-24 bg-gray-100 rounded-xl animate-pulse" />
+                            <div key={i} className="h-12 w-32 bg-gray-100 rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-wrap gap-2">
-                        {displayedCategories.map(cat => (
-                            <button
-                                key={`${cat.id}-${cat.label}`}
-                                onClick={() => {
-                                    setSelectedCategory(cat.filterValue || cat.label);
-                                    setPage(1);
-                                }}
-                                className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-                                    selectedCategory === (cat.filterValue || cat.label)
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                            >
-                                {cat.label}
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                    selectedCategory === (cat.filterValue || cat.label)
-                                        ? 'bg-white/20'
-                                        : 'bg-gray-200'
-                                }`}>
-                                    {cat.count?.toLocaleString()}
-                                </span>
-                            </button>
-                        ))}
-
-                        {/* Show More / Show Less Button */}
-                        {sortedCategories.length > 10 && (
-                            <button
-                                onClick={() => setShowMoreCategories(!showMoreCategories)}
-                                className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center gap-1"
-                            >
-                                {showMoreCategories ? (
-                                    <>عرض أقل</>
-                                ) : (
-                                    <>
-                                        المزيد ({sortedCategories.length - 10})
-                                        <ChevronDown size={16} />
-                                    </>
-                                )}
-                            </button>
-                        )}
+                    <div className="flex flex-wrap gap-3">
+                        {displayedCategories.map(cat => {
+                            const isSelected = selectedCategory === (cat.filterValue || cat.label);
+                            return (
+                                <button
+                                    key={`${cat.id}-${cat.label}`}
+                                    onClick={() => {
+                                        setSelectedCategory(cat.filterValue || cat.label);
+                                        setPage(1);
+                                    }}
+                                    className={`px-5 py-3 rounded-xl font-bold text-base transition-all flex items-center gap-3 border-2 ${
+                                        isSelected
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30 scale-105'
+                                            : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+                                    }`}
+                                >
+                                    {cat.label}
+                                    <span className={`text-sm px-2.5 py-1 rounded-lg font-medium ${
+                                        isSelected
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-gray-100 text-gray-500'
+                                    }`}>
+                                        {cat.count?.toLocaleString()}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
