@@ -1,0 +1,3100 @@
+{
+  "fetchedAt": "2026-02-02T16:34:12.748Z",
+  "total": 100,
+  "withResources": 100,
+  "withoutResources": 0,
+  "totalResources": 270,
+  "status": "complete",
+  "datasets": [
+    {
+      "id": "c73ed389-0264-4fad-9dec-31049d8cdab3",
+      "titleAr": "الجمعيات التعاونية في منطقة المدينة المنورة",
+      "titleEn": "Cooperative Societies in Madinah region",
+      "descriptionAr": "تشمل هذه المجموعة الجمعيات التعاونية في منطقة المدينة المنورة",
+      "category": "الحماية الاجتماعية والخدمات الاجتماعية",
+      "organization": "وزارة الموارد البشرية والتنمية الاجتماعية",
+      "resources": [
+        {
+          "id": "2243eb8b-03f0-43a3-8ca5-503cb182e594",
+          "name": "CSV Cooperative Societies in Madinah region",
+          "format": "CSV",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/c73ed389-0264-4fad-9dec-31049d8cdab3/v1/CSV Cooperative Societies in Madinah region.csv",
+          "size": 0
+        },
+        {
+          "id": "6bf1f5af-46d1-4923-a937-f799df3afb17",
+          "name": "Cooperative Societies in Madinah region",
+          "format": "XLSX",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/c73ed389-0264-4fad-9dec-31049d8cdab3/v1/Cooperative Societies in Madinah region.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "13f529f4-4950-4669-ad94-4a5f40ab36bc",
+      "titleAr": "تقييم أثر السندات الخضراء لصندوق الاستثمارات العامة لعام 2023 النتائج التفصيلية للأثر البيئي لمشاريع المباني الخضراء المعتمدة",
+      "titleEn": "PIF Green Bond Impact Assessment 2023  Green Buildings Detailed Results",
+      "descriptionAr": "النتائج التفصيلية للأثر البيئي لمشاريع المباني الخضراء المعتمدة والممولة من صندوق الاستثمارات العامة.",
+      "category": "الاستثمار",
+      "organization": "صندوق الاستثمارات العامة",
+      "resources": [
+        {
+          "id": "717e301b-89b3-42d0-bc17-1ca6e02c263e",
+          "name": "Green Buildings Detailed Results CSV",
+          "format": "CSV",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/13f529f4-4950-4669-ad94-4a5f40ab36bc/v1/Green Buildings Detailed Results CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "685a0af8-6e84-4120-b5bd-d9d429eff000",
+          "name": "Green Buildings Detailed Results XLSX",
+          "format": "XLSX",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/13f529f4-4950-4669-ad94-4a5f40ab36bc/v1/Green Buildings Detailed Results XLSX.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "2daf43c6-4221-40ed-a7ef-1077fb9bc358",
+      "titleAr": "تقييم أثر السندات الخضراء لصندوق الاستثمارات العامة لعام 2023 النتائج التفصيلية للأثر البيئي لمشاريع النقل النظيف",
+      "titleEn": "PIF Green Bond Impact Assessment 2023  Clean Transportation Detailed Results",
+      "descriptionAr": "النتائج التفصيلية للأثر البيئي لمشاريع النقل النظيف الممولة ضمن السندات الخضراء لصندوق الاستثمارات العامة.",
+      "category": "الاستثمار",
+      "organization": "صندوق الاستثمارات العامة",
+      "resources": [
+        {
+          "id": "662683d1-0abe-43ee-ad2a-509269143673",
+          "name": "Clean Transportation Detailed Results XLSX",
+          "format": "XLSX",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/2daf43c6-4221-40ed-a7ef-1077fb9bc358/v1/Clean Transportation Detailed Results XLSX.xlsx",
+          "size": 0
+        },
+        {
+          "id": "a574ab0e-983c-4fe2-a10b-abb4049c5c65",
+          "name": "Clean Transportation Detailed Results CSV",
+          "format": "CSV",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/2daf43c6-4221-40ed-a7ef-1077fb9bc358/v1/Clean Transportation Detailed Results CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "bc8141ec-2557-4997-a73e-bf431f263907",
+      "titleAr": "منجزات التشوه البصري الربع الرابع 2025",
+      "titleEn": "Visual Distortion Improvement Achievements  Q4 2025",
+      "descriptionAr": "تقرير يوضح أبرز منجزات معالجة التشوه البصري خلال الربع الرابع من عام 2025",
+      "category": "الجهات الرقابية",
+      "organization": "أمانة منطقة تبوك",
+      "resources": [
+        {
+          "id": "51051ed1-fa8c-46b4-a318-0862194ae5ee",
+          "name": "Visual Distortion Improvement Achievements Q4 2025",
+          "format": "CSV",
+          "url": "4a866958-5fe2-4631-afbb-b7e1b3fff28b/bc8141ec-2557-4997-a73e-bf431f263907/v1/Visual Distortion Improvement Achievements Q4 2025.csv",
+          "size": 0
+        },
+        {
+          "id": "dda89733-83a0-4ada-994b-6f9f563c18c9",
+          "name": "Visual Distortion Improvement AchievementsQ4 2025",
+          "format": "XLSX",
+          "url": "4a866958-5fe2-4631-afbb-b7e1b3fff28b/bc8141ec-2557-4997-a73e-bf431f263907/v1/Visual Distortion Improvement AchievementsQ4 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e33820db-c537-480f-ac60-657c493a6f8b",
+      "titleAr": "تقييم أثر السندات الخضراء لصندوق الاستثمارات العامة لعام 2023 النتائج التفصيلية للأثر البيئي لمشاريع الطاقة المتجددة",
+      "titleEn": "PIF Green Bond Impact Assessment 2023  Renewable Energy Detailed Results",
+      "descriptionAr": "النتائج التفصيلية للأثر البيئي لمشاريع الطاقة المتجددة الممولة ضمن السندات الخضراء لصندوق الاستثمارات العامة.",
+      "category": "الاستثمار",
+      "organization": "صندوق الاستثمارات العامة",
+      "resources": [
+        {
+          "id": "48423f20-684b-4ae3-a6c7-3a619f600379",
+          "name": "Renewable Energy Detailed Results XLSX",
+          "format": "XLSX",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/e33820db-c537-480f-ac60-657c493a6f8b/v1/Renewable Energy Detailed Results XLSX.xlsx",
+          "size": 0
+        },
+        {
+          "id": "9b058c83-3db3-4331-a37b-98a6da18b878",
+          "name": "Renewable Energy Detailed Results CSV",
+          "format": "CSV",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/e33820db-c537-480f-ac60-657c493a6f8b/v1/Renewable Energy Detailed Results CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "ba7b65e9-b6f8-4f55-8566-f821600a716c",
+      "titleAr": "الجمعيات التعاونية منطقة الرياض",
+      "titleEn": "Cooperative Societies in RIYADH region",
+      "descriptionAr": "تشمل هذه المجموعة الجمعيات التعاونية في منطقة الرياض",
+      "category": "الحماية الاجتماعية والخدمات الاجتماعية",
+      "organization": "وزارة الموارد البشرية والتنمية الاجتماعية",
+      "resources": [
+        {
+          "id": "dc45d081-f1fd-4767-8e30-80a9d1d43744",
+          "name": "Cooperative Societies in RIYADH region",
+          "format": "XLSX",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/ba7b65e9-b6f8-4f55-8566-f821600a716c/v1/Cooperative Societies in RIYADH region.xlsx",
+          "size": 0
+        },
+        {
+          "id": "cbdf70e6-19bc-4981-9c71-db94e71a26fa",
+          "name": "CSV Cooperative Societies in RIYADH region",
+          "format": "CSV",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/ba7b65e9-b6f8-4f55-8566-f821600a716c/v1/CSV Cooperative Societies in RIYADH region.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "df0e295e-a570-40da-a2e4-e78ef4082ea1",
+      "titleAr": "عدد الأصناف المدرجة بالقائمة الإلزامية للمنتجات الوطنية حسب القسم",
+      "titleEn": "Number of Commodities Listed under the Mandatory List National Products by Segment",
+      "descriptionAr": "تستعرض مجموعة البيانات عدد الأصناف المدرجة بالقائمة الإلزامية للمنتجات الوطنية بحسب القسم",
+      "category": "المشتريات الحكومية",
+      "organization": "هيئة المحتوى المحلي والمشتريات الحكومية",
+      "resources": [
+        {
+          "id": "8afc3a52-b26a-47dd-94b9-26e9f95dff6f",
+          "name": "Number of Commodities Listed under MandatoryList",
+          "format": "CSV",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/df0e295e-a570-40da-a2e4-e78ef4082ea1/v2/Number of Commodities Listed under MandatoryList.csv",
+          "size": 0
+        },
+        {
+          "id": "1e9d22aa-41bd-46aa-ac6f-f2de66020644",
+          "name": "Number of Commodities Listed under Mandatory List",
+          "format": "XLSX",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/df0e295e-a570-40da-a2e4-e78ef4082ea1/v2/Number of Commodities Listed under Mandatory List.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "3b286659-c4ea-44f6-9960-a37db873473f",
+      "titleAr": "تقييم أثر السندات الخضراء لصندوق الاستثمارات العامة لعام 2023 النتائج التفصيلية للأثر البيئي لمشاريع كفاءة الطاقة",
+      "titleEn": "PIF Green Bond Impact Assessment 2023  Energy Efficiency Detailed Results",
+      "descriptionAr": "النتائج التفصيلية للأثر البيئي لمشاريع كفاءة الطاقة الممولة ضمن السندات الخضراء لصندوق الاستثمارات العامة.",
+      "category": "الاستثمار",
+      "organization": "صندوق الاستثمارات العامة",
+      "resources": [
+        {
+          "id": "b63b475c-ef4b-4226-88a8-28fb7ab1e1c1",
+          "name": "Energy Efficiency Detailed Results XLSX",
+          "format": "XLSX",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/3b286659-c4ea-44f6-9960-a37db873473f/v1/Energy Efficiency Detailed Results XLSX.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f0387255-2d70-4748-9d71-6d0a0dc4ac59",
+          "name": "Energy Efficiency Detailed Results CSV",
+          "format": "CSV",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/3b286659-c4ea-44f6-9960-a37db873473f/v1/Energy Efficiency Detailed Results CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "73502439-398d-4499-a5ce-17b4376e59f3",
+      "titleAr": "عدد الفائزين في مهرجان الملك عبدالعزيز",
+      "titleEn": "The number of winners at the King Abdulaziz Festival",
+      "descriptionAr": "عدد الفائزين بناء على الفئة في مهرجان الملك عبدالعزيز حتى عام 2024",
+      "category": "التعليم والتدريب",
+      "organization": "نادي الإبل",
+      "resources": [
+        {
+          "id": "773afb36-b24c-4ea0-aa45-883fb41767cf",
+          "name": "Number of Winners at King Abdulaziz Festival",
+          "format": "XLSX",
+          "url": "771adca2-4739-457a-be53-ad26f46ce8bd/73502439-398d-4499-a5ce-17b4376e59f3/v1/Number of Winners at King Abdulaziz Festival.xlsx",
+          "size": 0
+        },
+        {
+          "id": "a1731467-903c-4896-ba09-d707bb7d725a",
+          "name": "Number of Winners at King Abdulaziz Festival CSV",
+          "format": "CSV",
+          "url": "771adca2-4739-457a-be53-ad26f46ce8bd/73502439-398d-4499-a5ce-17b4376e59f3/v1/Number of Winners at King Abdulaziz Festival CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "a9d4c2ca-020d-4f8b-893c-5ceee4c7dadb",
+      "titleAr": "المحافظ الاستثمارية الوقفية المرخصة",
+      "titleEn": "Licensed Endowment Investment Portfolios",
+      "descriptionAr": "عدد المحافظ الاستثمارية الوقفية المرخصة حسب السنة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "942ece3a-ec65-4378-86fc-9fc04d593a3d",
+          "name": "Investment Portfolios by Year CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/a9d4c2ca-020d-4f8b-893c-5ceee4c7dadb/v1/Investment Portfolios by Year CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "3547dfc1-5f6e-494f-857b-d3d49fdad48a",
+          "name": "Investment Portfolios by Year",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/a9d4c2ca-020d-4f8b-893c-5ceee4c7dadb/v1/Investment Portfolios by Year.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "9a97ab59-3725-4d7e-afee-9260b8c844be",
+      "titleAr": "بيان بأعداد الإبل الموثقة حسب الجنس",
+      "titleEn": "Statement of the number of documented camels by gender",
+      "descriptionAr": "بيان بأعداد الإبل الموثقة في مهرجان الملك عبدالعزيز وجادات الإبل حسب الجنس في برنامج وثقها حتى نهاية 2024",
+      "category": "الحكومة الإلكترونية",
+      "organization": "نادي الإبل",
+      "resources": [
+        {
+          "id": "42c506d1-b129-4a45-b3e4-b629db9b93ff",
+          "name": "Documented camels by gender",
+          "format": "XLSX",
+          "url": "771adca2-4739-457a-be53-ad26f46ce8bd/9a97ab59-3725-4d7e-afee-9260b8c844be/v1/Documented camels by gender.xlsx",
+          "size": 0
+        },
+        {
+          "id": "1d99f56d-1163-4415-aeb8-b62c7dceb7ba",
+          "name": "Documented camels by gender CSV",
+          "format": "CSV",
+          "url": "771adca2-4739-457a-be53-ad26f46ce8bd/9a97ab59-3725-4d7e-afee-9260b8c844be/v1/Documented camels by gender CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "0ba04d58-4860-4f72-abe3-f509e26c7d79",
+      "titleAr": "تقويم إصدارات الصكوك ضمن برنامج الصكوك المحلية بالريال 2026م",
+      "titleEn": "Local Sukuk Issuances Calendar for 2026",
+      "descriptionAr": "تقويم إصدارات الصكوك ضمن برنامج الصكوك المحلية بالريال 2026م يوضح من خلاله تاريخ التسوية والعرض (الشهر واليوم)\n",
+      "category": "المالية",
+      "organization": "المركز الوطني لإدارة الدين",
+      "resources": [
+        {
+          "id": "c275d886-7bc3-4fd3-b9f6-47fda223fce8",
+          "name": "Calendar of local Sukuk Issuances for 2026",
+          "format": "XLSX",
+          "url": "8bcc82c5-a249-4b67-812a-214f46a37db2/0ba04d58-4860-4f72-abe3-f509e26c7d79/v1/Calendar of local Sukuk Issuances for 2026.xlsx",
+          "size": 0
+        },
+        {
+          "id": "50e80594-fc62-4080-a6c2-edd1bd1b202f",
+          "name": "Calendar of local Sukuk Issuances for 2026 CSV",
+          "format": "CSV",
+          "url": "8bcc82c5-a249-4b67-812a-214f46a37db2/0ba04d58-4860-4f72-abe3-f509e26c7d79/v1/Calendar of local Sukuk Issuances for 2026 CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "f3ea5c57-36f0-4068-a721-c1d7eb0d3c8d",
+      "titleAr": "ملخص تخصيصات السندات الخضراء لعام 2023  أبرز مؤشرات ونتائج الأثر البيئي لتخصيصات السندات الخضراء لعام 2023",
+      "titleEn": "PIF Green Bond Impact Assessment 2023  PIF Green Bond Impact Highlights",
+      "descriptionAr": "أبرز مؤشرات ونتائج الأثر البيئي لتخصيصات السندات الخضراء لصندوق الاستثمارات العامة لعام 2023.",
+      "category": "الاستثمار",
+      "organization": "صندوق الاستثمارات العامة",
+      "resources": [
+        {
+          "id": "21f0ef49-42d3-4ccc-95ee-a533714c47ab",
+          "name": "PIF Green Bond Impact Highlights CSV",
+          "format": "CSV",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/f3ea5c57-36f0-4068-a721-c1d7eb0d3c8d/v1/PIF Green Bond Impact Highlights CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "20313d7e-0169-47a7-a6c6-f9fcea77545f",
+          "name": "PIF Green Bond Impact Highlights XLSX",
+          "format": "XLSX",
+          "url": "38c38dbd-5953-45e9-81f1-b139a1c0d7f5/f3ea5c57-36f0-4068-a721-c1d7eb0d3c8d/v1/PIF Green Bond Impact Highlights XLSX.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "f49613b2-d6d9-4392-b862-22b1ba8b4d63",
+      "titleAr": "إجمالي عدد المبتعثين الحاليين حسب الدولة والجنس والدرجة العلمية ",
+      "titleEn": "Total number of current scholarship students by country gender and grade",
+      "descriptionAr": "المبتعثين الحاليين لعام 2025 (الدولة – الجنس – الدرجة العلمية – العدد)",
+      "category": "التعليم",
+      "organization": "وزارة التعليم",
+      "resources": [
+        {
+          "id": "7556c30e-69d1-41ba-96ec-793da42697f2",
+          "name": "Current scholarship students",
+          "format": "CSV",
+          "url": "3910a763-1829-445f-97b1-2bd988249b7e/f49613b2-d6d9-4392-b862-22b1ba8b4d63/v1/Current scholarship students.csv",
+          "size": 0
+        },
+        {
+          "id": "02b179b6-25a0-44bc-ac50-b6efa19574b2",
+          "name": "Total number of current scholarship students",
+          "format": "XLSX",
+          "url": "3910a763-1829-445f-97b1-2bd988249b7e/f49613b2-d6d9-4392-b862-22b1ba8b4d63/v1/Total number of current scholarship students.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "43aff525-4d5f-455f-83e2-9b3dad555c2d",
+      "titleAr": "إجمالي عدد الخريجين في دول الابتعاث حسب الجنس والدرجة العلمية من عام 2022 إلى 2024",
+      "titleEn": "Total number of scholarship graduates by country gender and grade from 2022 to 2024",
+      "descriptionAr": "الخريجين (سنة التخرج – الدولة – الجنس – الدرجة العلمية – العدد)",
+      "category": "التعليم",
+      "organization": "وزارة التعليم",
+      "resources": [
+        {
+          "id": "20adcdf4-0984-4de8-942e-8741f28e981f",
+          "name": "Total number of scholarship graduates",
+          "format": "XLSX",
+          "url": "3910a763-1829-445f-97b1-2bd988249b7e/43aff525-4d5f-455f-83e2-9b3dad555c2d/v1/Total number of scholarship graduates.xlsx",
+          "size": 0
+        },
+        {
+          "id": "47b2e9cc-3853-4b48-9ca4-9fa8e4f43cf4",
+          "name": "Total Scholarship Graduates CSV",
+          "format": "CSV",
+          "url": "3910a763-1829-445f-97b1-2bd988249b7e/43aff525-4d5f-455f-83e2-9b3dad555c2d/v1/Total Scholarship Graduates CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "ee6362e9-c479-4792-bb77-cae33ab2db3d",
+      "titleAr": "شركاء الهيئة التنمويين",
+      "titleEn": "The Authoritys Development Partners",
+      "descriptionAr": "شركاء الهيئة في تنفيذها لمشاريعها التنموية وتوزيعها على المناطق الإدارية حسب السنة",
+      "category": "الحماية الاجتماعية والخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "b2bdc8c3-e892-4734-9978-83abd3491136",
+          "name": "The Authoritys Development Partners CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/ee6362e9-c479-4792-bb77-cae33ab2db3d/v1/The Authoritys Development Partners CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "91e0ab4f-7d73-4103-8110-ae83d3ab3f38",
+          "name": "The Authoritys Development Partners",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/ee6362e9-c479-4792-bb77-cae33ab2db3d/v1/The Authoritys Development Partners.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e35ad93d-7307-4728-82c0-d708874b369e",
+      "titleAr": "المشاريع التنموية المدعومة من الهيئة",
+      "titleEn": "Development Projects Supported by the Authority",
+      "descriptionAr": "المشاريع التنموية المدعومة من الهيئة مصنفة حسب المنطقة والسنة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "a355e366-4b52-4680-ab8a-1ca74b4ce79e",
+          "name": "Development Projects Supported by the Authority",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/e35ad93d-7307-4728-82c0-d708874b369e/v1/Development Projects Supported by the Authority.xlsx",
+          "size": 0
+        },
+        {
+          "id": "b623b85b-3a95-498e-b6d6-7f0c3376df8b",
+          "name": "Development Projects Supported by theAuthority CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/e35ad93d-7307-4728-82c0-d708874b369e/v1/Development Projects Supported by theAuthority CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "78692f31-cf7c-48a5-bf64-895d2515f8dc",
+      "titleAr": "المنظمات غير الربحية المشمولة بالإشراف الفني للهيئة",
+      "titleEn": "Non Profit Organizations Supervised by the Authority",
+      "descriptionAr": "المنظمات غير الربحية المشمولة بالإشراف الفني للهيئة حسب المنطقة",
+      "category": "الحماية الاجتماعية والخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "df7ae96d-043d-4927-9941-062bfdcd44ca",
+          "name": "Non Profit Organizations",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/78692f31-cf7c-48a5-bf64-895d2515f8dc/v1/Non Profit Organizations.xlsx",
+          "size": 0
+        },
+        {
+          "id": "92a1f54a-a638-40bf-b463-9f88f64d4ad8",
+          "name": "Non Profit Organizations CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/78692f31-cf7c-48a5-bf64-895d2515f8dc/v1/Non Profit Organizations CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "1fdfc612-4396-42db-b4eb-073b2eca5f3e",
+      "titleAr": "المستفيدين المباشرين من مصارف الأوقاف للأوقاف التي تحت نظارة الهيئة",
+      "titleEn": "Direct Beneficiaries of Endowment Yields Under the Authoritys Management",
+      "descriptionAr": "عدد المستفيدين المباشرين من مصارف الأوقاف للأوقاف التي تحت نظارة الهيئة حسب السنة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "a5c25799-e9a9-40be-9f52-237567e2778f",
+          "name": "Number of Direct Beneficiaries by Year",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/1fdfc612-4396-42db-b4eb-073b2eca5f3e/v1/Number of Direct Beneficiaries by Year.xlsx",
+          "size": 0
+        },
+        {
+          "id": "24e5a4c6-de22-4d59-bf7a-869fe72d274c",
+          "name": "Number of Direct Beneficiaries by Year CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/1fdfc612-4396-42db-b4eb-073b2eca5f3e/v1/Number of Direct Beneficiaries by Year CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "442a28d4-0b52-4c72-b756-a2c88f51ff3b",
+      "titleAr": "المتطوعين في الجهات المقدِّمة للفرص التطوعية في المجال الوقفي",
+      "titleEn": "Volunteers in Organizations Providing Endowment Volunteering Opportunities",
+      "descriptionAr": "عدد المتطوعين في الجهات المقدِّمة للفرص التطوعية في المجال الوقفي حسب السنة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "537288c3-d8d2-4cdc-92aa-adc5b749cdcf",
+          "name": "Number of Volunteers by Year CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/442a28d4-0b52-4c72-b756-a2c88f51ff3b/v1/Number of Volunteers by Year CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "6ec463d0-bd10-4f30-85b0-f81088294025",
+          "name": "Number of Volunteers by Year",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/442a28d4-0b52-4c72-b756-a2c88f51ff3b/v1/Number of Volunteers by Year.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e59767b1-cc4a-41fb-975c-cd228e839d1c",
+      "titleAr": "الساعات التطوعية في الجهات المقدِّمة للفرص التطوعية في المجال الوقفي",
+      "titleEn": "Volunteering Hours in Organizations Providing Endowment Volunteering Opportunities",
+      "descriptionAr": "الساعات التطوعية في الجهات المقدِّمة للفرص التطوعية في المجال الوقفي حسب السنة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "446164ba-d538-4152-9e39-abc2357dbf75",
+          "name": "Number of Hours by Year",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/e59767b1-cc4a-41fb-975c-cd228e839d1c/v1/Number of Hours by Year.xlsx",
+          "size": 0
+        },
+        {
+          "id": "0c1f1a46-06a9-4b6a-a6bf-cd8f503db19a",
+          "name": "Number of Hours by Year CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/e59767b1-cc4a-41fb-975c-cd228e839d1c/v1/Number of Hours by Year CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "eba69268-4276-4a83-a46f-da83a9d831f9",
+      "titleAr": "الجهات المقدِّمة للفرص التطوعية في المجال الوقفي",
+      "titleEn": "Organizations Providing Endowment Volunteering Opportunities",
+      "descriptionAr": "الجهات المقدِّمة للفرص التطوعية في المجال الوقفي حسب المدينة",
+      "category": "الخدمات الاجتماعية",
+      "organization": "الهيئة العامة للأوقاف",
+      "resources": [
+        {
+          "id": "76d1ba75-86cf-4009-aada-c0558b35f662",
+          "name": "Endowment Volunteering Organizations",
+          "format": "XLSX",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/eba69268-4276-4a83-a46f-da83a9d831f9/v1/Endowment Volunteering Organizations.xlsx",
+          "size": 0
+        },
+        {
+          "id": "52ba8068-0722-495d-b1dd-d1dc5a02f2f9",
+          "name": "Endowment Volunteering Organizations CSV",
+          "format": "CSV",
+          "url": "d0565549-b5be-4466-9e01-121a55c385bb/eba69268-4276-4a83-a46f-da83a9d831f9/v1/Endowment Volunteering Organizations CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "195bb29c-0482-498d-ae55-eec3c77a96ec",
+      "titleAr": "إدارة الرقابة والتراخيص التجارية الربع الرابع من العام 2025",
+      "titleEn": "Commercial Control and Licensing Management Group fourth quarter of 2025",
+      "descriptionAr": "تحتوي على بيانات الرقابة الصحية والتراخيص للحملات وإجمالي المصادرات وإجمالي إتلافات المواد الغذائية وعدد المنشآت المغرمة.",
+      "category": "البلدية",
+      "organization": "أمانة منطقة الرياض",
+      "resources": [
+        {
+          "id": "27dd2b76-aff5-417c-9c76-2b22c1857663",
+          "name": "1Commercial licenses",
+          "format": "XLSX",
+          "url": "4a9f48e7-b2c1-4d3c-9445-01212acb9bd8/195bb29c-0482-498d-ae55-eec3c77a96ec/v1/1Commercial licenses.xlsx",
+          "size": 0
+        },
+        {
+          "id": "226203bb-82e5-416b-8c2b-74c4e3b51c8b",
+          "name": "Commercial licenses",
+          "format": "CSV",
+          "url": "4a9f48e7-b2c1-4d3c-9445-01212acb9bd8/195bb29c-0482-498d-ae55-eec3c77a96ec/v1/Commercial licenses.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "41b46280-aeed-4a2e-9ad6-ec3cc38996c1",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب اقسام المهنة والمنطقة والجنس والجنسية   للربع الرابع 2025",
+      "titleEn": "Employees currently employed in the private sector categorized by occupation regiongender nationality Q4 2025",
+      "descriptionAr": "توضح هذه المجموعة العاملين  على راس العمل  في القطاع الخاص حسب اقسام المهنة والمنطقة والجنس والجنسية   للربع الرابع 2025",
+      "category": "التوظيف",
+      "organization": "وزارة الموارد البشرية والتنمية الاجتماعية",
+      "resources": [
+        {
+          "id": "ce8ada6e-5da9-40f1-b590-341266cca4b7",
+          "name": "by occupation region gender nationality Q4 2025",
+          "format": "XLSX",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/41b46280-aeed-4a2e-9ad6-ec3cc38996c1/v1/by occupation region gender nationality Q4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "90a33222-1a58-4921-94ec-ff7edbeb7376",
+          "name": "by occupation region gender nationality Q4 2025CSV",
+          "format": "CSV",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/41b46280-aeed-4a2e-9ad6-ec3cc38996c1/v1/by occupation region gender nationality Q4 2025CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "ac121e81-74d4-46c8-9729-eb090180fe99",
+      "titleAr": "إجمالي خريجي برامج الدراسات العليا للعام الأكاديمي 1446هـ",
+      "titleEn": "Overall Graduate Students from Postgraduate Programs AY 2024 2025",
+      "descriptionAr": "إجمالي عدد خريجي برامج الدراسات العليا في الجامعة للعام الأكاديمي 1446هـ، موزع حسب الفروع والكليات",
+      "category": "التعليم والتدريب",
+      "organization": "جامعة الملك سعود بن عبدالعزيز للعلوم الصحية",
+      "resources": [
+        {
+          "id": "eb2de9f2-3e36-430a-a9d0-2989e4d39821",
+          "name": "Graduates from Postgraduate Programs AY 2024 2025",
+          "format": "XLSX",
+          "url": "26679430-0fd9-4772-a6c3-2c55f359b933/ac121e81-74d4-46c8-9729-eb090180fe99/v1/Graduates from Postgraduate Programs AY 2024 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "7ef22b91-b11e-4e93-bca2-5084daa0eb3e",
+          "name": "Graduates from Postgraduate Programs1 AY 2024 2025",
+          "format": "CSV",
+          "url": "26679430-0fd9-4772-a6c3-2c55f359b933/ac121e81-74d4-46c8-9729-eb090180fe99/v1/Graduates from Postgraduate Programs1 AY 2024 2025.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "6d3ee302-28db-4dc0-ab0c-8823f2d88b9e",
+      "titleAr": "الشهادات الصحية الربع الرابع من العام 2025م",
+      "titleEn": " Health certificates for the fourth quarter of 2025",
+      "descriptionAr": "تحتوي على بيانات إحصائية تحتوي على بيانات المختبرات وإجمالي العينات وبيانات الشهادات الصحية الربع الرابع من العام 2025",
+      "category": "البلدية",
+      "organization": "أمانة منطقة الرياض",
+      "resources": [
+        {
+          "id": "2bb12619-dc22-4817-a338-0ae71583db41",
+          "name": "1Health certificates",
+          "format": "XLSX",
+          "url": "4a9f48e7-b2c1-4d3c-9445-01212acb9bd8/6d3ee302-28db-4dc0-ab0c-8823f2d88b9e/v1/1Health certificates.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f013462f-5a1c-4001-b92e-aa5ab3b5547a",
+          "name": "Health certificates",
+          "format": "CSV",
+          "url": "4a9f48e7-b2c1-4d3c-9445-01212acb9bd8/6d3ee302-28db-4dc0-ab0c-8823f2d88b9e/v1/Health certificates.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "a55a76d9-6138-471f-85f6-24b8f1f391f6",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب النشاط الاقتصادي والفئة العمرية   للربع الرابع 2025",
+      "titleEn": "Employees currently employed in the private sector by economic activity and age groupQ4 2025",
+      "descriptionAr": "توضح هذه المجموعةالعاملين  على راس العمل  في القطاع الخاص  حسب النشاط الاقتصادي والفئة العمرية    للربع الرابع 2025",
+      "category": "الموارد البشرية",
+      "organization": "وزارة الموارد البشرية والتنمية الاجتماعية",
+      "resources": [
+        {
+          "id": "d649130c-fb3b-4586-b9e5-32dbddb7fecb",
+          "name": "economic activity and age group Q4 2025",
+          "format": "XLSX",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/a55a76d9-6138-471f-85f6-24b8f1f391f6/v1/economic activity and age group Q4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "b518675e-4bfa-45b2-9c95-3f6d25cff3f5",
+          "name": "economic activity and age group Q4 2025CSV",
+          "format": "CSV",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/a55a76d9-6138-471f-85f6-24b8f1f391f6/v1/economic activity and age group Q4 2025CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "4811a908-9bb1-478d-9f39-bd8da558cd28",
+      "titleAr": "الصيدليات المعتمدة بمجلس الضمان الصحي 2025 ربع الرابع",
+      "titleEn": "Accredited Pharmacies with the Council of Health Insurance 2025Q4",
+      "descriptionAr": "مثل هذا الجدول بيانات للصيدليات في القطاع الخاص المعتمدة لدى مجلس الضمان الصحي، ويشمل نوع مقدم الخدمة، والموقع الجغرافي من حيث المدينة والمنطقة، وذلك لدعم أغراض التنظيم، والاعتماد، والتحليل، والإشراف على مقدمي خدمات الصيدلة ",
+      "category": "الصحة",
+      "organization": "مجلس الضمان الصحي ",
+      "resources": [
+        {
+          "id": "66522e1b-9161-4e7b-9fd0-784b331555f9",
+          "name": "Accredited Pharmacies by CHI 2025 Q4",
+          "format": "CSV",
+          "url": "86ca88f0-1c3a-4eb7-9274-178582a51a68/4811a908-9bb1-478d-9f39-bd8da558cd28/v2/Accredited Pharmacies by CHI 2025 Q4.csv",
+          "size": 0
+        },
+        {
+          "id": "d87da3bd-762a-4bf6-b0e8-fa49f6f1c01e",
+          "name": "Accredited Pharmacies by CHI 2025Q4",
+          "format": "XLSX",
+          "url": "86ca88f0-1c3a-4eb7-9274-178582a51a68/4811a908-9bb1-478d-9f39-bd8da558cd28/v2/Accredited Pharmacies by CHI 2025Q4.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "ce455ba6-d10e-4616-8811-0e2aacd4a08a",
+      "titleAr": "عدد موظفي صندوق التنمية الصناعية لعام 2024",
+      "titleEn": "SIDF Number of Employees 2024",
+      "descriptionAr": "This dataset displays the total number of employees by year in  SIDF.",
+      "category": "الصناعة",
+      "organization": "صندوق التنمية الصناعية السعودي",
+      "resources": [
+        {
+          "id": "55850224-2402-4827-8ac8-3ef0f5d34a4c",
+          "name": "SIDF Number of Employees 2024",
+          "format": "CSV",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/ce455ba6-d10e-4616-8811-0e2aacd4a08a/v1/SIDF Number of Employees 2024.csv",
+          "size": 0
+        },
+        {
+          "id": "745e8d10-0446-4f16-8a9f-7ae30b9d771e",
+          "name": "SIDF Number of Employees 2024XSL",
+          "format": "XLSX",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/ce455ba6-d10e-4616-8811-0e2aacd4a08a/v1/SIDF Number of Employees 2024XSL.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "32ab628b-4735-4f8f-a41f-3713ed4480e1",
+      "titleAr": "المبالغ المعتمدة حسب المنتجات التمويلة 2024",
+      "titleEn": "Approved Amount by Financing Product 2024",
+      "descriptionAr": "تعرض هذه المجموعة من البيانات عدد الموافقات التي أجرتها SIDF، حسب المنتج",
+      "category": "الصناعة",
+      "organization": "صندوق التنمية الصناعية السعودي",
+      "resources": [
+        {
+          "id": "064c57f7-2352-4a02-8a25-1964cd84ea57",
+          "name": "Approved Amount by Financing Product 2024XSL",
+          "format": "XLSX",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/32ab628b-4735-4f8f-a41f-3713ed4480e1/v1/Approved Amount by Financing Product 2024XSL.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2f43cbb8-e97b-4b43-be91-2044fb2cebbf",
+          "name": "Approved Amount by Financing Product 2024",
+          "format": "CSV",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/32ab628b-4735-4f8f-a41f-3713ed4480e1/v1/Approved Amount by Financing Product 2024.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "16acc790-e472-4699-845f-77c5c9b2f4fb",
+      "titleAr": "عدد تصاريح الحمولة الاستثنائية للمركبات الأجنبية",
+      "titleEn": "Number of exceptional load permits for international vehicles",
+      "descriptionAr": "عدد تصاريح الحمولة الاستثنائية الصادرة من قبل الهيئة العامة للطرق للمركبات الأجنبية حسب المنطقة والربع السنوي",
+      "category": "النقل والمواصلات",
+      "organization": "الهيئة العامة للطرق",
+      "resources": [
+        {
+          "id": "bfa7d306-2f89-4dd9-95b3-b9de951d418c",
+          "name": "Exceptional load permits for international xlsx",
+          "format": "XLSX",
+          "url": "80aaa4fa-c23f-4dd7-b997-7efbc3d566dc/16acc790-e472-4699-845f-77c5c9b2f4fb/v2/Exceptional load permits for international xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "550ead4e-e8cb-4f8f-b7f6-e9d9dee75765",
+          "name": "Exceptional load permits for international csv",
+          "format": "CSV",
+          "url": "80aaa4fa-c23f-4dd7-b997-7efbc3d566dc/16acc790-e472-4699-845f-77c5c9b2f4fb/v2/Exceptional load permits for international csv.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "cccfc7f5-7800-4641-bf84-c9082778955d",
+      "titleAr": "عدد طلبات تمديدات تصاريح الحفر",
+      "titleEn": "Number of extension of drilling permit requests",
+      "descriptionAr": "عدد طلبات تمديد تصاريح الحفر حسب المنطقة والربع السنوي",
+      "category": "النقل والمواصلات",
+      "organization": "الهيئة العامة للطرق",
+      "resources": [
+        {
+          "id": "58c70d4d-e263-4fb8-9ca2-6a39f9828a64",
+          "name": "Extension of Drilling Permit csv",
+          "format": "CSV",
+          "url": "80aaa4fa-c23f-4dd7-b997-7efbc3d566dc/cccfc7f5-7800-4641-bf84-c9082778955d/v2/Extension of Drilling Permit csv.csv",
+          "size": 0
+        },
+        {
+          "id": "341ef7c1-541c-4a9b-b663-e78164656c2d",
+          "name": "Extension of Drilling Permit xlsx",
+          "format": "XLSX",
+          "url": "80aaa4fa-c23f-4dd7-b997-7efbc3d566dc/cccfc7f5-7800-4641-bf84-c9082778955d/v2/Extension of Drilling Permit xlsx.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "daa44995-0dea-43df-957e-8b56ebd4a7bb",
+      "titleAr": "العاملين على راس العمل  في القطاع الخاص حسب النشاط الاقتصادي والجنس والجنسية  للربع الرابع 2025",
+      "titleEn": "Employees in the private sector by economic activity gender and nationalityQ4 2025",
+      "descriptionAr": "توضح هذه المجموعة العاملين  على راس العمل  في القطاع الخاص  حسب النشاط الاقتصادي والجنس والجنسية   للربع الرابع 2025",
+      "category": "الموارد البشرية",
+      "organization": "وزارة الموارد البشرية والتنمية الاجتماعية",
+      "resources": [
+        {
+          "id": "34229247-7cce-4b02-9d53-29b9af942c01",
+          "name": "economic activity gender nationalityQ4 2025CSV",
+          "format": "CSV",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/daa44995-0dea-43df-957e-8b56ebd4a7bb/v1/economic activity gender nationalityQ4 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "89c10761-6389-400e-9a37-e9fd79cdd637",
+          "name": "economic activity gender nationalityQ4 2025",
+          "format": "XLSX",
+          "url": "267814ec-1d12-40f6-9e6a-a2b3239aef7c/daa44995-0dea-43df-957e-8b56ebd4a7bb/v1/economic activity gender nationalityQ4 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "447986fc-5bce-4333-b2dc-4b48aa6b10d3",
+      "titleAr": "عدد القروض المعتمدة حسب المنتجات 2024",
+      "titleEn": "Number of Approved loans by Products 2024",
+      "descriptionAr": "تعرض هذه المجموعة من البيانات عدد الموافقات التي أجرتها SIDF، حسب المنتج.",
+      "category": "الصناعة",
+      "organization": "صندوق التنمية الصناعية السعودي",
+      "resources": [
+        {
+          "id": "fb3b7d01-7e06-4e5f-8b3e-2ce67db3a0c6",
+          "name": "Number of Approved loans by Products",
+          "format": "CSV",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/447986fc-5bce-4333-b2dc-4b48aa6b10d3/v1/Number of Approved loans by Products.csv",
+          "size": 0
+        },
+        {
+          "id": "09d47b55-5cb5-479a-93a2-50b83628a40b",
+          "name": "Number of Approved loans by Products 2024",
+          "format": "XLSX",
+          "url": "c6fedddd-8103-400c-a073-6a26d878baf2/447986fc-5bce-4333-b2dc-4b48aa6b10d3/v1/Number of Approved loans by Products 2024.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "f1397497-168c-4d86-a722-9f9c412417cf",
+      "titleAr": "المجمعات الخاصة الطبية المعتمدة بمجلس الضمان الصحي 2025 ربع الرابع",
+      "titleEn": " Accredited Private medical complexes with the CHI 2025 Q4",
+      "descriptionAr": "يمثل هذا الجدول بيانات تعريفية لمقدمي الخدمات الصحية الخاص، ونوع مقدم الخدمة، إضافة إلى موقعه الجغرافي من حيث المدينة والمنطقة، وذلك لدعم أغراض التصنيف والتنظيم والتحليل.",
+      "category": "الصحة",
+      "organization": "مجلس الضمان الصحي ",
+      "resources": [
+        {
+          "id": "ed3feadf-0082-418e-9b46-39fbf1f76e5e",
+          "name": "Accredited Medical Complexes with CHI 2025Q4",
+          "format": "XLSX",
+          "url": "86ca88f0-1c3a-4eb7-9274-178582a51a68/f1397497-168c-4d86-a722-9f9c412417cf/v2/Accredited Medical Complexes with CHI 2025Q4.xlsx",
+          "size": 0
+        },
+        {
+          "id": "fc31a45a-00bb-4870-9677-74e4ec66bf46",
+          "name": "Accredited Medical Complex with CHI 2025Q4",
+          "format": "CSV",
+          "url": "86ca88f0-1c3a-4eb7-9274-178582a51a68/f1397497-168c-4d86-a722-9f9c412417cf/v2/Accredited Medical Complex with CHI 2025Q4.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "2d0b3451-70c9-4b81-9bfc-0027cc8dcb2d",
+      "titleAr": "قائمة التغيرات في صافي أصول هيئة السوق المالية ",
+      "titleEn": "Financial Changes",
+      "descriptionAr": "التغيرات المالية.",
+      "category": "الاستثمار",
+      "organization": "هيئة السوق المالية",
+      "resources": [
+        {
+          "id": "599b3174-ea08-4229-82d3-37b96cc36ab7",
+          "name": "Table 22 Financial Changes CSV",
+          "format": "CSV",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/2d0b3451-70c9-4b81-9bfc-0027cc8dcb2d/v1/Table 22 Financial Changes CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "686f7903-cf0c-4b3f-937a-82a89735051b",
+          "name": "Table 22 Financial Changes",
+          "format": "XLSX",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/2d0b3451-70c9-4b81-9bfc-0027cc8dcb2d/v1/Table 22 Financial Changes.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "0dcf3d78-f16a-4a68-857c-5eb031c2f9eb",
+      "titleAr": "إجمالي الغرامات والجزاءات المالية الواجب تنفيذها بقرارات صادرة عن هيئة السوق المالية ولجان الفصل في منازعات الأوراق المالية ",
+      "titleEn": "Fines and Penalties",
+      "descriptionAr": "الغرامات والجزاءات.",
+      "category": "الاستثمار",
+      "organization": "هيئة السوق المالية",
+      "resources": [
+        {
+          "id": "df7a4064-a453-4e04-bc29-1e00c92f3ba7",
+          "name": "Table 20 Fines and Penalties",
+          "format": "XLSX",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/0dcf3d78-f16a-4a68-857c-5eb031c2f9eb/v1/Table 20 Fines and Penalties.xlsx",
+          "size": 0
+        },
+        {
+          "id": "97f75600-1cb7-442c-938d-a5fd70f4f9fc",
+          "name": "Table 20 Fines and Penalties CSV",
+          "format": "CSV",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/0dcf3d78-f16a-4a68-857c-5eb031c2f9eb/v1/Table 20 Fines and Penalties CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "5856dfad-a4eb-4b4e-9532-5757512b08e4",
+      "titleAr": "مبالغ التعويضات وأتعاب الدعاوى المحكوم بها الصادرة بقرارات قطعية صادرة عن لجان الفصل في منازعات الأوراق المالية",
+      "titleEn": "Compensation Awards",
+      "descriptionAr": "التعويضات المحكوم بها.",
+      "category": "الاستثمار",
+      "organization": "هيئة السوق المالية",
+      "resources": [
+        {
+          "id": "7d5d1394-dda0-489f-acb8-23d42fa6a816",
+          "name": "Table 21 Compensation Awards",
+          "format": "XLSX",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/5856dfad-a4eb-4b4e-9532-5757512b08e4/v1/Table 21 Compensation Awards.xlsx",
+          "size": 0
+        },
+        {
+          "id": "cd5fe23c-c9b5-4c50-aa5e-2670f109b516",
+          "name": "Table 21 Compensation Awards CSV",
+          "format": "CSV",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/5856dfad-a4eb-4b4e-9532-5757512b08e4/v1/Table 21 Compensation Awards CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "4d37a3f0-1656-49d5-8fb6-17da750aaf59",
+      "titleAr": "عدد البلاغات مصنفة بحسب المبلغ عنه",
+      "titleEn": "Reports By Reported Party",
+      "descriptionAr": "البلاغات حسب الجهة المُبلّغ عنها.",
+      "category": "الاستثمار",
+      "organization": "هيئة السوق المالية",
+      "resources": [
+        {
+          "id": "6813af71-a1fa-49ae-b6e3-063c13d9a05f",
+          "name": "Table 16 Reports By Reported Party CSV",
+          "format": "CSV",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/4d37a3f0-1656-49d5-8fb6-17da750aaf59/v1/Table 16 Reports By Reported Party CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "5b693b92-745e-48f9-8000-c198b0658f1e",
+          "name": "Table 16 Reports By Reported Party",
+          "format": "XLSX",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/4d37a3f0-1656-49d5-8fb6-17da750aaf59/v1/Table 16 Reports By Reported Party.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "34a1072e-4548-4b64-a23f-00c7ef2afaea",
+      "titleAr": "المواد المستنفدة للأوزون",
+      "titleEn": "HCFC 22 consumption",
+      "descriptionAr": "تتضمن هذه المجموعة بيانات سنوية توضح كميات المواد المستنفذة لطبقة الأوزون، مقاسة بالطن المتري، خلال الفترة من عام 2020 إلى عام 2024. تعكس البيانات الاتجاهات الزمنية لاستخدام هذه المواد، وتهدف إلى دعم أعمال الرصد البيئي، وتعزيز الشفافية، وقياس مستوى الالتزام بالتشريعات الوطنية والاتفاقيات الدولية المعنية بحماية طبقة الأوزون، مثل بروتوكول مونتريال. كما تتيح البيانات للباحثين والمهتمين تحليل فعالية السياسات والإجراءات التنظيمية المتبعة للحد من استخدام المواد المستنفذة لطبقة الأوزون.",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "848893a2-fe24-46c1-a33d-09ead9be88fa",
+          "name": "HCFC 22 consumption",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/34a1072e-4548-4b64-a23f-00c7ef2afaea/v1/HCFC 22 consumption.xlsx",
+          "size": 0
+        },
+        {
+          "id": "3adb6506-5f8e-4f27-933e-df7934563f7f",
+          "name": "HCFC22 consumption",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/34a1072e-4548-4b64-a23f-00c7ef2afaea/v1/HCFC22 consumption.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "39971319-b3a3-464c-afa4-c0ca5aaecf8a",
+      "titleAr": "نسبة السعوديين وغير السعوديين",
+      "titleEn": "Percentage of Saudis and nonSaudis",
+      "descriptionAr": "تمثل هذة المجموعة اجمالي نسبة منسوبي المركز الوطني للرقابة على الالتزام البيئي مقسمة لسعوديين وغير السعوديين لعام 2025",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "2feab78d-6165-4daf-b2ae-a303324691ad",
+          "name": "Percentage of Saudis and non Saudis CSV",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/39971319-b3a3-464c-afa4-c0ca5aaecf8a/v1/Percentage of Saudis and non Saudis CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "cb37b99e-19c0-42cd-91ca-a4d24d460fb4",
+          "name": "Percentage of Saudis and non Saudis",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/39971319-b3a3-464c-afa4-c0ca5aaecf8a/v1/Percentage of Saudis and non Saudis.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e39ba252-4891-4aaf-a755-52e80b02e5b1",
+      "titleAr": "تمكين  المرأة",
+      "titleEn": "women empowerment",
+      "descriptionAr": "تمثل هذة المجموعة نسبة الإناث من اجمالي عدد موظفين المركز الوطني للرقابة على الالتزام البيئي لعام 2025",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "dd3aed94-a914-49e7-b376-3c04fec9808f",
+          "name": "Women empowerment",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/e39ba252-4891-4aaf-a755-52e80b02e5b1/v1/Women empowerment.xlsx",
+          "size": 0
+        },
+        {
+          "id": "7416cc81-0741-49d5-a7d9-c0fa483a13da",
+          "name": "Women empowerment CSV",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/e39ba252-4891-4aaf-a755-52e80b02e5b1/v1/Women empowerment CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "20787e32-dbd9-4c3c-8fb2-4f9fafb2baa5",
+      "titleAr": "المؤهلات التعليمية",
+      "titleEn": "Educational qualifications",
+      "descriptionAr": "تمثل مجموعة البيانات هذه مؤهلات موظفي المركز الوطني للامتثال البيئي لعام 2025.",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "6bb636bb-8f4e-4c6f-a36c-551f11deaaf4",
+          "name": "Educational qualifications",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/20787e32-dbd9-4c3c-8fb2-4f9fafb2baa5/v1/Educational qualifications.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2400d0b1-6c96-4124-b9dd-dda92b899af8",
+          "name": "Educational qualifications CSV",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/20787e32-dbd9-4c3c-8fb2-4f9fafb2baa5/v1/Educational qualifications CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "8a59082b-7af6-4d4a-bffc-e23914fc4ebc",
+      "titleAr": "قائمة المتدربين في برنامج التدريب التعاوني بالمركز للعام 2025م",
+      "titleEn": "List of trainees in the NCEC cooperative training program for the year 2025",
+      "descriptionAr": "تتضمن هذه المجموعة بيانات المتدربين المشاركين في برنامج التدريب التعاوني لعام 2025م، وتشمل معلومات عن الجامعة التي ينتسب إليها المتدرب، بالإضافة إلى تاريخ بداية التدريب وتاريخ نهايته. تهدف البيانات إلى دعم تنظيم وإدارة برامج التدريب التعاوني، ومتابعة فترات التدريب، وتحليل مشاركة الجهات الأكاديمية، بما يسهم في تحسين التخطيط واتخاذ القرار المتعلق ببرامج تنمية القدرات وبناء الكفاءات.",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "25ddbd8a-d2d1-42d4-9b21-56be1c02a169",
+          "name": "List of trainees in NCEC csv",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/8a59082b-7af6-4d4a-bffc-e23914fc4ebc/v1/List of trainees in NCEC csv.csv",
+          "size": 0
+        },
+        {
+          "id": "23e26948-b037-43a0-bfd8-96561a0df248",
+          "name": "List of trainees in the NCEC",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/8a59082b-7af6-4d4a-bffc-e23914fc4ebc/v1/List of trainees in the NCEC.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "34c98e38-9a46-4343-900d-2b5c0ec191a5",
+      "titleAr": "دورات اتحاد التايكوندو",
+      "titleEn": "Taekwondo Federation Courses",
+      "descriptionAr": "برامج تدريبية معتمدة من اتحاد التايكوندو",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "d6168e0c-cea2-40c7-aaa9-6169f0a4d4cf",
+          "name": "Certified training programs",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/34c98e38-9a46-4343-900d-2b5c0ec191a5/v1/Certified training programs.csv",
+          "size": 0
+        },
+        {
+          "id": "8b7add01-7bcd-431e-99fa-eeedc270bea1",
+          "name": "Taekwondo Federation Courses",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/34c98e38-9a46-4343-900d-2b5c0ec191a5/v1/Taekwondo Federation Courses.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "85fcad26-110c-4678-b023-8a9be15e32c4",
+      "titleAr": "مراكز تدريب التايكوندو",
+      "titleEn": "Taekwondo Training Centers",
+      "descriptionAr": "أفضل المراكز لتعليم وتطوير مهارات التايكوندو",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "13dfa1d8-eaa2-43a7-9399-527e9fdd709e",
+          "name": "Taekwondo Training Centers CSV",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/85fcad26-110c-4678-b023-8a9be15e32c4/v1/Taekwondo Training Centers CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "6d106208-3bd6-412f-ba63-bcc843b06353",
+          "name": "Taekwondo Training Centers",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/85fcad26-110c-4678-b023-8a9be15e32c4/v1/Taekwondo Training Centers.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "abab1446-d0d8-4a32-b4b8-5f711ae7fe51",
+      "titleAr": "أوزان التايكوندو المعتمدة",
+      "titleEn": "Official Taekwondo Weight Classes",
+      "descriptionAr": "فئات الأوزان المعتمدة لمنافسات التايكوندو",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "bca3ebc8-9e79-4428-87ba-30869848fd32",
+          "name": "Official Taekwondo Weight",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/abab1446-d0d8-4a32-b4b8-5f711ae7fe51/v1/Official Taekwondo Weight.csv",
+          "size": 0
+        },
+        {
+          "id": "81f85b6d-5520-4d06-8001-f56ae2e69581",
+          "name": "Official Taekwondo Weight Classes",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/abab1446-d0d8-4a32-b4b8-5f711ae7fe51/v1/Official Taekwondo Weight Classes.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "feab099f-7376-479c-8226-9ccb34b6f53c",
+      "titleAr": "البطولات الموسمية المحلية",
+      "titleEn": "Local championships",
+      "descriptionAr": "ملخص للبطولات المحلية خلال الموسم",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "c605790d-ba09-4221-9028-938d195685f0",
+          "name": "Local Seasonal Championships",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/feab099f-7376-479c-8226-9ccb34b6f53c/v1/Local Seasonal Championships.xlsx",
+          "size": 0
+        },
+        {
+          "id": "e0e18e04-c602-4978-a47a-93f796d5f73a",
+          "name": "Local Championships",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/feab099f-7376-479c-8226-9ccb34b6f53c/v1/Local Championships.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "7642bb68-27db-4115-ae1a-4f42d7e07f6f",
+      "titleAr": "مشاركات المنتخب السعودي للتايكوندو الخارجية",
+      "titleEn": "International participations of the Saudi national taekwondo team",
+      "descriptionAr": "ملخص لمشاركات المنتخب عالميًا",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "05adefdf-6e1a-497a-9a11-5bf3419afc15",
+          "name": "International participations Saudi taekwondo",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/7642bb68-27db-4115-ae1a-4f42d7e07f6f/v1/International participations Saudi taekwondo.csv",
+          "size": 0
+        },
+        {
+          "id": "8a104fca-ec6c-4bea-adf3-d84cbc03fd2e",
+          "name": "International participations of Saudi taekwondo",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/7642bb68-27db-4115-ae1a-4f42d7e07f6f/v1/International participations of Saudi taekwondo.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "bf7c92b4-5964-4fb3-8644-1732216191ec",
+      "titleAr": "حكام التايكوندو السعوديين",
+      "titleEn": "Saudi Taekwondo referees",
+      "descriptionAr": "احصائيات حكام التايكوندو المعتمدين لدى الاتحاد السعودي للتايكوندو",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "225ec9e1-c201-410e-a7b5-c49679a76c1b",
+          "name": "Saudi Taekwondo referees CSV",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/bf7c92b4-5964-4fb3-8644-1732216191ec/v2/Saudi Taekwondo referees CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "189ac783-80bf-4698-b3fe-e4f6226aaddf",
+          "name": "Saudi Taekwondo referees",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/bf7c92b4-5964-4fb3-8644-1732216191ec/v2/Saudi Taekwondo referees.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "b1e00b36-96eb-452b-bd2b-bd23ab76ba1d",
+      "titleAr": "الإنجازات الخارجية للاعبي المنتخب السعودي للتايكوندو",
+      "titleEn": "The international achievements of the Saudi national taekwondo team players",
+      "descriptionAr": "تستعرض هذه القائمة أبرز الإنجازات الدولية التي حققها لاعبو المنتخب السعودي للتايكوندو، والتي تعكس تطور الرياضة في المملكة ونجاح اللاعبين في المنافسات الإقليمية والعالمية",
+      "category": "الرياضة",
+      "organization": "الاتحاد السعودي للتايكوندو",
+      "resources": [
+        {
+          "id": "649ccee3-61b3-42b2-973f-53277ce0ef6d",
+          "name": "international achievements of Saudi taekwondo",
+          "format": "CSV",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/b1e00b36-96eb-452b-bd2b-bd23ab76ba1d/v1/international achievements of Saudi taekwondo.csv",
+          "size": 0
+        },
+        {
+          "id": "1b1c0447-fdc2-4493-a9a0-c0fba1eea70a",
+          "name": "international achievements of the Saudi taekwondo",
+          "format": "XLSX",
+          "url": "38299d22-f177-4bf8-8597-d7f636f12837/b1e00b36-96eb-452b-bd2b-bd23ab76ba1d/v1/international achievements of the Saudi taekwondo.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "519a6a1f-5f0a-4505-a094-b9e19eae79e0",
+      "titleAr": "إحصائيات الزيارات على موقع هيئة الحكومة الرقمية",
+      "titleEn": "Digital Government Authority website Visitor Statistics",
+      "descriptionAr": "تتضمن مجموعة البيانات إحصائيات زيارات موقع هيئة الحكومة الرقمية، وتشمل مؤشرات الأداء، الصفحات الأكثر مشاهدة، وتوزيع الزيارات حسب الدول والمدن.",
+      "category": "الحكومة الإلكترونية",
+      "organization": "هيئة الحكومة الرقمية.",
+      "resources": [
+        {
+          "id": "38997637-ed9e-4349-858f-0f472c40888f",
+          "name": "DGA website visitors V2 2025 Q3 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q3 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "b216c787-12c0-49b8-be84-123a284eda6d",
+          "name": "DGA website visitors V2 2024 Q2 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q2 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "e4c03c33-db7e-4463-8f50-1d3814466a7b",
+          "name": "DGA website visitors V2 2023 Q2 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q2 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "46420341-ea08-4241-a677-22bf7b5bec78",
+          "name": "DGA website visitors V2 2024 Q1 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q1 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f50dc5e7-7072-436c-97fc-2e2aede22205",
+          "name": "DGA website visitors V2 2024 Q4 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q4 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "6bf62007-16e9-485c-854c-36c560a366c6",
+          "name": "DGA website visitors V2 2024 Q4 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q4 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "6a43bd96-44eb-4e52-b55b-476bd58624ae",
+          "name": "DGA website visitors V2 2024 Q3 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q3 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "570f1ff5-3ba6-49b3-b788-4abcab6c8d7c",
+          "name": "DGA website visitors V2 2025 Q2 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q2 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "0181c61e-9787-4d40-a1e6-5e44764b6e12",
+          "name": "DGA website visitors V2 2025 Q4 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q4 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "7de0bb59-bab5-449d-ba06-64ff524e3f09",
+          "name": "DGA website visitors V2 2025 Q1 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q1 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "c112fe22-aa36-476f-b37c-701facade0db",
+          "name": "DGA website visitors V2 2024 Q3 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q3 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "8493bc7d-e9ef-472c-b7d9-7307de0a3a72",
+          "name": "DGA website visitors V2 2023 Q3 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q3 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "790bff9f-c800-4e97-92b6-7dc615c470fd",
+          "name": "DGA website visitors V2 2025 Q4 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q4 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "ce507550-0d2c-4954-80ba-863f241b8aa3",
+          "name": "DGA website visitors V2 2023 Q4 xlsx",
+          "format": "XLSX",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q4 xlsx.xlsx",
+          "size": 0
+        },
+        {
+          "id": "de67c903-bd7b-479c-a67f-8e7c0cf4ce73",
+          "name": "DGA website visitors V2 2025 Q2 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q2 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "0c5ead28-0f88-4b47-a93a-8f96a7e3d00f",
+          "name": "DGA website visitors V2 2023 Q2 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q2 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "5c670d9a-6d1b-43e1-a45c-914af5478352",
+          "name": "DGA website visitors V2 2025 Q3 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q3 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "cd3e56a3-0876-4966-87aa-af862a249d7e",
+          "name": "DGA website visitors V2 2024 Q1 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q1 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "f1e041c3-5764-4f51-b54e-be460b3fb60d",
+          "name": "DGA website visitors V2 2023 Q4 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q4 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "4c5c1800-b9b4-4815-83c6-c0d4de1cba80",
+          "name": "DGA website visitors V2 2025 Q1 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2025 Q1 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "f32532a0-bc70-40e1-93cc-e4065f95c9a7",
+          "name": "DGA website visitors V2 2023 Q3 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2023 Q3 csv.csv",
+          "size": 0
+        },
+        {
+          "id": "eb0e153b-0f0d-4ee7-81ee-e936da17c113",
+          "name": "DGA website visitors V2 2024 Q2 csv",
+          "format": "CSV",
+          "url": "459d3c0e-03b1-4960-af11-27b925bc4f65/519a6a1f-5f0a-4505-a094-b9e19eae79e0/v2/DGA website visitors V2 2024 Q2 csv.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 22,
+      "hasData": true
+    },
+    {
+      "id": "1b253c90-6790-452c-812a-d4fc2144271b",
+      "titleAr": "عدد المؤتمرات في التجمع",
+      "titleEn": "Number of Conferences in R1",
+      "descriptionAr": "ملف يوضح إجمالي عدد المؤتمرات التي تم تنظيمها أو المشاركة فيها ضمن منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة الأنشطة العلمية، ودعم التطوير المهني، وتعزيز تبادل المعرفة.",
+      "category": "التعليم والتدريب",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "a6acc2de-8eda-4ef7-a101-a8d07bf5dbab",
+          "name": "Number of Conferences in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1b253c90-6790-452c-812a-d4fc2144271b/v1/Number of Conferences in R1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "1dfa0b63-2f1e-498f-ae8f-ecf5957c53fc",
+          "name": "Number of Conferences in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1b253c90-6790-452c-812a-d4fc2144271b/v1/Number of Conferences in R1.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "4e641d1a-0e62-4c21-a4d9-a803d780f79a",
+      "titleAr": "عدد الابحاث في التجمع",
+      "titleEn": "Number of Research in R1",
+      "descriptionAr": "ملف يوضح إجمالي عدد الأبحاث المنفذة في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة النشاط البحثي، وتحليل الإنتاج العلمي، ودعم التخطيط والابتكار الصحي.",
+      "category": "التعليم والتدريب",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "bd180842-7f63-4c2a-914f-5eb59329393d",
+          "name": "Number of Research in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/4e641d1a-0e62-4c21-a4d9-a803d780f79a/v1/Number of Research in R1.csv",
+          "size": 0
+        },
+        {
+          "id": "3c8ecf56-1020-4da7-89d0-a952a74bdfdc",
+          "name": "Number of Research in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/4e641d1a-0e62-4c21-a4d9-a803d780f79a/v1/Number of Research in R1 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "a9b960bc-b865-4de4-abea-70bf44605dff",
+      "titleAr": "عدد المتدربين في التجمع",
+      "titleEn": "Number of Trainee",
+      "descriptionAr": "ملف يوضح إجمالي عدد المتدربين في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة برامج التدريب، وتحليل الطاقة الاستيعابية، ودعم تخطيط وبناء القدرات.",
+      "category": "الموارد البشرية",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "0592695c-4dc2-49e7-99dc-a8a9e1dc17f4",
+          "name": "Number of Trainee in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/a9b960bc-b865-4de4-abea-70bf44605dff/v1/Number of Trainee in R1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "64b0e378-cfe9-4a5f-8c30-edf32abaf844",
+          "name": "Number of Trainee in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/a9b960bc-b865-4de4-abea-70bf44605dff/v1/Number of Trainee in R1.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "3a089a2e-f073-4a83-96fa-00a2e1e50f37",
+      "titleAr": "تقرير الصرف والبنود ",
+      "titleEn": "Expenditure and Items Report",
+      "descriptionAr": "ملف يوضح بيانات الصرف المالي في التجمع الصحي، ويشمل تفاصيل البنود والمصروفات خلال فترة زمنية محددة، ويُستخدم لمتابعة الإنفاق، وتحليل التكاليف، ودعم التخطيط المالي والرقابة.",
+      "category": "المالية",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "58b93012-3fb6-46a1-8ea7-3bd0fc7fd80d",
+          "name": "Expenditure and Items Report 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/3a089a2e-f073-4a83-96fa-00a2e1e50f37/v1/Expenditure and Items Report 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "406dc177-28a2-4e89-9504-b41a5dc87cd1",
+          "name": "Expenditure and Items Report",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/3a089a2e-f073-4a83-96fa-00a2e1e50f37/v1/Expenditure and Items Report.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "2b62fe9b-2075-44c7-bfcf-d7d5b0bc6a3a",
+      "titleAr": "الخدمات الالكترونية في التجمع",
+      "titleEn": "Electronic Services in R1",
+      "descriptionAr": "ملف يوضح قائمة الخدمات الإلكترونية المقدمة في التجمع الصحي، ويشمل معلومات أساسية عن نوع الخدمة ونطاقها، ويُستخدم لدعم التحول الرقمي، وتحليل الخدمات، وتحسين تجربة المستفيدين.",
+      "category": "تقنية المعلومات",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "6caebeda-7cff-454c-9cac-229435219dc0",
+          "name": "Electronic Services",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/2b62fe9b-2075-44c7-bfcf-d7d5b0bc6a3a/v1/Electronic Services.csv",
+          "size": 0
+        },
+        {
+          "id": "b6c94f44-5e52-42f0-bcdc-bfe1c3538870",
+          "name": "Electronic Services 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/2b62fe9b-2075-44c7-bfcf-d7d5b0bc6a3a/v1/Electronic Services 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "97d53d00-203d-40c5-844c-14263bab33fe",
+      "titleAr": "التطبيقات الرقمية المعتمدة",
+      "titleEn": "Digital Applications",
+      "descriptionAr": "ملف يوضح قائمة التطبيقات الرقمية المعتمدة في التجمع الصحي، ويشمل معلومات أساسية عن اسم التطبيق ونطاق استخدامه، ويُستخدم لدعم الحوكمة الرقمية، وتنظيم الاعتماد، ومتابعة الأصول التقنية.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "cdcfebc4-90f8-4b43-96a1-216d9ad78c9a",
+          "name": "Digital Applications",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/97d53d00-203d-40c5-844c-14263bab33fe/v1/Digital Applications.csv",
+          "size": 0
+        },
+        {
+          "id": "447aa543-c0d9-435a-83bb-e31d3ac3cb9e",
+          "name": "Digital Applications 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/97d53d00-203d-40c5-844c-14263bab33fe/v1/Digital Applications 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "ba06ad7b-4a4a-4866-959c-a09aa5085ebd",
+      "titleAr": "النشرات التحذيرية اسبيسي للملاحة الجوية",
+      "titleEn": "SPECI warning bulletins for air navigation",
+      "descriptionAr": "تقرير طقس جوي يصدر عند حدوث تغييرات مفاجئة في المطار ",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "ea48d528-5166-4094-b120-4455525912f8",
+          "name": "Air navigation of SPECI warning bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/ba06ad7b-4a4a-4866-959c-a09aa5085ebd/v1/Air navigation of SPECI warning bulletins.csv",
+          "size": 0
+        },
+        {
+          "id": "b7e70713-f98b-471f-9648-7632b503b87c",
+          "name": "SPECI warning bulletins for air navigation",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/ba06ad7b-4a4a-4866-959c-a09aa5085ebd/v1/SPECI warning bulletins for air navigation.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "36d6d381-e4d6-4e96-8118-5a92a33a0c80",
+      "titleAr": "نشرات التحذير الجوي للملاحة الجوية",
+      "titleEn": "Aviation warning bulletins for air navigation",
+      "descriptionAr": "تحذير جوي على منطقة المطار ومدته من 3 إلى 4 ساعات",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "d3afe00a-a309-46de-aba9-76138ac62a97",
+          "name": "Air navigation Aviation of warning bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/36d6d381-e4d6-4e96-8118-5a92a33a0c80/v1/Air navigation Aviation of warning bulletins.csv",
+          "size": 0
+        },
+        {
+          "id": "1be52fcf-d0b9-4008-85d8-78b2c58101a4",
+          "name": "Aviation warning bulletins for air navigation",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/36d6d381-e4d6-4e96-8118-5a92a33a0c80/v1/Aviation warning bulletins for air navigation.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "6b216b02-13ba-4e16-82a2-18dd6fc9b3e2",
+      "titleAr": "نشرات الميتار للملاحة الجوية",
+      "titleEn": "METAR bulletins for air navigation",
+      "descriptionAr": "تقرير طقس ساعي لحالة الطقس الفعلية في المطار وتستخدم للطيران",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "72338156-aa7c-4010-9b6c-1d8039d4977f",
+          "name": "METAR bulletins for air navigation",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/6b216b02-13ba-4e16-82a2-18dd6fc9b3e2/v1/METAR bulletins for air navigation.xlsx",
+          "size": 0
+        },
+        {
+          "id": "c58e486f-c649-4e96-9dda-943d430556b0",
+          "name": "Air navigation of METAR bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/6b216b02-13ba-4e16-82a2-18dd6fc9b3e2/v1/Air navigation of METAR bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "aaaa07bd-9b29-421b-8d37-e1140ae79e2c",
+      "titleAr": "نشرات التاف للملاحة الجوية",
+      "titleEn": "TAF bulletins for air navigation",
+      "descriptionAr": "تقرير جوي يصدر للمطارات يتضمن حالة الطقس المتوقعة خلال فترة زمنية محددة",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "be2e24df-4875-4579-acd2-748dc12a22ce",
+          "name": "TAF bulletins for air navigation",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/aaaa07bd-9b29-421b-8d37-e1140ae79e2c/v1/TAF bulletins for air navigation.xlsx",
+          "size": 0
+        },
+        {
+          "id": "3ab9e9f4-e2e9-4e95-8063-c8cf8ee28221",
+          "name": "Air navigation of TAF bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/aaaa07bd-9b29-421b-8d37-e1140ae79e2c/v1/Air navigation of TAF bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "eced66ef-e35c-4584-936e-9d306261a5ec",
+      "titleAr": "نشرات طبقات الجو العليا",
+      "titleEn": "Upper air bulletins",
+      "descriptionAr": "تقرير عن حالة الرياح والحرارة والضغط والرطوبة في طبقات الجو العليا وتستخدم في التنبؤات ",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "749839b0-fae0-469e-8bbc-8ecc54174c71",
+          "name": "Upper air bulletins",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/eced66ef-e35c-4584-936e-9d306261a5ec/v1/Upper air bulletins.xlsx",
+          "size": 0
+        },
+        {
+          "id": "66ee2473-c840-4063-a0cf-d036cdccdce5",
+          "name": "Upper level atmospheric bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/eced66ef-e35c-4584-936e-9d306261a5ec/v1/Upper level atmospheric bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "64c6ea32-21f0-4d1a-a3db-5ef680ee4c5f",
+      "titleAr": "نشرات السينوب الرئيسية",
+      "titleEn": "Main SYNOP bulletins",
+      "descriptionAr": "تقرير طقس سطحي يصدر من المراصد كل 6 ساعات  (00, 06, 12, 18 UTC)",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "9381d5cf-25a5-47b6-8a70-53ad3e3f80fa",
+          "name": "Main SYNOP bulletins",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/64c6ea32-21f0-4d1a-a3db-5ef680ee4c5f/v1/Main SYNOP bulletins.xlsx",
+          "size": 0
+        },
+        {
+          "id": "3f876a85-60e8-4a73-9892-6462a8e12111",
+          "name": "Main synoptic bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/64c6ea32-21f0-4d1a-a3db-5ef680ee4c5f/v1/Main synoptic bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "c9b95add-fab4-4669-b0fd-26c0bcacab49",
+      "titleAr": "نشرات السينوب الفرعية",
+      "titleEn": "Supplementary SYNOP bulletins",
+      "descriptionAr": "تقرير طقس سطحي يصدر من المراصد كل 6 ساعات (03, 09, 15, 21 UTC)",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "8bf24d76-f6c0-4333-8f80-755855def802",
+          "name": "Supplementary SYNOP bulletins",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/c9b95add-fab4-4669-b0fd-26c0bcacab49/v1/Supplementary SYNOP bulletins.xlsx",
+          "size": 0
+        },
+        {
+          "id": "59c16915-c4e5-4f0b-b72b-eb1d9e7e4774",
+          "name": "Intermediate synoptic bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/c9b95add-fab4-4669-b0fd-26c0bcacab49/v1/Intermediate synoptic bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e9087252-fbd3-4ebd-b3f6-f0b3c8148a43",
+      "titleAr": "نشرات أعلى درجة حرارة",
+      "titleEn": "Maximum temperature bulletins",
+      "descriptionAr": "أعلى قيمة لدرجة الحرارة وترسل مره واحدة الساعة 12 بالتوقيت العالمي",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "33b85a64-aede-4e15-bf85-4ecbf8edc26d",
+          "name": "Maximum temperature bulletins",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/e9087252-fbd3-4ebd-b3f6-f0b3c8148a43/v1/Maximum temperature bulletins.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2628b180-086a-4b5a-b362-75fcc2f6c2f1",
+          "name": "Highest temperature bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/e9087252-fbd3-4ebd-b3f6-f0b3c8148a43/v1/Highest temperature bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "784c64fb-50f6-4302-8b1d-5ff8e8a339c2",
+      "titleAr": "نشرات المناخ الشهري للمراصد",
+      "titleEn": "Monthly climate bulletins for the observatories",
+      "descriptionAr": "ملخص أعداد النشرات المناخية التي ترسل نهاية كل شهر من المراصد",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "8cf90d61-a8bc-49dc-bc25-0a63cb015a35",
+          "name": "The observatories Monthly for climate bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/784c64fb-50f6-4302-8b1d-5ff8e8a339c2/v1/The observatories Monthly for climate bulletins.csv",
+          "size": 0
+        },
+        {
+          "id": "fc1b134a-0138-41e2-bd94-4f7182aa702f",
+          "name": "Monthly climate bulletins for the observatories",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/784c64fb-50f6-4302-8b1d-5ff8e8a339c2/v1/Monthly climate bulletins for the observatories.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "fa13fa87-8e26-4e90-a14a-477bc9107794",
+      "titleAr": "نشرات المناخ الشهري لطبقات الجو العليا",
+      "titleEn": "Monthly upper air climate bulletins",
+      "descriptionAr": "ملخص لنشرات طبقات الجو العليا ترسل نهاية كل شهر من المراصد",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "8a42ee9a-b4f2-470d-8561-38cae8fce0ce",
+          "name": "Monthly climate bulletins for the upper air layers",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/fa13fa87-8e26-4e90-a14a-477bc9107794/v1/Monthly climate bulletins for the upper air layers.xlsx",
+          "size": 0
+        },
+        {
+          "id": "0beef1da-2d38-498c-bf8b-95b8c47e2831",
+          "name": "Monthly upper air climate bulletins",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/fa13fa87-8e26-4e90-a14a-477bc9107794/v1/Monthly upper air climate bulletins.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "12fdfe26-d11f-4db2-9f39-03165506c197",
+      "titleAr": "التوقعات البحرية على الخليج العربي",
+      "titleEn": "Marine forecasts for the Arabian Gulf",
+      "descriptionAr": "توقع الحالة الجوية على الخليج العربي",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "6782f169-9401-4191-9a45-01444429d048",
+          "name": "The Arabian Gulf for Marine forecasts",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/12fdfe26-d11f-4db2-9f39-03165506c197/v1/The Arabian Gulf for Marine forecasts.csv",
+          "size": 0
+        },
+        {
+          "id": "94c5b973-1fa8-49dd-b02c-4752bfdb773c",
+          "name": "Marine forecasts for the Arabian Gulf",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/12fdfe26-d11f-4db2-9f39-03165506c197/v1/Marine forecasts for the Arabian Gulf.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "cf1c98c8-c767-48c9-b7a4-3f28597af91c",
+      "titleAr": "التوقعات البحرية على البحر الأحمر",
+      "titleEn": "Marine forecasts for the Red Sea",
+      "descriptionAr": "أعداد توقعات الحالة الجوية على طول البحر الأحمر من الشمال إلى الجنوب",
+      "category": "الأحوال الجوية",
+      "organization": "المركز الوطني للأرصاد",
+      "resources": [
+        {
+          "id": "0b5e82c8-0d3b-45e5-b0d7-aa82cb03d4bc",
+          "name": "The Red Sea Marine forecasts",
+          "format": "CSV",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/cf1c98c8-c767-48c9-b7a4-3f28597af91c/v1/The Red Sea Marine forecasts.csv",
+          "size": 0
+        },
+        {
+          "id": "860bdbde-2bd4-4b27-aeef-b3c87e880a4a",
+          "name": "Marine forecasts for the Red Sea",
+          "format": "XLSX",
+          "url": "91e2baab-2d29-4f47-8791-bb7ddceea273/cf1c98c8-c767-48c9-b7a4-3f28597af91c/v1/Marine forecasts for the Red Sea.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "1a2ccc06-6618-40bb-a60f-d33f767711e9",
+      "titleAr": "القوى العاملة لهيئة السوق المالية المنضمون والمغادرون",
+      "titleEn": "Workforce Sector",
+      "descriptionAr": "القوى العاملة حسب القطاع.",
+      "category": "الاستثمار",
+      "organization": "هيئة السوق المالية",
+      "resources": [
+        {
+          "id": "5e83dde4-9219-425d-a280-61e8d258a17b",
+          "name": "Table 14 Workforce Sector",
+          "format": "XLSX",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/1a2ccc06-6618-40bb-a60f-d33f767711e9/v1/Table 14 Workforce Sector.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2470fa20-9dfb-4f0a-a0e3-d70e70fb4b6c",
+          "name": "Table 14 Workforce Sector CSV",
+          "format": "CSV",
+          "url": "afd0f613-3fae-42fa-a383-b87647e8d32f/1a2ccc06-6618-40bb-a60f-d33f767711e9/v1/Table 14 Workforce Sector CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "4301a003-e483-4162-8255-aac043bcf388",
+      "titleAr": "المكتبة المركزية",
+      "titleEn": "Central Library",
+      "descriptionAr": "مجموعة بيانات المكتبة المركزية في جامعة الجوف لعام 2025",
+      "category": "التعليم",
+      "organization": "جامعة الجوف",
+      "resources": [
+        {
+          "id": "c63b697c-301c-451c-9081-0d9812f66666",
+          "name": "Library Resources CSV",
+          "format": "CSV",
+          "url": "e182f3f1-57f2-4644-9e43-c303fcc591f7/4301a003-e483-4162-8255-aac043bcf388/v1/Library Resources CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "fe80f565-574e-4d4b-9ced-1a676b7f0cb7",
+          "name": "Library Resources XLSX",
+          "format": "XLSX",
+          "url": "e182f3f1-57f2-4644-9e43-c303fcc591f7/4301a003-e483-4162-8255-aac043bcf388/v1/Library Resources XLSX.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "90ef4c40-c4aa-4d67-a9d8-6cd3548fd701",
+      "titleAr": "مجموعة بيانات ميزانية الهيئة ",
+      "titleEn": "The Authority Budget",
+      "descriptionAr": "ميزانية الهيئة العامة للولاية على أموال القاصرين ومن في حكمهم ",
+      "category": "الميزانية",
+      "organization": "الهيئة العامة للولاية على أموال القاصرين",
+      "resources": [
+        {
+          "id": "6e6b96df-b418-4289-a68e-9035dcd61469",
+          "name": "Authority Budget2023",
+          "format": "XLSX",
+          "url": "800d0fc0-8008-493d-9393-70036d06090e/90ef4c40-c4aa-4d67-a9d8-6cd3548fd701/v1/Authority Budget2023.xlsx",
+          "size": 0
+        },
+        {
+          "id": "e28866c9-58d2-45a1-a649-f449694feebd",
+          "name": "Authority Budget 2023",
+          "format": "CSV",
+          "url": "800d0fc0-8008-493d-9393-70036d06090e/90ef4c40-c4aa-4d67-a9d8-6cd3548fd701/v1/Authority Budget 2023.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "39c0a3dd-e549-4ffb-b64d-66dd3793975d",
+      "titleAr": "الطلاب الدوليين",
+      "titleEn": "International Students",
+      "descriptionAr": "مجموعة بيانات الطلاب الدوليين في جامعة الجوف لعام 2025",
+      "category": "التعليم والتدريب",
+      "organization": "جامعة الجوف",
+      "resources": [
+        {
+          "id": "430f0632-0812-4a30-8969-830916afcfba",
+          "name": "International Students XLSX",
+          "format": "XLSX",
+          "url": "e182f3f1-57f2-4644-9e43-c303fcc591f7/39c0a3dd-e549-4ffb-b64d-66dd3793975d/v1/International Students XLSX.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2cb43348-44d1-48ca-8445-d6de27289325",
+          "name": "International Students CSV",
+          "format": "CSV",
+          "url": "e182f3f1-57f2-4644-9e43-c303fcc591f7/39c0a3dd-e549-4ffb-b64d-66dd3793975d/v1/International Students CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "85337aa6-5b13-4c72-9d58-f914a4418e7d",
+      "titleAr": " قائمة برنامج التدريب لعام 2025م",
+      "titleEn": "Training program list for 2025",
+      "descriptionAr": "قائمة برامج التدريب لمنسوبي المركز للعام 2025 م",
+      "category": "البيئة",
+      "organization": "المركز الوطني للرقابة على الالتزام البيئي",
+      "resources": [
+        {
+          "id": "f6ca492e-2448-478c-89b0-22e14e4bf397",
+          "name": "csv List of training programs 2025",
+          "format": "CSV",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/85337aa6-5b13-4c72-9d58-f914a4418e7d/v1/csv List of training programs 2025.csv",
+          "size": 0
+        },
+        {
+          "id": "bef8c7e7-e226-473e-9acf-d584c1c0efad",
+          "name": "List of training programs 2025",
+          "format": "XLSX",
+          "url": "d81c49f1-5f16-47cd-8c6d-7a921840ecc8/85337aa6-5b13-4c72-9d58-f914a4418e7d/v1/List of training programs 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "3d44d00e-5aa6-4937-981d-bd0548606109",
+      "titleAr": "المبيعات العقارية إلكتروني 2025",
+      "titleEn": "Real Estate Sales Electronic 2025",
+      "descriptionAr": "إحصائيات الأصول المعروضة والمباعة في المزادات الإلكترونية  وإجمالي مبالغ البيع حسب المنطقة والسنة",
+      "category": "الاستثمار",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "acd1eb39-1324-47f9-bff6-28cfd25dad06",
+          "name": "AuctionAggQuarterElectronic Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "7c8892bc-9793-40f6-8f7e-296b97ad6078",
+          "name": "AuctionAggQuarterElectronic Quarter2 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter2 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "1206ec85-070c-4059-aecb-455210a809ec",
+          "name": "AuctionAggQuarterElectronic Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter3 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "4577c230-0263-46e3-ade0-62bbe1aa63c2",
+          "name": "AuctionAggQuarterElectronic Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "6ba2be3f-ec11-4b63-8570-af258f4f8790",
+          "name": "AuctionAggQuarterElectronic Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "f0213991-6aa4-4af5-aea4-da7121988a5e",
+          "name": "AuctionAggQuarterElectronic Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "1d742c50-0c9d-441b-98cf-e1d7a28fabbd",
+          "name": "AuctionAggQuarterElectronic Quarter1 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter1 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "46c939ef-c088-4d06-98af-eabaa2af45fe",
+          "name": "AuctionAggQuarterElectronic Quarter3 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/3d44d00e-5aa6-4937-981d-bd0548606109/v4/AuctionAggQuarterElectronic Quarter3 2025CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "a7fe58bf-657d-4446-88b1-a3686a6c7e94",
+      "titleAr": "المبيعات العقارية  حضوري 2025",
+      "titleEn": "Real Estate Sales  InPerson 2025",
+      "descriptionAr": "تفاصيل المبيعات العقارية المنفذة حضوريًا حسب السنة والربع ونوع المزاد\n",
+      "category": "اقتصاد وطني",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "fda3d211-29f7-473a-bcb3-0d61242dd3ce",
+          "name": "AuctionAggQuarter InPerson Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/AuctionAggQuarter InPerson Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "d190e0b1-1948-426e-996a-1e7e074bc580",
+          "name": "AuctionAggQuarter InPerson Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/AuctionAggQuarter InPerson Quarter2 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "ed5d0221-9978-43ff-b0b8-32874fbe8e73",
+          "name": "AuctionAggQuarter InPerson Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/AuctionAggQuarter InPerson Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "2af90b12-25be-41ca-8549-8ed9b5d5fda9",
+          "name": "AuctionAggQuarter InPerson Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/AuctionAggQuarter InPerson Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "bbdc5d7b-d59e-424d-a64c-bc22852d3393",
+          "name": "auctionAggQuarter InPerson Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/auctionAggQuarter InPerson Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "98aca1d6-f056-45f2-8d4e-bcda433975fd",
+          "name": "AuctionAggQuarter InPerson Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/a7fe58bf-657d-4446-88b1-a3686a6c7e94/v3/AuctionAggQuarter InPerson Quarter1 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 6,
+      "hasData": true
+    },
+    {
+      "id": "cc856462-5d59-481c-8ceb-29007c2b5525",
+      "titleAr": "المبيعات العقارية  هجين 2025",
+      "titleEn": "Real Estate Sales  Hybrid 2025 ",
+      "descriptionAr": "تفاصيل المبيعات العقارية المنفذة بأسلوب هجين  إلكتروني + حضوري  حسب السنة والربع ونوع المزاد\n",
+      "category": "اقتصاد وطني",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "ec44d8bf-13a9-41ff-9198-03883bf949ea",
+          "name": "AuctionAggQuarter Hjeen Quarter 2 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter 2 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "8fe45f48-3638-4e83-9058-1948c78b5fe9",
+          "name": "AuctionAggQuarter Hjeen Quarter3 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter3 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "07cc9101-e3af-42c6-9c77-37c763a13140",
+          "name": "AuctionAggQuarter Hjeen Quarter1 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter1 2025CSV.csv",
+          "size": 0
+        },
+        {
+          "id": "7b4f3f5c-9177-4ae3-990e-3e629c0be663",
+          "name": "AuctionAggQuarter Hjeen Quarter 2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter 2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "b7d80819-d805-41fb-8cce-5c5ed98d5a07",
+          "name": "AuctionAggQuarter Hjeen Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "1dd993d2-6ef9-4451-8de6-6f1847ba30d8",
+          "name": "AuctionAggQuarter Hjeen Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter3 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "9f6a9d3e-1d34-4266-be99-7100408bf858",
+          "name": "AuctionAggQuarter Hjeen Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "cc27e9b5-b3ae-49a7-bde1-e9b23a7438bf",
+          "name": "AuctionAggQuarter Hjeen Quarter4 2025CSV",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/cc856462-5d59-481c-8ceb-29007c2b5525/v4/AuctionAggQuarter Hjeen Quarter4 2025CSV.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "40fd0d4e-76e1-4fb2-afd3-42a56698e5af",
+      "titleAr": "تفاصيل المزادات  الإلكتروني 2025",
+      "titleEn": "Auction Details  Electronic 2025",
+      "descriptionAr": "تفاصيل المزادات المنفذة إلكترونيًا تشمل بيانات التاريخ، وقت البدء والانتهاء، والمنطقة والوكيل\n",
+      "category": "اقتصاد وطني",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "dd87d9a2-c42a-45ac-a52c-058e1d54d5f3",
+          "name": "AuctionDetails Electronic Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "478b1f44-9959-4102-9ade-0d8b1c0560e1",
+          "name": "AuctionDetails Electronic Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter2 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "eb31c283-2d86-4ec9-bf5a-23847c60b3d5",
+          "name": "AuctionDetails Electronic Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "1e0b7771-6670-43b0-b9ac-617fb4e1d187",
+          "name": "AuctionDetails Electronic Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "ceae8485-8490-4274-9a2f-69b7de5d2b79",
+          "name": "AuctionDetails Electronic Quarter3 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter3 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "af3be5be-dc70-41f3-8ecd-7a56d57285e4",
+          "name": "AuctionDetails Electronic Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f61df3cf-e48c-40f6-8bb5-84974738a78c",
+          "name": "AuctionDetails Electronic Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "1b6c9b03-2d9c-4c5f-a022-e96de70407ea",
+          "name": "AuctionDetails Electronic Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/40fd0d4e-76e1-4fb2-afd3-42a56698e5af/v3/AuctionDetails Electronic Quarter3 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "7952333b-60c9-4048-bc57-87aea49309d4",
+      "titleAr": "تفاصيل المزادات  حضوري 2025",
+      "titleEn": "Auction Details  In Person 2025 ",
+      "descriptionAr": "تفاصيل المزادات المنفذة حضوريًا تشمل بيانات التاريخ، وقت البدء والانتهاء، والمنطقة والوكيل\n",
+      "category": "أحصائيات",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "01a333c1-f3ec-4b8c-acb4-0d34df2c354f",
+          "name": "AuctionDetails InPerson Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "3705dead-8557-432a-b3a3-2b4f3d0273a6",
+          "name": "AuctionDetails InPerson Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "9049d07a-fc64-487e-9bc6-67cb5dbf895d",
+          "name": "AuctionDetails InPerson Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "4e2b9691-54e2-46dd-af97-8383c001110c",
+          "name": "AuctionDetails InPerson Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "9f59490a-26ba-436f-85e7-8bafced340f3",
+          "name": "AuctionDetails InPerson Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "67569fd6-324c-43dc-9d49-e553034e4cdd",
+          "name": "AuctionDetails InPerson Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/7952333b-60c9-4048-bc57-87aea49309d4/v2/AuctionDetails InPerson Quarter2 2025csv.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 6,
+      "hasData": true
+    },
+    {
+      "id": "308744fe-60db-47f5-9ddb-691a51506a09",
+      "titleAr": "تفاصيل المزادات  هجين 2025",
+      "titleEn": "Auction Details  Hybrid 2025",
+      "descriptionAr": "تفاصيل المزادات المنفذة بأسلوب هجين تشمل بيانات التاريخ، وقت البدء والانتهاء، والمنطقة والوكيل\n",
+      "category": "اقتصاد وطني",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "97e8008d-dfad-4243-9c3b-1adb5cb65fd8",
+          "name": "AuctionDetails Hjeen Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "131898f1-248e-4023-b507-1fa54dcdfbea",
+          "name": "AuctionDetails Hjeen Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "4d0d6453-b1df-4e9b-a493-28ded9ade46e",
+          "name": "AuctionDetails Hjeen Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "6f1c6c84-1845-4770-b45e-2da9c9146476",
+          "name": "AuctionDetails Hjeen Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter3 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2a8bdc27-75d6-4d36-bc67-55361d9b3bef",
+          "name": "AuctionDetails Hjeen Quarter3 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter3 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "ccdc60ec-d349-4997-aca4-5affc71ea320",
+          "name": "AuctionDetails Hjeen Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter2 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "02940624-c13c-457c-ad05-72a4001b7fa5",
+          "name": "AuctionDetails Hjeen Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "63e22750-83f0-41f2-96f4-f34af9b93107",
+          "name": "AuctionDetails Hjeen Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/308744fe-60db-47f5-9ddb-691a51506a09/v3/AuctionDetails Hjeen Quarter4 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "bf18d9ad-628a-4fea-a1a9-76ea1b0a6e84",
+      "titleAr": "توزيع الموظفين حسب الفئة",
+      "titleEn": "Staff By Category",
+      "descriptionAr": "ملف يوضح توزيع الموظفين في التجمع الصحي حسب الفئات الوظيفية (أطباء، تمريض، صيدلة، تخصصات صحية مساندة، وكادر إداري).",
+      "category": "الموارد البشرية",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "4f50fac6-f27f-4b7d-83f1-65b18baa825f",
+          "name": "Staff By Category",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/bf18d9ad-628a-4fea-a1a9-76ea1b0a6e84/v1/Staff By Category.csv",
+          "size": 0
+        },
+        {
+          "id": "9dfbe46f-a448-4063-be38-b47855440e64",
+          "name": "Staff By Category 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/bf18d9ad-628a-4fea-a1a9-76ea1b0a6e84/v1/Staff By Category 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "68098400-520c-48d5-8d26-bd8855bf7572",
+      "titleAr": "مبيعات الأصول العقارية السنوية 2025",
+      "titleEn": " yearly Real Estate Asset Sales 2025",
+      "descriptionAr": "بيانات المبيعات العقارية السنوية حسب السنة والربع والمنطقة والمبالغ الإجمالية\n",
+      "category": "اقتصاد وطني",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "f540c1f7-52a8-45cd-98e6-13ef4d5a46fc",
+          "name": "AuctionSalesAggQuarter Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "d1317d77-c35b-43e3-a70f-36473c84874e",
+          "name": "AuctionSalesAggQuarter Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "714d2dc4-5783-4a1e-b049-4cf57c0c8f59",
+          "name": "AuctionSalesAggQuarter Quarter3 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter3 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "3e4a7c0f-3950-4c9f-a37e-5bae3cd7e06a",
+          "name": "AuctionSalesAggQuarter Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "f31125c4-7004-4dab-b833-83bcfa97755c",
+          "name": "AuctionSalesAggQuarter Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "8ba5467f-40fe-4a86-ad2c-96dcdabd2280",
+          "name": "AuctionSalesAggQuarter Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter3 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "995d5b8d-8743-4e35-8199-d0c18fb75666",
+          "name": "AuctionSalesAggQuarter Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "1b63d601-de8d-4a9d-a0f4-e75e860c4e68",
+          "name": "AuctionSalesAggQuarter Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/68098400-520c-48d5-8d26-bd8855bf7572/v4/AuctionSalesAggQuarter Quarter2 2025csv.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "e60e02e5-8699-4bb1-a71a-d61c90130341",
+      "titleAr": "توزيع الموظفين في التجمع مواطن مقيم",
+      "titleEn": "Staff By SA  Non SA",
+      "descriptionAr": "ملف يوضح توزيع الموظفين في منشآت التجمع الصحي حسب حالة التوظيف (مواطن أو مقيم)، ويُستخدم لتحليل تركيبة القوى العاملة، ومتابعة نسب التوطين، ودعم تخطيط الموارد البشرية واتخاذ القرار.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "ac208808-b3ce-459a-b770-76ed5328083d",
+          "name": "Staff by SA Non SA 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/e60e02e5-8699-4bb1-a71a-d61c90130341/v1/Staff by SA Non SA 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "95c23814-94c9-4e53-8d8f-d8685e7e8b1e",
+          "name": "Staff by SA Non SA",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/e60e02e5-8699-4bb1-a71a-d61c90130341/v1/Staff by SA Non SA.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec",
+      "titleAr": "مزادات العقارات السنوية 2025",
+      "titleEn": "yaerly Real Estate Auctions 2025",
+      "descriptionAr": "بيانات المزادات العقارية السنوية حسب الربع والشهر، تشمل عدد الصكوك، النوع، والمنطقة\n",
+      "category": "أحصائيات",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "4452f333-7a69-4de0-8517-2fd93750d82d",
+          "name": "AuctionAggMonth Quarter3 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter3 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "acf0e672-e5a4-4e2c-acbc-318a183d49d3",
+          "name": "AuctionAggMonth Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f3044c25-def7-4158-9847-6c7a1ccfd4f6",
+          "name": "AuctionAggMonth Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter2 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "fa643d1c-76b2-4637-b554-75bf7c721093",
+          "name": "AuctionAggMonth Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "195a6ac4-a147-481c-a9a5-8cabe1fe302b",
+          "name": "AuctionAggMonth Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "eeb3f49e-3ddd-40d0-a954-9fd66eacb8f6",
+          "name": "AuctionAggMonth Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter2 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "cb29f31c-087c-41b3-acd5-e8b73447cbac",
+          "name": "AuctionAggMonth Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "9220dcfc-df7e-4304-acfb-f6a81c9070a2",
+          "name": "AuctionAggMonth Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/38ef9473-f5f4-4fbf-83a7-1a4bf0c7ccec/v3/AuctionAggMonth Quarter3 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "22b819e0-f014-47fa-b39f-f46ee4c0cf86",
+      "titleAr": "الموظفين حسب الجنس في التجمع ",
+      "titleEn": "Staff By Gender in R1",
+      "descriptionAr": "ملف يوضح توزيع الموظفين حسب الجنس في منشآت التجمع الصحي، ويُستخدم لتحليل القوى العاملة، ومتابعة مؤشرات التنوع، ودعم تخطيط الموارد البشرية واتخاذ القرار.",
+      "category": "أحصائيات",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "f55958cc-e426-455a-95ee-07e5a53faae7",
+          "name": "Staff By Gender 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/22b819e0-f014-47fa-b39f-f46ee4c0cf86/v1/Staff By Gender 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "d0928476-c3f6-4284-bcf0-61e64ebbc229",
+          "name": "Staff By Gender",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/22b819e0-f014-47fa-b39f-f46ee4c0cf86/v1/Staff By Gender.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "8f6631e1-f2e0-46fc-953a-15cb924eeac3",
+      "titleAr": "مزادات المركبات  إلكتروني 2025",
+      "titleEn": "Vehicle Auctions  Electronic 2025",
+      "descriptionAr": "بيانات مزادات المركبات المنفذة إلكترونيًا حسب السنة والربع والنوع، تشمل الموقع، النوع، والموديل\n",
+      "category": "الشباب",
+      "organization": "مركز الإسناد والتصفية (إنفاذ)",
+      "resources": [
+        {
+          "id": "d89446fb-c860-4c50-a336-5148d1e7e5cb",
+          "name": "AuctionVehicleDetails Electronic Quarter3 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter3 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "68eae51c-ab05-407c-a839-9dfe9618d8ff",
+          "name": "AuctionVehicleDetails Electronic Quarter4 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter4 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f847b629-0162-432a-8457-ab200cdf8059",
+          "name": "AuctionVehicleDetails Electronic Quarter3 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter3 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "845bbb6c-3337-4175-8cf1-addbf82cbb7a",
+          "name": "AuctionVehicleDetails Electronic Quarter4 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter4 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "63e4f7e9-b27d-4eea-8141-b2e7d787a894",
+          "name": "AuctionVehicleDetails Electronic Quarter2 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter2 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "e11d9079-686d-4e38-afdd-b3b55a14f479",
+          "name": "AuctionVehicleDetails Electronic Quarter1 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "56f7f5b6-e6c3-472f-9d50-bf195f6db88a",
+          "name": "AuctionVehicleDetails Electronic Quarter1 2025csv",
+          "format": "CSV",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter1 2025csv.csv",
+          "size": 0
+        },
+        {
+          "id": "f82c8628-d426-46a0-a2c0-ed77a8fb3a36",
+          "name": "AuctionVehicleDetails Electronic Quarter2 2025",
+          "format": "XLSX",
+          "url": "6222e362-74b2-468e-96e6-f656fed5e7d9/8f6631e1-f2e0-46fc-953a-15cb924eeac3/v3/AuctionVehicleDetails Electronic Quarter2 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 8,
+      "hasData": true
+    },
+    {
+      "id": "f3205d97-dc97-4204-8e3f-b1643402aeed",
+      "titleAr": "عدد زيارات مراكز الرعاية الصحية الأولية في التجمع",
+      "titleEn": "Primary Health Care Center Visits in R1 ",
+      "descriptionAr": "ملف يوضح عدد زيارات مراكز الرعاية الصحية الأولية في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة حجم الإقبال على خدمات الرعاية الأولية، وتحليل الطلب، ودعم التخطيط التشغيلي وتحسين توزيع الخدمات.",
+      "category": "خدمة العملاء",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "f8085253-ffb5-4215-9d66-4d3067e1fb45",
+          "name": "Primary Health Care Center Visits in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/f3205d97-dc97-4204-8e3f-b1643402aeed/v1/Primary Health Care Center Visits in R1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "d7d602c7-02b5-43c1-ac3b-67e08b8cb8bb",
+          "name": "Primary Health Care Center Visits in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/f3205d97-dc97-4204-8e3f-b1643402aeed/v1/Primary Health Care Center Visits in R1.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "e303f9e2-615d-4726-892e-07571bb2c461",
+      "titleAr": " أكثر 10 تشخيصات شيوعًا في اقسام الطوارئ في التجمع",
+      "titleEn": "Top 10 Common Diagnoses in  Emergency Department in R1",
+      "descriptionAr": "ملف يوضح أكثر عشرة تشخيصات شيوعًا في أقسام الطوارئ بمنشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لتحليل أنماط الحالات الطارئة، ودعم التخطيط الصحي، وتحسين جاهزية خدمات الطوارئ.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "e6142da5-142c-4a1c-9522-4ca721446212",
+          "name": "Top 10 Common Diagnoses in  ED in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/e303f9e2-615d-4726-892e-07571bb2c461/v1/Top 10 Common Diagnoses in  ED in R1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f495693a-9c76-45b8-b46d-59eb4080bd94",
+          "name": "Top 10 Common Diagnoses in  ED in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/e303f9e2-615d-4726-892e-07571bb2c461/v1/Top 10 Common Diagnoses in  ED in R1.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "edd72b3f-a79e-47d7-a9a0-b9cce951941a",
+      "titleAr": "عدد زيارات العيادات الخارجية في التجمع",
+      "titleEn": "OutPatient Visits in R1 ",
+      "descriptionAr": "ملف يوضح عدد زيارات العيادات الخارجية في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة حجم الخدمة، وتحليل الطلب على العيادات، ودعم التخطيط التشغيلي.",
+      "category": "خدمة العملاء",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "cfe5052d-5ff2-4b56-96ea-4fca0d919716",
+          "name": "OutPatient Visits in R1",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/edd72b3f-a79e-47d7-a9a0-b9cce951941a/v1/OutPatient Visits in R1.xlsx",
+          "size": 0
+        },
+        {
+          "id": "f906c50f-7e8f-490b-94b4-9fa5aea0ff4c",
+          "name": "OutPatient Visits in R1 2025",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/edd72b3f-a79e-47d7-a9a0-b9cce951941a/v1/OutPatient Visits in R1 2025.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "1ed9a00d-9ee9-4bb5-a0bd-cc6a93f81b9c",
+      "titleAr": " أكثر 10 أدوية تم صرفها في التجمع",
+      "titleEn": "Top 10 Most Dispensed Medications in R1",
+      "descriptionAr": "ملف يوضح أكثر عشرة أدوية تم صرفها في منشآت التجمع الصحي خلال فترة زمنية محددة.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "4df45c1a-0a84-469f-af3b-4140716cbcf5",
+          "name": "Top 10 Most Dispensed Medications in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1ed9a00d-9ee9-4bb5-a0bd-cc6a93f81b9c/v1/Top 10 Most Dispensed Medications in R1.csv",
+          "size": 0
+        },
+        {
+          "id": "3cc69a79-7062-4a0d-beb6-c717d09058ab",
+          "name": "Top 10 Most Dispensed Medications in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1ed9a00d-9ee9-4bb5-a0bd-cc6a93f81b9c/v1/Top 10 Most Dispensed Medications in R1 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "0d19791b-7639-4a3a-9189-4031fca04db8",
+      "titleAr": " أكثر 10 فحوصات مخبرية طلبًا في التجمع",
+      "titleEn": "Top 10 Laboratory Tests Ordered in R1",
+      "descriptionAr": "ملف يوضح أكثر عشرة فحوصات مخبرية يتم طلبها في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لتحليل أنماط الطلب، ودعم التخطيط التشغيلي، وتحسين إدارة الموارد المخبرية.",
+      "category": "خدمة العملاء",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "4bca2272-71c4-4414-9377-219f4798608d",
+          "name": "Top 10 Laboratory Tests Ordered in R1 2025",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/0d19791b-7639-4a3a-9189-4031fca04db8/v1/Top 10 Laboratory Tests Ordered in R1 2025.csv",
+          "size": 0
+        },
+        {
+          "id": "ff171772-f838-4c37-8417-4978dcc23025",
+          "name": "Top 10 Laboratory Tests Ordered in R1",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/0d19791b-7639-4a3a-9189-4031fca04db8/v1/Top 10 Laboratory Tests Ordered in R1.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "1d81d304-f601-40ba-b4b3-1bb9df83848b",
+      "titleAr": "عدد زيارات مراكز الرعاية المستعجلة  في التجمع",
+      "titleEn": "Urgent Care Center Visits in R1 ",
+      "descriptionAr": "ملف يوضح عدد زيارات مراكز الرعاية المستعجلة في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة حجم الحالات المستعجلة، وتحليل أنماط الإقبال، ودعم التخطيط التشغيلي وتعزيز جاهزية الخدمات.",
+      "category": "خدمة العملاء",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "a276e033-692c-4118-ba2e-7231cc0d3ed8",
+          "name": "Urgent Care Center Visits in R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1d81d304-f601-40ba-b4b3-1bb9df83848b/v1/Urgent Care Center Visits in R1 2025.xlsx",
+          "size": 0
+        },
+        {
+          "id": "4f2694eb-3cdc-4a58-9623-b2ce013109e9",
+          "name": "Urgent Care Center Visits in R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/1d81d304-f601-40ba-b4b3-1bb9df83848b/v1/Urgent Care Center Visits in R1.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "4db29327-2496-460d-af6d-b8c58f14ad22",
+      "titleAr": "معلومات المنشآت الصحية",
+      "titleEn": "Facility Information",
+      "descriptionAr": "ملف يحتوي على بيانات تعريفية عن المنشآت الصحية في التجمع الصحي، ويشمل معلومات أساسية باسم المنشأة.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "c5dc7787-4b5b-4e7a-ae7a-375b51f9927e",
+          "name": "Facility Information R1",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/4db29327-2496-460d-af6d-b8c58f14ad22/v1/Facility Information R1.csv",
+          "size": 0
+        },
+        {
+          "id": "4194725e-eac4-4709-a667-976048db298d",
+          "name": "Facility Information R1 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/4db29327-2496-460d-af6d-b8c58f14ad22/v1/Facility Information R1 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "92dd8b94-930a-44fe-b327-1e9e00b4e2a9",
+      "titleAr": "المصادر الوطنية لمنتجات القائمة الإلزامية",
+      "titleEn": "National Sources for Mandatory List Products",
+      "descriptionAr": "استعراض قائمة المصانع التي توفر منتجات القائمة الإلزامية",
+      "category": "المشتريات الحكومية",
+      "organization": "هيئة المحتوى المحلي والمشتريات الحكومية",
+      "resources": [
+        {
+          "id": "7d4dd348-1a69-4c43-a4ed-c729690efff9",
+          "name": "National Sources for Mandatory List Products",
+          "format": "CSV",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/92dd8b94-930a-44fe-b327-1e9e00b4e2a9/v3/National Sources for Mandatory List Products.csv",
+          "size": 0
+        },
+        {
+          "id": "73811cba-6b6a-488a-a753-f2505b23858d",
+          "name": "National Sources for MandatoryList Products",
+          "format": "XLSX",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/92dd8b94-930a-44fe-b327-1e9e00b4e2a9/v3/National Sources for MandatoryList Products.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "3cb0ebc1-8e61-4610-80b3-2b65bd0c61a0",
+      "titleAr": " إجمالي العمليات الجراحية المنفّذة في التجمع",
+      "titleEn": "Total of Surgical Operation in R1",
+      "descriptionAr": "ملف يوضح إجمالي عدد العمليات الجراحية التي تم تنفيذها في منشآت التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لأغراض المتابعة التشغيلية، وتحليل الأداء، ودعم اتخاذ القرار.",
+      "category": "خدمة العملاء",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "c8de4703-591c-4826-8a02-bf48f994ffed",
+          "name": "Total of Surgical Operation in R1",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/3cb0ebc1-8e61-4610-80b3-2b65bd0c61a0/v1/Total of Surgical Operation in R1.xlsx",
+          "size": 0
+        },
+        {
+          "id": "5803eeef-0ceb-4e5e-a411-c870b53c38a0",
+          "name": "Total of Surgical Operation in R1 2025",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/3cb0ebc1-8e61-4610-80b3-2b65bd0c61a0/v1/Total of Surgical Operation in R1 2025.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "7563bff7-d76c-4c21-b820-f0f15392391a",
+      "titleAr": "القائمة الإلزامية للشركات المملوكة للدولة",
+      "titleEn": "The Mandatory List of State Owned Companies",
+      "descriptionAr": "قائمة بالمنتجات الوطنية تصدرها الهيئة وتحدثها دورياً، وعلى الشركات -عند الانطباق- توريدها وفق الأحكام ذات العلاقة.",
+      "category": "آخر",
+      "organization": "هيئة المحتوى المحلي والمشتريات الحكومية",
+      "resources": [
+        {
+          "id": "25cc8d46-781c-4c31-9dc8-1d75b935f429",
+          "name": "The Mandatory List of State Owned Companies",
+          "format": "XLSX",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/7563bff7-d76c-4c21-b820-f0f15392391a/v7/The Mandatory List of State Owned Companies.xlsx",
+          "size": 0
+        },
+        {
+          "id": "d229c8f2-00f0-4086-8de0-931910b38f72",
+          "name": "The Mandatory List of StateOwned Companies",
+          "format": "CSV",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/7563bff7-d76c-4c21-b820-f0f15392391a/v7/The Mandatory List of StateOwned Companies.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "43ced92f-f63d-4b1c-9635-e1205b69d430",
+      "titleAr": "الامتثال واعتماد المنشآت الصحية",
+      "titleEn": "Compliance and Accreditation",
+      "descriptionAr": "ملف يوضح مستوى الامتثال ومتطلبات الاعتماد للمنشآت الصحية في التجمع الصحي خلال فترة زمنية محددة، ويُستخدم لمتابعة الالتزام بالمعايير التنظيمية، ودعم تحسين الجودة، وتعزيز جاهزية المنشآت للاعتماد.",
+      "category": "الصحة",
+      "organization": "تجمع الرياض الصحي الأول",
+      "resources": [
+        {
+          "id": "55f2d757-636e-4b3e-90d1-ba29e3550538",
+          "name": "Compliance and accreditations",
+          "format": "CSV",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/43ced92f-f63d-4b1c-9635-e1205b69d430/v1/Compliance and accreditations.csv",
+          "size": 0
+        },
+        {
+          "id": "d2a9d1d0-3e32-499d-b4d8-e48b3e137adf",
+          "name": "Compliance and accreditations 2025",
+          "format": "XLSX",
+          "url": "3d56c3ef-e7ff-4348-a62d-a70b982732af/43ced92f-f63d-4b1c-9635-e1205b69d430/v1/Compliance and accreditations 2025.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "a1ceb26b-1e28-45a5-b37f-76755010c633",
+      "titleAr": "القائمة الإلزامية للمنتجات الوطنية للجهات الحكومية",
+      "titleEn": "Mandatory list of national products for government entities",
+      "descriptionAr": "قائمة المنتجات المصنعة في المملكة العربية السعودية الواردة بوثائق المنافسة والتي يكون المتعاقد مع الجهة الحكومية ملزم بها عند تنفيذ الأعمال أو المشتريات حسب طبيعة العقد ونوعه.",
+      "category": "المشتريات الحكومية",
+      "organization": "هيئة المحتوى المحلي والمشتريات الحكومية",
+      "resources": [
+        {
+          "id": "8b06412f-354e-4fee-aadd-10c73fbba131",
+          "name": "Mandatory List for Government  Entities",
+          "format": "CSV",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/a1ceb26b-1e28-45a5-b37f-76755010c633/v16/Mandatory List for Government  Entities.csv",
+          "size": 0
+        },
+        {
+          "id": "18366529-1926-4e8e-b4e0-a450a51d4617",
+          "name": "Mandatory List for Government Entities",
+          "format": "XLSX",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/a1ceb26b-1e28-45a5-b37f-76755010c633/v16/Mandatory List for Government Entities.xlsx",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    },
+    {
+      "id": "8273c8b9-dbfb-4614-b2fc-66aaed38dfe1",
+      "titleAr": "إحصائيات المحتوى المحلي في القطاع الخاص",
+      "titleEn": "Statistics on Local Content in the Private Sector",
+      "descriptionAr": "تستعرض مجموعة البيانات إحصائيات أثر  المحتوى المحلي في القطاع الخاص ومشاريع التخصيص",
+      "category": "اقتصاد وطني",
+      "organization": "هيئة المحتوى المحلي والمشتريات الحكومية",
+      "resources": [
+        {
+          "id": "5a4c33da-3abd-4139-8345-cbe1c33bc240",
+          "name": "Statistics on Local Content in the Private Sector",
+          "format": "XLSX",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/8273c8b9-dbfb-4614-b2fc-66aaed38dfe1/v2/Statistics on Local Content in the Private Sector.xlsx",
+          "size": 0
+        },
+        {
+          "id": "2a9df78a-ec3e-4d41-8026-e4377238a757",
+          "name": "Statistics on Local Content in the PrivateSector",
+          "format": "CSV",
+          "url": "293d8fb8-efa8-454c-93dd-247804524967/8273c8b9-dbfb-4614-b2fc-66aaed38dfe1/v2/Statistics on Local Content in the PrivateSector.csv",
+          "size": 0
+        }
+      ],
+      "resourcesCount": 2,
+      "hasData": true
+    }
+  ]
+}
