@@ -2,9 +2,10 @@
  * ======================================
  * AI SIGNALS PAGE - صفحة الإشارات الذكية
  * ======================================
- * 
+ *
+ * WebFlux Edition - Real Data Only
  * صفحة مدعومة بالكامل بالذكاء الاصطناعي
- * AI-powered signals and insights page
+ * All data comes from real Saudi Open Data Portal
  */
 
 import React, { useState, useEffect } from 'react';
@@ -33,9 +34,14 @@ import {
     AlertCircle,
     Flame,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    Play,
+    ServerCrash
 } from 'lucide-react';
 import { api } from '../src/services/api';
+
+// WebFlux: API Base URL
+const API_BASE = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
 
 // ============================================
 // TYPES - الأنواع
@@ -453,23 +459,32 @@ const AISignalsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch signals from API - NO FAKE DATA
+    // WebFlux Stats
+    const [stats, setStats] = useState<{ totalDatasets: number; totalSignals: number; lastUpdate: string | null }>({
+        totalDatasets: 0,
+        totalSignals: 0,
+        lastUpdate: null
+    });
+    const [generating, setGenerating] = useState(false);
+
+    // WebFlux: Fetch signals from API - REAL DATA ONLY
     const fetchSignals = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await api.getSignals({ limit: 20 });
+            console.log('🚀 WebFlux: Fetching signals from API...');
+            const response = await api.getSignals({ limit: 50 });
             if (response.success && response.data && (response.data as APISignal[]).length > 0) {
                 const transformedSignals = (response.data as APISignal[]).map(transformSignal);
                 setSignals(transformedSignals);
+                setStats(prev => ({ ...prev, totalSignals: transformedSignals.length }));
+                console.log(`✅ WebFlux: Loaded ${transformedSignals.length} real signals`);
             } else {
-                // NO FAKE DATA - show empty state
-                console.log('No signals available from API');
+                console.log('📭 WebFlux: No signals in database');
                 setSignals([]);
             }
         } catch (err) {
-            console.error('Error fetching signals:', err);
-            // NO FAKE DATA - show error state
+            console.error('❌ WebFlux: Error fetching signals:', err);
             setError('تعذر تحميل الإشارات. يرجى المحاولة لاحقاً.');
             setSignals([]);
         } finally {
@@ -477,8 +492,76 @@ const AISignalsPage: React.FC = () => {
         }
     };
 
+    // WebFlux: Fetch stats from API
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/stats/overview`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setStats({
+                        totalDatasets: data.data.totalDatasets || 0,
+                        totalSignals: data.data.totalSignals || signals.length,
+                        lastUpdate: data.data.lastSyncAt || null
+                    });
+                }
+            }
+        } catch (err) {
+            console.log('Stats fetch failed, using local count');
+        }
+    };
+
+    // WebFlux: Generate signals from real data
+    const generateSignals = async () => {
+        setGenerating(true);
+        setError(null);
+        try {
+            console.log('🔄 WebFlux: Triggering signal generation...');
+
+            // Try to trigger analysis (this endpoint generates real signals)
+            const response = await fetch(`${API_BASE}/signals/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ WebFlux: Signals generated:', data);
+
+                // Reload signals after generation
+                await fetchSignals();
+            } else if (response.status === 401 || response.status === 403) {
+                // Try public generate endpoint
+                const publicResponse = await fetch(`${API_BASE}/sync/trigger`, {
+                    method: 'POST',
+                });
+
+                if (publicResponse.ok) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await fetchSignals();
+                } else {
+                    throw new Error('غير مصرح');
+                }
+            } else {
+                throw new Error('فشل في توليد الإشارات');
+            }
+        } catch (err) {
+            console.error('❌ WebFlux: Generation failed:', err);
+            setError('تعذر توليد الإشارات. جاري المحاولة من البيانات المتاحة...');
+
+            // Even if generation fails, try to fetch any existing signals
+            await fetchSignals();
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    // WebFlux: Initial fetch
     useEffect(() => {
         fetchSignals();
+        fetchStats();
     }, []);
 
     const filteredSignals = filter === 'all'
@@ -509,27 +592,27 @@ const AISignalsPage: React.FC = () => {
                         تحليل فوري وذكي لأهم الفرص والمخاطر في السوق، مع تفسير شامل لكل إشارة ومصادر البيانات المستخدمة
                     </p>
 
-                    {/* AI Features */}
+                    {/* WebFlux Stats - Real Data */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
-                            <Brain size={24} className="text-white mb-2" />
-                            <p className="text-white font-bold text-sm">تحليل ذكي</p>
-                            <p className="text-purple-100 text-xs">مدعوم بـ AI</p>
+                            <Database size={24} className="text-white mb-2" />
+                            <p className="text-white font-bold text-sm">مجموعات البيانات</p>
+                            <p className="text-2xl font-black text-white">{stats.totalDatasets.toLocaleString()}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
-                            <Shield size={24} className="text-white mb-2" />
-                            <p className="text-white font-bold text-sm">مصادر موثوقة</p>
-                            <p className="text-purple-100 text-xs">بيانات رسمية</p>
+                            <Zap size={24} className="text-white mb-2" />
+                            <p className="text-white font-bold text-sm">الإشارات النشطة</p>
+                            <p className="text-2xl font-black text-white">{signals.length}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
                             <Target size={24} className="text-white mb-2" />
-                            <p className="text-white font-bold text-sm">دقة عالية</p>
-                            <p className="text-purple-100 text-xs">ثقة 70%+</p>
+                            <p className="text-white font-bold text-sm">فرص استثمارية</p>
+                            <p className="text-2xl font-black text-green-300">{signals.filter(s => s.type === 'opportunity').length}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
-                            <Activity size={24} className="text-white mb-2" />
-                            <p className="text-white font-bold text-sm">تحديث مستمر</p>
-                            <p className="text-purple-100 text-xs">بيانات حية</p>
+                            <AlertTriangle size={24} className="text-white mb-2" />
+                            <p className="text-white font-bold text-sm">تنبيهات المخاطر</p>
+                            <p className="text-2xl font-black text-red-300">{signals.filter(s => s.type === 'risk').length}</p>
                         </div>
                     </div>
                 </div>
@@ -609,10 +692,34 @@ const AISignalsPage: React.FC = () => {
                     </button>
                 </div>
             ) : filteredSignals.length === 0 ? (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-8 text-center">
-                    <Eye size={48} className="text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-gray-700 mb-2">لا توجد إشارات</h3>
-                    <p className="text-gray-500">لم يتم العثور على إشارات بهذا التصنيف</p>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-8 mb-8 text-center">
+                    <Database size={48} className="text-blue-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-700 mb-2">لا توجد إشارات حالياً</h3>
+                    <p className="text-gray-500 mb-6">
+                        {stats.totalDatasets > 0
+                            ? `لديك ${stats.totalDatasets.toLocaleString()} مجموعة بيانات جاهزة للتحليل`
+                            : 'يمكنك توليد إشارات من البيانات الحقيقية'}
+                    </p>
+                    <button
+                        onClick={generateSignals}
+                        disabled={generating}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                    >
+                        {generating ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" />
+                                جاري التوليد...
+                            </>
+                        ) : (
+                            <>
+                                <Play size={20} />
+                                توليد إشارات من البيانات الحقيقية
+                            </>
+                        )}
+                    </button>
+                    <p className="text-xs text-gray-400 mt-4">
+                        سيتم تحليل البيانات من البوابة الوطنية للبيانات المفتوحة
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
