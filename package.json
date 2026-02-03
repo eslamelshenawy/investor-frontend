@@ -34,6 +34,8 @@
     "@types/papaparse": "^5.5.2",
     "@vitejs/plugin-react": "^5.0.0",
     "puppeteer": "^24.36.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

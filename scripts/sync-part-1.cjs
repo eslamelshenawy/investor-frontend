@@ -5,8 +5,11 @@
  * يحفظ النتائج في Database مباشرة
  */
 
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { Pool } = require('pg');
+
+puppeteer.use(StealthPlugin());
 
 const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres.udtuzktclvvjaqffvnfp:NiYqO4slVgX9k26s@aws-1-eu-west-1.pooler.supabase.com:6543/postgres";
 const BASE_URL = 'https://open.data.gov.sa';
