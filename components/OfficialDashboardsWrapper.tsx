@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     LayoutGrid,
     List,
@@ -57,6 +58,7 @@ const CATEGORIES = [
 ];
 
 const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ userRole }) => {
+    const navigate = useNavigate();
     const [dashboards, setDashboards] = useState<APIDashboard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -244,6 +246,7 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                                 // Grid Card
                                 <div
                                     key={dashboard.id}
+                                    onClick={() => navigate(`/dashboards/${dashboard.id}`)}
                                     className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
                                 >
                                     {/* Header */}
@@ -312,6 +315,7 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
                                 // List Card
                                 <div
                                     key={dashboard.id}
+                                    onClick={() => navigate(`/dashboards/${dashboard.id}`)}
                                     className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 hover:shadow-lg transition-all cursor-pointer"
                                 >
                                     <div className={`w-14 h-14 rounded-xl ${colorClasses.bg} flex items-center justify-center shrink-0`}>
