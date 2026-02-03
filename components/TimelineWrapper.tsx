@@ -17,7 +17,15 @@ interface ApiTimelineItem {
   trend?: string;
   tags?: string | string[];
   date: string;
-  itemType: 'content' | 'signal';
+  itemType: 'content' | 'signal' | 'dataset' | 'sync';
+  // Dataset specific fields
+  category?: string;
+  recordCount?: number;
+  externalId?: string;
+  // Sync specific fields
+  recordsCount?: number;
+  newRecords?: number;
+  updatedRecords?: number;
 }
 
 interface ApiResponse {
@@ -33,6 +41,9 @@ interface ApiResponse {
   errorAr?: string;
 }
 
+// API Base URL from environment
+const API_BASE = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+
 interface TimelineWrapperProps {
   apiBaseUrl?: string;
   limit?: number;
@@ -41,7 +52,21 @@ interface TimelineWrapperProps {
 }
 
 // Map content/signal types to TimelineEventType
-const mapTypeToEventType = (apiType: string, itemType: 'content' | 'signal'): TimelineEventType => {
+const mapTypeToEventType = (apiType: string, itemType: 'content' | 'signal' | 'dataset' | 'sync'): TimelineEventType => {
+  // Dataset types mapping
+  if (itemType === 'dataset') {
+    const datasetTypeMap: Record<string, TimelineEventType> = {
+      'NEW_DATA': TimelineEventType.NEW_DATA,
+      'UPDATE': TimelineEventType.UPDATE,
+    };
+    return datasetTypeMap[apiType?.toUpperCase()] || TimelineEventType.NEW_DATA;
+  }
+
+  // Sync types mapping
+  if (itemType === 'sync') {
+    return TimelineEventType.UPDATE;
+  }
+
   if (itemType === 'signal') {
     // Signal types mapping
     const signalTypeMap: Record<string, TimelineEventType> = {
@@ -69,7 +94,21 @@ const mapTypeToEventType = (apiType: string, itemType: 'content' | 'signal'): Ti
 };
 
 // Arabic type labels
-const getArabicSourceName = (apiType: string, itemType: 'content' | 'signal'): string => {
+const getArabicSourceName = (apiType: string, itemType: 'content' | 'signal' | 'dataset' | 'sync'): string => {
+  // Dataset labels
+  if (itemType === 'dataset') {
+    const datasetLabels: Record<string, string> = {
+      'NEW_DATA': 'بيانات جديدة',
+      'UPDATE': 'تحديث بيانات',
+    };
+    return datasetLabels[apiType?.toUpperCase()] || 'البوابة الوطنية للبيانات';
+  }
+
+  // Sync labels
+  if (itemType === 'sync') {
+    return 'مزامنة البيانات';
+  }
+
   if (itemType === 'signal') {
     const signalLabels: Record<string, string> = {
       'GROWTH': 'اشارة نمو',
@@ -106,109 +145,34 @@ const parseTags = (tags: string | string[] | undefined): string[] => {
   }
 };
 
-// Demo/Fallback data
-const DEMO_TIMELINE_EVENTS: TimelineEvent[] = [
-  {
-    id: 'demo_1',
-    type: TimelineEventType.NEW_DATA,
-    title: 'تحديث بيانات التضخم الشهري',
-    summary: 'أصدرت الهيئة العامة للإحصاء بيانات التضخم لشهر ديسمبر 2024، مسجلة ارتفاعاً بنسبة 1.6% على أساس سنوي.',
-    timestamp: new Date().toISOString(),
-    impactScore: 75,
-    sourceName: 'الهيئة العامة للإحصاء',
-    delta: { value: '+1.6%', isPositive: false, label: 'معدل التضخم' },
-    tags: ['التضخم', 'الإحصاء', 'الاقتصاد'],
-  },
-  {
-    id: 'demo_2',
-    type: TimelineEventType.SIGNAL,
-    title: 'إشارة نمو في قطاع التجزئة',
-    summary: 'رصد نمو ملحوظ في مبيعات التجزئة بنسبة 8% مقارنة بالربع السابق، مدفوعاً بموسم الأعياد.',
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    impactScore: 68,
-    sourceName: 'تحليل الذكاء الاصطناعي',
-    delta: { value: '+8%', isPositive: true, label: 'نمو المبيعات' },
-    tags: ['التجزئة', 'النمو', 'المبيعات'],
-  },
-  {
-    id: 'demo_3',
-    type: TimelineEventType.INSIGHT,
-    title: 'تحليل: توقعات سوق العمل 2025',
-    summary: 'تشير المؤشرات إلى استمرار تحسن سوق العمل مع توقع خلق 200 ألف وظيفة جديدة في القطاع الخاص.',
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    impactScore: 82,
-    sourceName: 'رادار المستثمر',
-    tags: ['سوق العمل', 'التوظيف', 'القطاع الخاص'],
-  },
-  {
-    id: 'demo_4',
-    type: TimelineEventType.UPDATE,
-    title: 'تحديث مؤشر أسعار العقارات',
-    summary: 'سجل مؤشر أسعار العقارات السكنية ارتفاعاً بنسبة 2.3% في الربع الرابع من 2024.',
-    timestamp: new Date(Date.now() - 10800000).toISOString(),
-    impactScore: 65,
-    sourceName: 'الهيئة العامة للعقار',
-    delta: { value: '+2.3%', isPositive: true, label: 'ارتفاع الأسعار' },
-    tags: ['العقارات', 'الأسعار', 'السكني'],
-  },
-  {
-    id: 'demo_5',
-    type: TimelineEventType.REVISION,
-    title: 'تعديل توقعات نمو الناتج المحلي',
-    summary: 'عدّل صندوق النقد الدولي توقعاته لنمو الناتج المحلي السعودي لعام 2025 إلى 4.6%.',
-    timestamp: new Date(Date.now() - 14400000).toISOString(),
-    impactScore: 88,
-    sourceName: 'صندوق النقد الدولي',
-    delta: { value: '4.6%', isPositive: true, label: 'معدل النمو' },
-    tags: ['الناتج المحلي', 'النمو', 'IMF'],
-  },
-  {
-    id: 'demo_6',
-    type: TimelineEventType.NEW_DATA,
-    title: 'إصدار بيانات الميزان التجاري',
-    summary: 'حقق الميزان التجاري فائضاً بقيمة 45 مليار ريال في نوفمبر 2024، مدعوماً بارتفاع صادرات النفط.',
-    timestamp: new Date(Date.now() - 18000000).toISOString(),
-    impactScore: 71,
-    sourceName: 'الهيئة العامة للإحصاء',
-    delta: { value: '+45B', isPositive: true, label: 'فائض تجاري' },
-    tags: ['الميزان التجاري', 'الصادرات', 'النفط'],
-  },
-  {
-    id: 'demo_7',
-    type: TimelineEventType.SIGNAL,
-    title: 'تنبيه: ارتفاع أسعار مواد البناء',
-    summary: 'رصد ارتفاع في أسعار الحديد والأسمنت بنسبة 5% خلال الشهر الماضي.',
-    timestamp: new Date(Date.now() - 21600000).toISOString(),
-    impactScore: 62,
-    sourceName: 'مؤشر أسعار المنتجين',
-    delta: { value: '+5%', isPositive: false, label: 'ارتفاع التكاليف' },
-    tags: ['البناء', 'الأسعار', 'المواد'],
-  },
-  {
-    id: 'demo_8',
-    type: TimelineEventType.INSIGHT,
-    title: 'رؤية: مستقبل التجارة الإلكترونية',
-    summary: 'من المتوقع أن يصل حجم سوق التجارة الإلكترونية إلى 80 مليار ريال بحلول 2026.',
-    timestamp: new Date(Date.now() - 25200000).toISOString(),
-    impactScore: 76,
-    sourceName: 'تقرير السوق',
-    tags: ['التجارة الإلكترونية', 'النمو', 'التقنية'],
-  },
-];
 
 // Transform API item to TimelineEvent
 const transformToTimelineEvent = (item: ApiTimelineItem): TimelineEvent => {
   const eventType = mapTypeToEventType(item.type, item.itemType);
   const tags = parseTags(item.tags);
 
-  // Determine delta from trend (for signals)
+  // Determine delta based on item type
   let delta: TimelineEvent['delta'] | undefined;
+
   if (item.itemType === 'signal' && item.trend) {
     const isPositive = ['UP', 'GROWTH', 'POSITIVE'].includes(item.trend.toUpperCase());
     delta = {
       value: isPositive ? '+' : '-',
       isPositive,
       label: isPositive ? 'ارتفاع' : 'انخفاض',
+    };
+  } else if (item.itemType === 'dataset' && item.recordCount) {
+    delta = {
+      value: `${item.recordCount.toLocaleString()}`,
+      isPositive: true,
+      label: 'سجل',
+    };
+  } else if (item.itemType === 'sync') {
+    const total = (item.newRecords || 0) + (item.updatedRecords || 0);
+    delta = {
+      value: `+${total}`,
+      isPositive: total > 0,
+      label: 'تحديث',
     };
   }
 
@@ -226,7 +190,7 @@ const transformToTimelineEvent = (item: ApiTimelineItem): TimelineEvent => {
 };
 
 const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
-  apiBaseUrl = '/api/content',
+  apiBaseUrl = `${API_BASE}/content`,
   limit = 30,
   onItemClick,
   className = '',
@@ -250,16 +214,13 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
 
       const data: ApiResponse = await response.json();
 
-      if (!data.success || !data.data || data.data.length === 0) {
-        // Use demo data when API returns empty
-        console.log('Using demo timeline data');
-        setEvents(DEMO_TIMELINE_EVENTS);
-        setTotalPages(1);
+      if (!data.success) {
+        setError(data.errorAr || data.error || 'فشل في تحميل البيانات');
         setLoading(false);
         return;
       }
 
-      const transformedEvents = data.data.map(transformToTimelineEvent);
+      const transformedEvents = data.data ? data.data.map(transformToTimelineEvent) : [];
 
       if (pageNum === 1) {
         setEvents(transformedEvents);
@@ -271,10 +232,8 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
         setTotalPages(data.meta.totalPages);
       }
     } catch (err) {
-      console.error('Timeline fetch error, using demo data:', err);
-      // Use demo data on error
-      setEvents(DEMO_TIMELINE_EVENTS);
-      setTotalPages(1);
+      console.error('Timeline fetch error:', err);
+      setError('فشل في الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
