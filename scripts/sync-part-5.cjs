@@ -1,12 +1,14 @@
 /**
  * Parallel Sync - Part 5 of 5
  * Categories 41-48
+ *
+ * يحفظ النتائج في Database مباشرة
  */
 
-import pg from 'pg';
-import puppeteer from 'puppeteer';
+const puppeteer = require('puppeteer');
+const { Pool } = require('pg');
 
-const DATABASE_URL = "postgresql://postgres.udtuzktclvvjaqffvnfp:NiYqO4slVgX9k26s@aws-1-eu-west-1.pooler.supabase.com:6543/postgres";
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres.udtuzktclvvjaqffvnfp:NiYqO4slVgX9k26s@aws-1-eu-west-1.pooler.supabase.com:6543/postgres";
 const BASE_URL = 'https://open.data.gov.sa';
 const PAGE_SIZE = 100;
 const FETCH_RESOURCES = true;
@@ -24,7 +26,7 @@ const CATEGORIES = [
   { id: 'open_data_migration_group', name: 'تهجير البيانات' },
 ];
 
-const pool = new pg.Pool({
+const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false },
   max: 3
