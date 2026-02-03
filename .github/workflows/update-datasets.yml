@@ -1,10 +1,15 @@
-name: Update Datasets
+name: Update Datasets (PAUSED - Use sync-parallel.yml instead)
 
-# يشتغل يومياً الساعة 6 صباحاً (توقيت السعودية = 3 صباحاً UTC)
+# ⚠️ هذا الـ Workflow متوقف مؤقتاً
+# استخدم sync-parallel.yml بدلاً منه (أسرع 5 مرات)
+#
+# السبب: تم تقسيم المزامنة إلى 5 jobs متوازية
+# للتفعيل مرة أخرى: أزل التعليق من الـ schedule
+
 on:
-  schedule:
-    - cron: '0 3 * * *'  # كل يوم الساعة 3 صباحاً UTC
-  workflow_dispatch:  # للتشغيل اليدوي
+  # schedule:
+  #   - cron: '0 3 * * *'  # متوقف مؤقتاً
+  workflow_dispatch:  # للتشغيل اليدوي فقط
 
 jobs:
   update:

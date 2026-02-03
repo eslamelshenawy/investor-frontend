@@ -1,0 +1,120 @@
+name: Parallel Sync (5 Jobs)
+
+# المزامنة المتوازية - أسرع 5 مرات!
+# يشغل 5 jobs بالتوازي، كل واحد يعالج 10 categories
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # يومياً الساعة 6 صباحاً (توقيت السعودية)
+  workflow_dispatch:  # للتشغيل اليدوي
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  # Part 1: Categories 1-10
+  sync-part-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chrome
+        run: npx puppeteer browsers install chrome
+      - name: Run Part 1
+        run: node scripts/sync-part-1.cjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Part 2: Categories 11-20
+  sync-part-2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chrome
+        run: npx puppeteer browsers install chrome
+      - name: Run Part 2
+        run: node scripts/sync-part-2.cjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Part 3: Categories 21-30
+  sync-part-3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chrome
+        run: npx puppeteer browsers install chrome
+      - name: Run Part 3
+        run: node scripts/sync-part-3.cjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Part 4: Categories 31-40
+  sync-part-4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chrome
+        run: npx puppeteer browsers install chrome
+      - name: Run Part 4
+        run: node scripts/sync-part-4.cjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Part 5: Categories 41-48
+  sync-part-5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chrome
+        run: npx puppeteer browsers install chrome
+      - name: Run Part 5
+        run: node scripts/sync-part-5.cjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Summary Job - runs after all parts complete
+  summary:
+    needs: [sync-part-1, sync-part-2, sync-part-3, sync-part-4, sync-part-5]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🎉 Parallel Sync Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All 5 sync jobs completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Part 1: Categories 1-10 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Part 2: Categories 11-20 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Part 3: Categories 21-30 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Part 4: Categories 31-40 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Part 5: Categories 41-48 ✅" >> $GITHUB_STEP_SUMMARY
