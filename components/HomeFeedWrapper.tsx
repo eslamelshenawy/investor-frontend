@@ -26,7 +26,10 @@ interface APIContent {
   excerptAr?: string;
   tags: string;
   viewCount: number;
+  likeCount?: number;
+  saveCount?: number;
   publishedAt: string;
+  coverImage?: string;
 }
 
 // Map API content type to FeedContentType
@@ -41,7 +44,7 @@ function mapContentType(apiType: string): FeedContentType {
   return typeMap[apiType] || FeedContentType.ARTICLE;
 }
 
-// Transform API content to FeedItem
+// Transform API content to FeedItem - uses only real data from API
 function transformContent(content: APIContent): FeedItem {
   let tags: string[] = [];
   try {
@@ -64,17 +67,30 @@ function transformContent(content: APIContent): FeedItem {
     timestamp: content.publishedAt,
     tags,
     engagement: {
-      views: content.viewCount,
-      likes: Math.floor(content.viewCount * 0.3),
-      comments: Math.floor(content.viewCount * 0.1),
-      shares: Math.floor(content.viewCount * 0.05),
-      saves: Math.floor(content.viewCount * 0.15),
+      views: content.viewCount || 0,
+      likes: content.likeCount || 0,
+      comments: 0, // Real comments will come from comments API
+      shares: 0,
+      saves: content.saveCount || 0,
     },
     excerpt: content.excerptAr || content.excerpt || '',
-    coverImage: `https://picsum.photos/seed/${content.id}/800/400`,
+    // Use real cover image if available, otherwise use content-type based placeholder
+    coverImage: content.coverImage || getDefaultCoverImage(content.type),
     hasLiked: false,
     hasSaved: false,
   };
+}
+
+// Get default cover image based on content type
+function getDefaultCoverImage(type: string): string {
+  const images: Record<string, string> = {
+    'REPORT': '/images/report-cover.jpg',
+    'NEWS': '/images/news-cover.jpg',
+    'ANALYSIS': '/images/analysis-cover.jpg',
+    'ARTICLE': '/images/article-cover.jpg',
+    'INSIGHT': '/images/insight-cover.jpg',
+  };
+  return images[type] || '/images/default-cover.jpg';
 }
 
 const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard }) => {
