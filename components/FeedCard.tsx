@@ -348,23 +348,26 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction }) => {
         </div>
     );
 
-    const renderExpertInsight = () => (
-        <div className="mt-3 sm:mt-4 p-5 sm:p-8 bg-slate-900 text-white rounded-xl sm:rounded-2xl relative overflow-hidden text-center sm:text-right">
-            <Quote size={40} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/10 rotate-180 sm:w-[60px] sm:h-[60px]" />
-            <div className="relative z-10">
-                <p className="text-base sm:text-xl lg:text-2xl font-serif leading-relaxed mb-4 sm:mb-6 opacity-90">
-                    "{item.payload.quote}"
-                </p>
-                <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
-                    <img src={item.payload.expertImage} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-700 object-cover" />
-                    <div className="text-right">
-                        <p className="font-bold text-xs sm:text-sm text-white">{item.payload.expertName}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-400">{item.payload.expertRole}</p>
+    const renderExpertInsight = () => {
+        if (!item.payload?.quote) return null;
+        return (
+            <div className="mt-3 sm:mt-4 p-5 sm:p-8 bg-slate-900 text-white rounded-xl sm:rounded-2xl relative overflow-hidden text-center sm:text-right">
+                <Quote size={40} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/10 rotate-180 sm:w-[60px] sm:h-[60px]" />
+                <div className="relative z-10">
+                    <p className="text-base sm:text-xl lg:text-2xl font-serif leading-relaxed mb-4 sm:mb-6 opacity-90">
+                        "{item.payload.quote}"
+                    </p>
+                    <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
+                        <img src={item.payload.expertImage} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-700 object-cover" />
+                        <div className="text-right">
+                            <p className="font-bold text-xs sm:text-sm text-white">{item.payload.expertName}</p>
+                            <p className="text-[10px] sm:text-xs text-slate-400">{item.payload.expertRole}</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderPortfolio = () => (
         <div className="mt-4 border border-gray-100 rounded-2xl p-5 shadow-sm bg-white">

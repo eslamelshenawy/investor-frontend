@@ -1003,14 +1003,6 @@ const AppWithAuth = () => {
 
       {/* Protected routes - require authentication */}
       <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <AppContent />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/*"
         element={
           <ProtectedRoute>
