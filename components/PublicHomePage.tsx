@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../src/services/api';
@@ -23,8 +23,13 @@ import {
   Building2,
   Zap,
   Loader2,
-  LayoutDashboard
+  LayoutDashboard,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
+
+// API Base URL for SSE streams
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 
 // Types
 interface StatsData {
@@ -70,36 +75,208 @@ const PublicHomePage: React.FC = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [datasets, setDatasets] = useState<DatasetItem[]>([]);
   const [sources, setSources] = useState<SourceItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch real data from API
-  useEffect(() => {
-    const fetchData = async () => {
+  // Streaming states
+  const [statsStreaming, setStatsStreaming] = useState(true);
+  const [datasetsStreaming, setDatasetsStreaming] = useState(true);
+  const [sourcesStreaming, setSourcesStreaming] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Refs for EventSource cleanup
+  const statsEventSourceRef = useRef<EventSource | null>(null);
+  const datasetsEventSourceRef = useRef<EventSource | null>(null);
+  const sourcesEventSourceRef = useRef<EventSource | null>(null);
+
+  // Combined loading state
+  const loading = statsStreaming || datasetsStreaming || sourcesStreaming;
+
+  // WebFlux SSE Stream for Stats
+  const streamStats = useCallback(() => {
+    const url = `${API_BASE_URL}/stats/stream`;
+    console.log('[WebFlux] Connecting to stats stream:', url);
+
+    const eventSource = new EventSource(url);
+    statsEventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('[WebFlux] Stats stream connected');
+      setIsConnected(true);
+    };
+
+    eventSource.addEventListener('stats', (e) => {
       try {
-        setLoading(true);
-        const [statsRes, datasetsRes, sourcesRes] = await Promise.all([
-          api.getOverviewStats(),
-          api.getDatasets({ limit: 6 }),
-          api.getSourceStats()
-        ]);
+        const data = JSON.parse(e.data);
+        console.log('[WebFlux] Received stats:', data);
+        setStats(data);
+        setStatsStreaming(false);
+      } catch (err) {
+        console.error('[WebFlux] Error parsing stats:', err);
+      }
+    });
 
-        if (statsRes.success && statsRes.data) {
-          setStats(statsRes.data);
-        }
-        if (datasetsRes.success && datasetsRes.data) {
-          setDatasets(datasetsRes.data.slice(0, 6));
-        }
-        if (sourcesRes.success && sourcesRes.data) {
-          setSources(sourcesRes.data.sources || []);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+    eventSource.addEventListener('complete', () => {
+      console.log('[WebFlux] Stats stream complete');
+      setStatsStreaming(false);
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error('[WebFlux] Stats stream error:', err);
+      eventSource.close();
+      // Fallback to regular API
+      fetchStatsRegular();
+    };
+  }, []);
+
+  // Regular API fallback for stats
+  const fetchStatsRegular = useCallback(async () => {
+    try {
+      console.log('[API] Fetching stats via regular API...');
+      const res = await api.getOverviewStats();
+      if (res.success && res.data) {
+        setStats(res.data);
+      }
+    } catch (err) {
+      console.error('[API] Error fetching stats:', err);
+    } finally {
+      setStatsStreaming(false);
+    }
+  }, []);
+
+  // WebFlux SSE Stream for Datasets
+  const streamDatasets = useCallback(() => {
+    const url = `${API_BASE_URL}/datasets/stream?limit=6`;
+    console.log('[WebFlux] Connecting to datasets stream:', url);
+
+    const eventSource = new EventSource(url);
+    datasetsEventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('[WebFlux] Datasets stream connected');
+      setIsConnected(true);
+    };
+
+    eventSource.addEventListener('dataset', (e) => {
+      try {
+        const dataset = JSON.parse(e.data);
+        console.log('[WebFlux] Received dataset:', dataset.name || dataset.nameAr);
+        setDatasets(prev => {
+          // Avoid duplicates
+          if (prev.some(d => d.id === dataset.id)) return prev;
+          // Limit to 6 items
+          if (prev.length >= 6) return prev;
+          return [...prev, dataset];
+        });
+      } catch (err) {
+        console.error('[WebFlux] Error parsing dataset:', err);
+      }
+    });
+
+    eventSource.addEventListener('complete', () => {
+      console.log('[WebFlux] Datasets stream complete');
+      setDatasetsStreaming(false);
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error('[WebFlux] Datasets stream error:', err);
+      eventSource.close();
+      // Fallback to regular API
+      fetchDatasetsRegular();
+    };
+  }, []);
+
+  // Regular API fallback for datasets
+  const fetchDatasetsRegular = useCallback(async () => {
+    try {
+      console.log('[API] Fetching datasets via regular API...');
+      const res = await api.getDatasets({ limit: 6 });
+      if (res.success && res.data) {
+        setDatasets(res.data.slice(0, 6));
+      }
+    } catch (err) {
+      console.error('[API] Error fetching datasets:', err);
+    } finally {
+      setDatasetsStreaming(false);
+    }
+  }, []);
+
+  // WebFlux SSE Stream for Sources
+  const streamSources = useCallback(() => {
+    const url = `${API_BASE_URL}/sources/stream`;
+    console.log('[WebFlux] Connecting to sources stream:', url);
+
+    const eventSource = new EventSource(url);
+    sourcesEventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('[WebFlux] Sources stream connected');
+      setIsConnected(true);
+    };
+
+    eventSource.addEventListener('source', (e) => {
+      try {
+        const source = JSON.parse(e.data);
+        console.log('[WebFlux] Received source:', source.name);
+        setSources(prev => {
+          // Avoid duplicates
+          if (prev.some(s => s.name === source.name)) return prev;
+          return [...prev, source];
+        });
+      } catch (err) {
+        console.error('[WebFlux] Error parsing source:', err);
+      }
+    });
+
+    eventSource.addEventListener('complete', () => {
+      console.log('[WebFlux] Sources stream complete');
+      setSourcesStreaming(false);
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error('[WebFlux] Sources stream error:', err);
+      eventSource.close();
+      // Fallback to regular API
+      fetchSourcesRegular();
+    };
+  }, []);
+
+  // Regular API fallback for sources
+  const fetchSourcesRegular = useCallback(async () => {
+    try {
+      console.log('[API] Fetching sources via regular API...');
+      const res = await api.getSourceStats();
+      if (res.success && res.data) {
+        setSources(res.data.sources || []);
+      }
+    } catch (err) {
+      console.error('[API] Error fetching sources:', err);
+    } finally {
+      setSourcesStreaming(false);
+    }
+  }, []);
+
+  // Initialize all streams on mount
+  useEffect(() => {
+    // Start all WebFlux streams in parallel
+    streamStats();
+    streamDatasets();
+    streamSources();
+
+    // Cleanup on unmount
+    return () => {
+      if (statsEventSourceRef.current) {
+        statsEventSourceRef.current.close();
+      }
+      if (datasetsEventSourceRef.current) {
+        datasetsEventSourceRef.current.close();
+      }
+      if (sourcesEventSourceRef.current) {
+        sourcesEventSourceRef.current.close();
       }
     };
-    fetchData();
-  }, []);
+  }, [streamStats, streamDatasets, streamSources]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,7 +417,16 @@ const PublicHomePage: React.FC = () => {
       {/* Stats Section */}
       <section id="stats" className="py-12 -mt-8 relative z-20">
         <div className="container mx-auto px-4">
-          {loading ? (
+          {/* WebFlux Streaming Indicator */}
+          {(statsStreaming || datasetsStreaming || sourcesStreaming) && (
+            <div className="flex items-center justify-center gap-2 mb-4 text-sm text-[#002B5C]">
+              <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                <Wifi className="w-4 h-4 animate-pulse" />
+                <span>جاري تحميل البيانات عبر WebFlux...</span>
+              </div>
+            </div>
+          )}
+          {statsStreaming ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-[#002B5C]" />
             </div>
@@ -307,14 +493,26 @@ const PublicHomePage: React.FC = () => {
             </button>
           </div>
 
-          {loading ? (
+          {datasetsStreaming && datasets.length === 0 ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#002B5C]" />
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-[#002B5C]" />
+                <span className="text-sm text-gray-500">جاري تحميل مجموعات البيانات...</span>
+              </div>
             </div>
-          ) : datasets.length === 0 ? (
+          ) : !datasetsStreaming && datasets.length === 0 ? (
             <div className="text-center py-12 text-gray-500">لا توجد بيانات متاحة حالياً</div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Show streaming indicator if still loading more */}
+              {datasetsStreaming && (
+                <div className="text-center text-sm text-[#002B5C] col-span-full mb-2">
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    جاري تحميل المزيد...
+                  </span>
+                </div>
+              )}
               {datasets.map((dataset) => (
                 <div
                   key={dataset.id}
@@ -369,14 +567,26 @@ const PublicHomePage: React.FC = () => {
             <p className="text-gray-600">مصادر البيانات الرسمية والموثوقة</p>
           </div>
 
-          {loading ? (
+          {sourcesStreaming && sources.length === 0 ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-[#002B5C]" />
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-[#002B5C]" />
+                <span className="text-sm text-gray-500">جاري تحميل الجهات الحكومية...</span>
+              </div>
             </div>
-          ) : sources.length === 0 ? (
+          ) : !sourcesStreaming && sources.length === 0 ? (
             <div className="text-center py-8 text-gray-500">لا توجد جهات متاحة</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Show streaming indicator if still loading more */}
+              {sourcesStreaming && (
+                <div className="text-center text-sm text-[#002B5C] col-span-full mb-2">
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    جاري تحميل المزيد من الجهات...
+                  </span>
+                </div>
+              )}
               {sources.slice(0, 12).map((source, idx) => (
                 <div
                   key={idx}

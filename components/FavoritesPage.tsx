@@ -1,9 +1,9 @@
 /**
  * Favorites Page - صفحة المفضلة
- * Dynamic data from API with fallback
+ * WebFlux-style streaming - Real data only
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Bookmark,
     Search,
@@ -22,11 +22,15 @@ import {
     Heart,
     TrendingUp,
     TrendingDown,
-    Eye
+    Eye,
+    Radio,
+    WifiOff
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../src/services/api';
 import { useAuth } from '../contexts/AuthContext';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 
 // --- TYPES ---
 type ItemType = 'dashboard' | 'content' | 'signal' | 'dataset';
@@ -57,177 +61,145 @@ const FavoritesPage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [items, setItems] = useState<FavoriteItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [removing, setRemoving] = useState<string | null>(null);
+    const [streamProgress, setStreamProgress] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
+    const eventSourceRef = useRef<EventSource | null>(null);
 
-    // Fetch all data and combine
-    const fetchFavorites = useCallback(async () => {
+    // WebFlux-style SSE streaming
+    const fetchFavoritesStream = useCallback(() => {
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+        }
+
+        setLoading(true);
+        setStreaming(true);
+        setError(null);
+        setItems([]);
+        setStreamProgress(0);
+        setTotalItems(0);
+
+        const url = `${API_BASE_URL}/users/favorites/stream`;
+
+        try {
+            const eventSource = new EventSource(url, { withCredentials: true });
+            eventSourceRef.current = eventSource;
+
+            eventSource.addEventListener('meta', (e) => {
+                const meta = JSON.parse(e.data);
+                setTotalItems(meta.total || 0);
+            });
+
+            eventSource.addEventListener('favorite', (e) => {
+                const fav = JSON.parse(e.data);
+                const item = transformFavorite(fav);
+                setItems(prev => {
+                    const newItems = [...prev, item];
+                    if (totalItems > 0) {
+                        setStreamProgress(Math.round((newItems.length / totalItems) * 100));
+                    }
+                    return newItems;
+                });
+                setLoading(false);
+            });
+
+            eventSource.addEventListener('complete', () => {
+                setStreaming(false);
+                setStreamProgress(100);
+                eventSource.close();
+            });
+
+            eventSource.addEventListener('error', () => {
+                setStreaming(false);
+                eventSource.close();
+                // Fallback to regular API
+                fetchFavoritesRegular();
+            });
+
+            eventSource.onerror = () => {
+                setStreaming(false);
+                eventSource.close();
+                if (items.length === 0) {
+                    fetchFavoritesRegular();
+                }
+            };
+
+            // Timeout fallback
+            setTimeout(() => {
+                if (streaming && items.length === 0) {
+                    eventSource.close();
+                    fetchFavoritesRegular();
+                }
+            }, 5000);
+
+        } catch (err) {
+            console.error('SSE Error:', err);
+            fetchFavoritesRegular();
+        }
+    }, []);
+
+    // Regular API fallback
+    const fetchFavoritesRegular = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            // Fetch favorites list
-            const favoritesRes = await api.getFavorites();
+            const response = await api.getFavorites();
 
-            if (!favoritesRes.success || !favoritesRes.data) {
-                // If API fails, try to get items from other endpoints
-                await fetchItemsDirectly();
-                return;
+            if (response.success && response.data && Array.isArray(response.data)) {
+                const transformedItems = response.data.map(transformFavorite);
+                setItems(transformedItems);
+                setTotalItems(transformedItems.length);
+            } else {
+                setItems([]);
+                setTotalItems(0);
             }
-
-            const favorites = favoritesRes.data as any[];
-
-            if (favorites.length === 0) {
-                // No favorites, fetch sample items from various sources
-                await fetchItemsDirectly();
-                return;
-            }
-
-            // Transform favorites to our format
-            const transformedItems: FavoriteItem[] = favorites.map((fav: any) => ({
-                id: fav.itemId,
-                favoriteId: fav.id,
-                type: mapItemType(fav.itemType),
-                title: fav.itemTitle || fav.title || 'عنصر محفوظ',
-                titleAr: fav.itemTitleAr,
-                subtitle: fav.itemSubtitle || getSubtitleByType(fav.itemType),
-                description: fav.itemDescription,
-                date: formatRelativeDate(fav.createdAt),
-                savedAt: fav.createdAt,
-                image: fav.itemImage,
-                category: fav.category,
-                source: fav.source,
-            }));
-
-            setItems(transformedItems);
         } catch (err) {
             console.error('Error fetching favorites:', err);
-            // Fallback to fetching items directly
-            await fetchItemsDirectly();
+            setError('تعذر الاتصال بالخادم');
+            setItems([]);
         } finally {
             setLoading(false);
-        }
-    }, []);
-
-    // Fetch items directly from various endpoints when favorites API fails
-    const fetchItemsDirectly = async () => {
-        try {
-            const [datasetsRes, signalsRes, contentRes, dashboardsRes] = await Promise.allSettled([
-                api.getDatasets({ limit: 3 }),
-                api.getSignals({ limit: 3 }),
-                api.getFeed({ limit: 3 }),
-                api.getOfficialDashboards({ limit: 3 })
-            ]);
-
-            const combinedItems: FavoriteItem[] = [];
-
-            // Process datasets
-            if (datasetsRes.status === 'fulfilled' && datasetsRes.value.success && datasetsRes.value.data) {
-                const datasets = datasetsRes.value.data as any[];
-                datasets.forEach((d: any) => {
-                    combinedItems.push({
-                        id: d.id,
-                        favoriteId: `fav_dataset_${d.id}`,
-                        type: 'dataset',
-                        title: d.nameAr || d.name,
-                        titleAr: d.nameAr,
-                        subtitle: d.source || 'مجموعة بيانات',
-                        description: d.descriptionAr || d.description,
-                        date: formatRelativeDate(d.createdAt),
-                        savedAt: d.createdAt || new Date().toISOString(),
-                        category: d.category,
-                        source: d.source,
-                        recordCount: d.recordCount,
-                    });
-                });
-            }
-
-            // Process signals
-            if (signalsRes.status === 'fulfilled' && signalsRes.value.success && signalsRes.value.data) {
-                const signals = signalsRes.value.data as any[];
-                signals.forEach((s: any) => {
-                    combinedItems.push({
-                        id: s.id,
-                        favoriteId: `fav_signal_${s.id}`,
-                        type: 'signal',
-                        title: s.titleAr || s.title,
-                        titleAr: s.titleAr,
-                        subtitle: 'إشارة ذكية',
-                        description: s.summaryAr || s.summary,
-                        date: formatRelativeDate(s.createdAt),
-                        savedAt: s.createdAt || new Date().toISOString(),
-                        trend: s.trend === 'bullish' ? 'up' : s.trend === 'bearish' ? 'down' : 'neutral',
-                        impactScore: s.impactScore,
-                    });
-                });
-            }
-
-            // Process content
-            if (contentRes.status === 'fulfilled' && contentRes.value.success && contentRes.value.data) {
-                const content = contentRes.value.data as any[];
-                content.forEach((c: any) => {
-                    combinedItems.push({
-                        id: c.id,
-                        favoriteId: `fav_content_${c.id}`,
-                        type: 'content',
-                        title: c.titleAr || c.title,
-                        titleAr: c.titleAr,
-                        subtitle: c.type === 'news' ? 'أخبار' : c.type === 'analysis' ? 'تحليل' : 'محتوى',
-                        description: c.excerptAr || c.excerpt,
-                        date: formatRelativeDate(c.publishedAt),
-                        savedAt: c.publishedAt || new Date().toISOString(),
-                        image: c.image || `https://picsum.photos/seed/${c.id}/500/300`,
-                        viewCount: c.viewCount,
-                    });
-                });
-            }
-
-            // Process dashboards
-            if (dashboardsRes.status === 'fulfilled' && dashboardsRes.value.success && dashboardsRes.value.data) {
-                const dashboards = dashboardsRes.value.data as any[];
-                dashboards.forEach((d: any) => {
-                    combinedItems.push({
-                        id: d.id,
-                        favoriteId: `fav_dashboard_${d.id}`,
-                        type: 'dashboard',
-                        title: d.titleAr || d.title || d.name,
-                        titleAr: d.titleAr,
-                        subtitle: d.category || 'لوحة بيانات',
-                        description: d.descriptionAr || d.description,
-                        date: formatRelativeDate(d.createdAt),
-                        savedAt: d.createdAt || new Date().toISOString(),
-                        category: d.category,
-                    });
-                });
-            }
-
-            // Sort by date
-            combinedItems.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
-
-            setItems(combinedItems);
-        } catch (err) {
-            console.error('Error fetching items directly:', err);
-            setError('تعذر تحميل العناصر');
+            setStreaming(false);
         }
     };
 
-    // Helper functions
+    // Transform API response to FavoriteItem
+    const transformFavorite = (fav: any): FavoriteItem => {
+        const type = mapItemType(fav.itemType);
+        return {
+            id: fav.itemId || fav.id,
+            favoriteId: fav.id,
+            type,
+            title: fav.itemTitle || fav.title || 'عنصر محفوظ',
+            titleAr: fav.itemTitleAr || fav.titleAr,
+            subtitle: fav.itemSubtitle || getSubtitleByType(type),
+            description: fav.itemDescription || fav.description,
+            date: formatRelativeDate(fav.createdAt),
+            savedAt: fav.createdAt,
+            image: fav.itemImage || fav.image,
+            category: fav.category,
+            source: fav.source,
+            trend: fav.trend === 'bullish' ? 'up' : fav.trend === 'bearish' ? 'down' : 'neutral',
+            impactScore: fav.impactScore,
+            viewCount: fav.viewCount,
+            recordCount: fav.recordCount,
+        };
+    };
+
     const mapItemType = (type: string): ItemType => {
         switch (type?.toLowerCase()) {
             case 'dashboard': return 'dashboard';
             case 'signal': return 'signal';
             case 'dataset': return 'dataset';
-            case 'content':
-            case 'post':
-            case 'article':
-            case 'news':
-                return 'content';
             default: return 'content';
         }
     };
 
-    const getSubtitleByType = (type: string): string => {
-        switch (type?.toLowerCase()) {
+    const getSubtitleByType = (type: ItemType): string => {
+        switch (type) {
             case 'dashboard': return 'لوحة بيانات';
             case 'signal': return 'إشارة ذكية';
             case 'dataset': return 'مجموعة بيانات';
@@ -255,8 +227,14 @@ const FavoritesPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchFavorites();
-    }, [fetchFavorites]);
+        fetchFavoritesStream();
+
+        return () => {
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+            }
+        };
+    }, []);
 
     // Filter Logic
     const filteredItems = items.filter(item => {
@@ -271,7 +249,6 @@ const FavoritesPage: React.FC = () => {
     // Remove item
     const removeItem = async (e: React.MouseEvent, item: FavoriteItem) => {
         e.stopPropagation();
-
         setRemoving(item.id);
 
         // Optimistic update
@@ -356,18 +333,24 @@ const FavoritesPage: React.FC = () => {
                         </div>
                         مفضلتي
                     </h1>
-                    <p className="text-gray-500 text-lg">المرجع الموحد لكل ما قمت بحفظه ({stats.total} عنصر)</p>
+                    <p className="text-gray-500 text-lg">
+                        {loading ? 'جاري التحميل...' : `${stats.total} عنصر محفوظ`}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {/* Refresh Button */}
                     <button
-                        onClick={fetchFavorites}
-                        disabled={loading}
+                        onClick={fetchFavoritesStream}
+                        disabled={loading || streaming}
                         className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all"
                         title="تحديث"
                     >
-                        <RefreshCw size={18} className={loading ? 'animate-spin text-amber-500' : 'text-gray-500'} />
+                        {streaming ? (
+                            <Radio size={18} className="text-green-500 animate-pulse" />
+                        ) : (
+                            <RefreshCw size={18} className={loading ? 'animate-spin text-amber-500' : 'text-gray-500'} />
+                        )}
                     </button>
 
                     {/* Search */}
@@ -384,61 +367,85 @@ const FavoritesPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Streaming Progress */}
+            {streaming && (
+                <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="relative">
+                            <Radio size={20} className="text-amber-500 animate-pulse" />
+                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping"></span>
+                        </div>
+                        <span className="text-amber-700 font-bold text-sm">جاري تحميل البيانات...</span>
+                        <span className="text-amber-500 text-sm">{items.length} / {totalItems || '?'}</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-2 overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
+                            style={{ width: `${streamProgress}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
+
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-                    <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
-                    <div className="text-xs text-gray-500">إجمالي</div>
+            {!loading && items.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+                        <div className="text-xs text-gray-500">إجمالي</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-600">{stats.dashboards}</div>
+                        <div className="text-xs text-blue-600">لوحات</div>
+                    </div>
+                    <div className="bg-purple-50 rounded-xl border border-purple-100 p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600">{stats.signals}</div>
+                        <div className="text-xs text-purple-600">إشارات</div>
+                    </div>
+                    <div className="bg-green-50 rounded-xl border border-green-100 p-4 text-center">
+                        <div className="text-2xl font-bold text-green-600">{stats.datasets}</div>
+                        <div className="text-xs text-green-600">بيانات</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-600">{stats.content}</div>
+                        <div className="text-xs text-gray-500">محتوى</div>
+                    </div>
                 </div>
-                <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{stats.dashboards}</div>
-                    <div className="text-xs text-blue-600">لوحات</div>
-                </div>
-                <div className="bg-purple-50 rounded-xl border border-purple-100 p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-600">{stats.signals}</div>
-                    <div className="text-xs text-purple-600">إشارات</div>
-                </div>
-                <div className="bg-green-50 rounded-xl border border-green-100 p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">{stats.datasets}</div>
-                    <div className="text-xs text-green-600">بيانات</div>
-                </div>
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center">
-                    <div className="text-2xl font-bold text-gray-600">{stats.content}</div>
-                    <div className="text-xs text-gray-500">محتوى</div>
-                </div>
-            </div>
+            )}
 
             {/* Tabs / Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
-                {[
-                    { id: 'all', label: 'الكل', icon: Layers, count: stats.total },
-                    { id: 'dashboard', label: 'اللوحات', icon: LayoutDashboard, count: stats.dashboards },
-                    { id: 'signal', label: 'إشارات', icon: Zap, count: stats.signals },
-                    { id: 'dataset', label: 'البيانات', icon: Database, count: stats.datasets },
-                    { id: 'content', label: 'محتوى', icon: FileText, count: stats.content },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveFilter(tab.id as any)}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${
-                            activeFilter === tab.id
-                                ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                        }`}
-                    >
-                        <tab.icon size={16} />
-                        {tab.label}
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            activeFilter === tab.id ? 'bg-white/20' : 'bg-gray-100'
-                        }`}>
-                            {tab.count}
-                        </span>
-                    </button>
-                ))}
-            </div>
+            {!loading && items.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+                    {[
+                        { id: 'all', label: 'الكل', icon: Layers, count: stats.total },
+                        { id: 'dashboard', label: 'اللوحات', icon: LayoutDashboard, count: stats.dashboards },
+                        { id: 'signal', label: 'إشارات', icon: Zap, count: stats.signals },
+                        { id: 'dataset', label: 'البيانات', icon: Database, count: stats.datasets },
+                        { id: 'content', label: 'محتوى', icon: FileText, count: stats.content },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveFilter(tab.id as any)}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all border ${
+                                activeFilter === tab.id
+                                    ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                            }`}
+                        >
+                            <tab.icon size={16} />
+                            {tab.label}
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                activeFilter === tab.id ? 'bg-white/20' : 'bg-gray-100'
+                            }`}>
+                                {tab.count}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Loading State */}
-            {loading && (
+            {loading && !streaming && (
                 <div className="flex flex-col items-center justify-center py-20">
                     <Loader2 size={48} className="text-amber-500 animate-spin mb-4" />
                     <p className="text-gray-500">جاري تحميل المفضلة...</p>
@@ -448,24 +455,27 @@ const FavoritesPage: React.FC = () => {
             {/* Error State */}
             {error && !loading && (
                 <div className="flex flex-col items-center justify-center py-20 bg-red-50 rounded-2xl border border-red-100">
-                    <AlertCircle size={48} className="text-red-400 mb-4" />
-                    <p className="text-red-600 mb-4">{error}</p>
+                    <WifiOff size={48} className="text-red-400 mb-4" />
+                    <p className="text-red-600 font-bold mb-2">تعذر الاتصال بالخادم</p>
+                    <p className="text-red-500 text-sm mb-4">{error}</p>
                     <button
-                        onClick={fetchFavorites}
-                        className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                        onClick={fetchFavoritesStream}
+                        className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors flex items-center gap-2"
                     >
+                        <RefreshCw size={16} />
                         إعادة المحاولة
                     </button>
                 </div>
             )}
 
             {/* Grid Content */}
-            {!loading && !error && (
+            {!loading && !error && items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {filteredItems.map(item => (
+                    {filteredItems.map((item, index) => (
                         <div
                             key={item.favoriteId}
-                            className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden"
+                            className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden animate-fadeIn"
+                            style={{ animationDelay: `${index * 50}ms` }}
                             onClick={() => navigateToItem(item)}
                         >
                             {/* Type Badge */}
@@ -490,16 +500,12 @@ const FavoritesPage: React.FC = () => {
 
                             {/* Content */}
                             <div className="mt-6 mb-3">
-                                {/* Image for content type */}
                                 {item.type === 'content' && item.image && (
                                     <div className="h-32 w-full rounded-xl bg-gray-100 mb-4 overflow-hidden">
                                         <img
                                             src={item.image}
                                             alt=""
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${item.id}/500/300`;
-                                            }}
                                         />
                                     </div>
                                 )}
@@ -515,7 +521,6 @@ const FavoritesPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* Icon for dashboard/dataset */}
                                     {(item.type === 'dashboard' || item.type === 'dataset') && (
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                                             item.type === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
@@ -526,7 +531,7 @@ const FavoritesPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Specific Content per Type */}
+                            {/* Type-specific content */}
                             <div className="mt-auto pt-4 border-t border-gray-50">
                                 {item.type === 'signal' && (
                                     <div className="flex items-center justify-between">
@@ -593,35 +598,46 @@ const FavoritesPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Empty State */}
-            {!loading && !error && filteredItems.length === 0 && (
-                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <Heart size={48} className="mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">لا توجد عناصر محفوظة</h3>
-                    <p className="text-gray-500 mb-6">
-                        {searchQuery
-                            ? 'لم يتم العثور على نتائج للبحث'
-                            : 'ابدأ بحفظ اللوحات والإشارات والبيانات المهمة لك'
-                        }
+            {/* Empty State - No Favorites */}
+            {!loading && !error && items.length === 0 && (
+                <div className="text-center py-20 bg-gradient-to-br from-gray-50 to-amber-50/30 rounded-3xl border-2 border-dashed border-gray-200">
+                    <Heart size={64} className="mx-auto mb-6 text-gray-300" />
+                    <h3 className="text-2xl font-black text-gray-800 mb-3">لا توجد عناصر محفوظة</h3>
+                    <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                        ابدأ بحفظ اللوحات والإشارات والبيانات المهمة لك للوصول إليها بسرعة
                     </p>
-                    {!searchQuery && (
-                        <div className="flex flex-wrap justify-center gap-3">
-                            <Link
-                                to="/dashboards"
-                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
-                            >
-                                <LayoutDashboard size={18} />
-                                استكشف اللوحات
-                            </Link>
-                            <Link
-                                to="/signals"
-                                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors flex items-center gap-2"
-                            >
-                                <Zap size={18} />
-                                تصفح الإشارات
-                            </Link>
-                        </div>
-                    )}
+                    <div className="flex flex-wrap justify-center gap-4">
+                        <Link
+                            to="/dashboards"
+                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                        >
+                            <LayoutDashboard size={20} />
+                            استكشف اللوحات
+                        </Link>
+                        <Link
+                            to="/signals"
+                            className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-lg shadow-purple-500/20"
+                        >
+                            <Zap size={20} />
+                            تصفح الإشارات
+                        </Link>
+                        <Link
+                            to="/datasets"
+                            className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-500/20"
+                        >
+                            <Database size={20} />
+                            استعرض البيانات
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Empty Search Results */}
+            {!loading && !error && items.length > 0 && filteredItems.length === 0 && (
+                <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-200">
+                    <Search size={48} className="mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">لم يتم العثور على نتائج</h3>
+                    <p className="text-gray-500">جرب البحث بكلمات مختلفة أو تغيير الفلتر</p>
                 </div>
             )}
         </div>
