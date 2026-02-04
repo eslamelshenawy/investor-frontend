@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../src/services/api';
 import {
   Activity,
   Search,
-  ChevronLeft,
-  TrendingUp,
   BarChart3,
-  PieChart,
   Users,
   Shield,
   Zap,
@@ -17,73 +15,15 @@ import {
   Download,
   Eye,
   Database,
-  LineChart,
   Sparkles,
   CheckCircle,
   Play,
   Building2,
-  Briefcase,
   Target,
-  Layers
+  Loader2
 } from 'lucide-react';
 
-// Sample featured datasets
-const FEATURED_DATASETS = [
-  {
-    id: 'trade-sept-2025',
-    title: 'التجارة الدولية لشهر سبتمبر 2025',
-    description: 'إحصاءات شاملة حول حركة التجارة الدولية للمملكة',
-    category: 'البيانات الاقتصادية',
-    views: 17420,
-    downloads: 3204,
-    rating: 4.5,
-    isNew: true,
-    tags: ['تجارة', 'صادرات', 'واردات']
-  },
-  {
-    id: 'labor-market-q3',
-    title: 'سوق العمل - الربع الثالث 2025',
-    description: 'تحليل شامل لمؤشرات سوق العمل والتوظيف',
-    category: 'البيانات الاجتماعية',
-    views: 12350,
-    downloads: 2180,
-    rating: 4.8,
-    isNew: false,
-    tags: ['توظيف', 'بطالة', 'عمالة']
-  },
-  {
-    id: 'real-estate-index',
-    title: 'مؤشر العقارات السعودي',
-    description: 'تتبع أسعار العقارات والإيجارات في المدن الرئيسية',
-    category: 'البيانات العقارية',
-    views: 9870,
-    downloads: 1540,
-    rating: 4.2,
-    isNew: true,
-    tags: ['عقارات', 'أسعار', 'إيجارات']
-  },
-  {
-    id: 'energy-production',
-    title: 'إنتاج الطاقة والتعدين',
-    description: 'بيانات الإنتاج النفطي والتعديني الشهرية',
-    category: 'البيانات الصناعية',
-    views: 15200,
-    downloads: 2890,
-    rating: 4.6,
-    isNew: false,
-    tags: ['نفط', 'طاقة', 'تعدين']
-  }
-];
-
-// Sample statistics
-const PLATFORM_STATS = [
-  { label: 'مجموعة بيانات', value: '1,250+', icon: Database },
-  { label: 'مستخدم نشط', value: '45,000+', icon: Users },
-  { label: 'جهة حكومية', value: '85+', icon: Building2 },
-  { label: 'تحميل شهري', value: '120,000+', icon: Download }
-];
-
-// Features list
+// Features list (static)
 const FEATURES = [
   {
     icon: BarChart3,
@@ -107,10 +47,76 @@ const FEATURES = [
   }
 ];
 
+// Types
+interface StatsData {
+  totalDatasets: number;
+  totalCategories: number;
+  totalUsers: number;
+  totalSignals: number;
+  totalViews: number;
+}
+
+interface DatasetItem {
+  id: string;
+  name: string;
+  nameAr: string;
+  description?: string;
+  descriptionAr?: string;
+  category: string;
+  source: string;
+  recordCount?: number;
+  createdAt?: string;
+}
+
+interface SourceItem {
+  name: string;
+  count: number;
+}
+
 const PublicHomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Dynamic data states
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [datasets, setDatasets] = useState<DatasetItem[]>([]);
+  const [sources, setSources] = useState<SourceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [statsRes, datasetsRes, sourcesRes] = await Promise.all([
+          api.getOverviewStats(),
+          api.getDatasets({ limit: 4 }),
+          api.getSourceStats()
+        ]);
+
+        if (statsRes.success && statsRes.data) {
+          setStats(statsRes.data);
+        }
+
+        if (datasetsRes.success && datasetsRes.data) {
+          setDatasets(datasetsRes.data.slice(0, 4));
+        }
+
+        if (sourcesRes.success && sourcesRes.data) {
+          setSources(sourcesRes.data.sources || []);
+        }
+      } catch (error) {
+        console.error('Error fetching public page data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,20 +281,53 @@ const PublicHomePage: React.FC = () => {
       {/* Stats Section */}
       <section id="stats" className="py-12 lg:py-16 bg-slate-50">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
-            {PLATFORM_STATS.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl p-6 lg:p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all group"
-              >
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+              <div className="bg-white rounded-2xl p-6 lg:p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all group">
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
-                  <stat.icon size={28} />
+                  <Database size={28} />
                 </div>
-                <div className="text-2xl lg:text-3xl font-black text-gray-900 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-500 font-medium">{stat.label}</div>
+                <div className="text-2xl lg:text-3xl font-black text-gray-900 mb-1">
+                  {stats?.totalDatasets?.toLocaleString() || '0'}
+                </div>
+                <div className="text-sm text-gray-500 font-medium">مجموعة بيانات</div>
               </div>
-            ))}
-          </div>
+
+              <div className="bg-white rounded-2xl p-6 lg:p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all group">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-green-50 text-green-600 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                  <Users size={28} />
+                </div>
+                <div className="text-2xl lg:text-3xl font-black text-gray-900 mb-1">
+                  {stats?.totalUsers?.toLocaleString() || '0'}
+                </div>
+                <div className="text-sm text-gray-500 font-medium">مستخدم مسجل</div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 lg:p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all group">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                  <Building2 size={28} />
+                </div>
+                <div className="text-2xl lg:text-3xl font-black text-gray-900 mb-1">
+                  {sources.length || stats?.totalCategories || '0'}
+                </div>
+                <div className="text-sm text-gray-500 font-medium">جهة حكومية</div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 lg:p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all group">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                  <Zap size={28} />
+                </div>
+                <div className="text-2xl lg:text-3xl font-black text-gray-900 mb-1">
+                  {stats?.totalSignals?.toLocaleString() || '0'}
+                </div>
+                <div className="text-sm text-gray-500 font-medium">إشارة ذكية</div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -340,7 +379,7 @@ const PublicHomePage: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(isAuthenticated ? '/datasets' : '/login')}
               className="mt-6 lg:mt-0 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold transition-colors group"
             >
               عرض جميع البيانات
@@ -348,69 +387,56 @@ const PublicHomePage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {FEATURED_DATASETS.map((dataset) => (
-              <div
-                key={dataset.id}
-                onClick={() => navigate('/login')}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                      <Database size={24} />
-                    </div>
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {dataset.category}
-                      </span>
-                      {dataset.isNew && (
-                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded mr-2">
-                          جديد
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          ) : datasets.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              لا توجد بيانات متاحة حالياً
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              {datasets.map((dataset) => (
+                <div
+                  key={dataset.id}
+                  onClick={() => navigate(isAuthenticated ? `/dataset/${dataset.id}` : '/login')}
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <Database size={24} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {dataset.category || 'غير مصنف'}
                         </span>
-                      )}
+                      </div>
                     </div>
+                    {dataset.source && (
+                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                        {dataset.source}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    <Star size={16} fill="currentColor" />
-                    <span className="text-sm font-bold text-gray-700">{dataset.rating}</span>
-                  </div>
-                </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                  {dataset.title}
-                </h3>
-                <p className="text-gray-600 mb-4 line-clamp-2">
-                  {dataset.description}
-                </p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
+                    {dataset.nameAr || dataset.name}
+                  </h3>
+                  <p className="text-gray-600 mb-4 line-clamp-2">
+                    {dataset.descriptionAr || dataset.description || 'لا يوجد وصف متاح'}
+                  </p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {dataset.tags.map((tag, idx) => (
-                    <span key={idx} className="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Eye size={16} />
-                      {dataset.views.toLocaleString()}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Download size={16} />
-                      {dataset.downloads.toLocaleString()}
+                    <span className="text-blue-600 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                      استعراض
+                      <ArrowLeft size={16} />
                     </span>
                   </div>
-                  <span className="text-blue-600 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                    استعراض
-                    <ArrowLeft size={16} />
-                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

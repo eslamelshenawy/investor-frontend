@@ -444,6 +444,65 @@ class ApiService {
   }
 
   // =====================
+  // Stats Endpoints (Public)
+  // =====================
+
+  async getOverviewStats() {
+    return this.get<{
+      totalDatasets: number;
+      totalCategories: number;
+      totalSignals: number;
+      activeSignals: number;
+      totalUsers: number;
+      totalContent: number;
+      totalViews: number;
+      newThisWeek: number;
+      weeklyGrowth: number;
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/stats/overview');
+  }
+
+  async getTrendingTopics() {
+    return this.get<{
+      categories: Array<{ tag: string; count: number; countFormatted: string; type: string; color: string }>;
+      tags: Array<{ tag: string; count: number; countFormatted: string; type: string; color: string }>;
+      topics: Array<{ tag: string; count: number; countFormatted: string; type: string; color: string }>;
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/stats/trending');
+  }
+
+  async getRecentActivity() {
+    return this.get<{
+      signals: { count: number; items: Array<{ id: string; title: string; titleAr: string; type: string; trend: string; impactScore: number; createdAt: string }> };
+      content: { count: number; items: Array<{ id: string; title: string; titleAr: string; type: string; viewCount: number; publishedAt: string }> };
+      datasets: { count: number; items: Array<{ id: string; name: string; nameAr: string; category: string; source: string; createdAt: string }> };
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/stats/activity');
+  }
+
+  async getCategoryStats() {
+    return this.get<{
+      categories: Array<{ name: string; nameEn: string; count: number; percentage: number }>;
+      total: number;
+      uniqueCategories: number;
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/stats/categories');
+  }
+
+  async getSourceStats() {
+    return this.get<{
+      sources: Array<{ name: string; count: number }>;
+      totalSources: number;
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/stats/sources');
+  }
+
+  // =====================
   // Widgets Endpoints
   // =====================
 
