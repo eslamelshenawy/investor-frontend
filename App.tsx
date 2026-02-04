@@ -75,6 +75,7 @@ import DataAnalysisPage from './components/DataAnalysisPage';
 import OfficialDashboardsWrapper from './components/OfficialDashboardsWrapper';
 import DatasetsPage from './components/DatasetsPage';
 import PublicHomePage from './components/PublicHomePage';
+import DatasetDetailPage from './components/DatasetDetailPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -998,6 +999,7 @@ const AppWithAuth = () => {
     <Routes>
       {/* Public routes - accessible without login */}
       <Route path="/" element={<PublicHomePage />} />
+      <Route path="/data/:id" element={<DatasetDetailPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
 
