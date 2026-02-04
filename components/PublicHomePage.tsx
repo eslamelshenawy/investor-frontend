@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Activity,
   Search,
@@ -108,12 +109,13 @@ const FEATURES = [
 
 const PublicHomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/login?redirect=/datasets&q=${encodeURIComponent(searchQuery)}`);
+      navigate(isAuthenticated ? `/datasets?q=${encodeURIComponent(searchQuery)}` : `/login?redirect=/datasets&q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -143,18 +145,29 @@ const PublicHomePage: React.FC = () => {
 
             {/* Auth Buttons */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-blue-600 transition-colors hidden sm:block"
-              >
-                تسجيل الدخول
-              </button>
-              <button
-                onClick={() => navigate('/register')}
-                className="px-4 lg:px-6 py-2 lg:py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
-              >
-                إنشاء حساب
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="px-4 lg:px-6 py-2 lg:py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                >
+                  الذهاب للوحة التحكم
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-blue-600 transition-colors hidden sm:block"
+                  >
+                    تسجيل الدخول
+                  </button>
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="px-4 lg:px-6 py-2 lg:py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  >
+                    إنشاء حساب
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -221,20 +234,32 @@ const PublicHomePage: React.FC = () => {
 
             {/* Quick Actions */}
             <div className="flex flex-wrap justify-center gap-4">
-              <button
-                onClick={() => navigate('/register')}
-                className="flex items-center gap-2 bg-white text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg"
-              >
-                <Play size={20} />
-                ابدأ الآن مجاناً
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20"
-              >
-                تصفح البيانات
-                <ArrowLeft size={20} />
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2 bg-white text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg"
+                >
+                  <Play size={20} />
+                  الذهاب للوحة التحكم
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="flex items-center gap-2 bg-white text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg"
+                  >
+                    <Play size={20} />
+                    ابدأ الآن مجاناً
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20"
+                  >
+                    تصفح البيانات
+                    <ArrowLeft size={20} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -405,19 +430,31 @@ const PublicHomePage: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button
-                onClick={() => navigate('/register')}
-                className="flex items-center justify-center gap-2 bg-white text-blue-900 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg text-lg"
-              >
-                <CheckCircle size={22} />
-                إنشاء حساب مجاني
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 text-lg"
-              >
-                تسجيل الدخول
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center justify-center gap-2 bg-white text-blue-900 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg text-lg"
+                >
+                  <CheckCircle size={22} />
+                  الذهاب للوحة التحكم
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="flex items-center justify-center gap-2 bg-white text-blue-900 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg text-lg"
+                  >
+                    <CheckCircle size={22} />
+                    إنشاء حساب مجاني
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/20 text-lg"
+                  >
+                    تسجيل الدخول
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Trust Badges */}
@@ -508,20 +545,26 @@ const PublicHomePage: React.FC = () => {
           <span className="text-[10px] font-bold">الرئيسية</span>
         </button>
 
-        <button
-          onClick={() => navigate('/register')}
-          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30"
-        >
-          إنشاء حساب
-        </button>
+        {isAuthenticated ? (
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30"
+          >
+            لوحة التحكم
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate('/register')}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30"
+          >
+            إنشاء حساب
+          </button>
+        )}
 
-        <button
-          onClick={() => navigate('/login')}
-          className="flex flex-col items-center justify-center space-y-1 text-gray-400 hover:text-blue-600"
-        >
-          <Users size={24} strokeWidth={2} />
-          <span className="text-[10px] font-bold">دخول</span>
-        </button>
+        {!isAuthenticated && (
+            <span className="text-[10px] font-bold">دخول</span>
+          </button>
+        )}
       </div>
     </div>
   );

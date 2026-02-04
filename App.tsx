@@ -997,9 +997,9 @@ const AppWithAuth = () => {
   return (
     <Routes>
       {/* Public routes - accessible without login */}
-      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <PublicHomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/" element={<PublicHomePage />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
 
       {/* Protected routes - require authentication */}
       <Route
