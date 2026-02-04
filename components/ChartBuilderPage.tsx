@@ -185,7 +185,7 @@ const COLOR_PALETTES = [
 // ============================================
 // Backend API Configuration
 // ============================================
-const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 
 // ============================================
 // COMPONENTS
