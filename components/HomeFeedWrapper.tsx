@@ -10,7 +10,7 @@ import { FeedItem, FeedContentType, User } from '../types';
 import HomeFeed from './HomeFeed';
 
 // API Base URL for SSE streams
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
 
 interface HomeFeedWrapperProps {
   user?: User;

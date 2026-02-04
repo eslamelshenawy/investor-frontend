@@ -56,7 +56,7 @@ export interface DatasetListResult {
 // ═══════════════════════════════════════════════════════════════════
 
 // Backend API (Render) - Primary source for datasets
-const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
+const BACKEND_API = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
 
 // Saudi Open Data Portal APIs (fallback)
 const CKAN_BASE = 'https://open.data.gov.sa/api/3/action';

@@ -61,7 +61,7 @@ interface CategoryCount {
 // CONSTANTS
 // ============================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
 const PAGE_SIZE = 24;
 const SEARCH_DEBOUNCE = 300;
 
