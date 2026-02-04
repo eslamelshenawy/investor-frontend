@@ -1,9 +1,9 @@
 /**
  * Expert Builder Wrapper - مغلف استوديو الخبراء
- * Fetches widgets from API and provides building functionality
+ * Uses WebFlux-style SSE streaming for progressive widget loading
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     Layers,
     Plus,
@@ -21,7 +21,10 @@ import {
     Thermometer,
     ShieldCheck,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    Radio,
+    Sparkles,
+    Database
 } from 'lucide-react';
 import { api } from '../src/services/api';
 
@@ -45,19 +48,29 @@ interface Widget {
     };
 }
 
+interface StreamMeta {
+    total: number;
+    categories: Array<{ id: string; label: string; labelEn: string; count: number }>;
+    typeStats: Record<string, number>;
+}
+
 interface ExpertBuilderWrapperProps {
     onPublishDashboard?: (name: string, description: string, selectedWidgets: string[]) => void;
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 
 // Atomic Widget Card Component
 const AtomicWidgetCard = ({
     widget,
     isSelected,
-    onToggle
+    onToggle,
+    animationDelay = 0
 }: {
     widget: Widget;
     isSelected: boolean;
     onToggle: () => void;
+    animationDelay?: number;
 }) => {
     const { atomicType, atomicMetadata, data } = widget;
     const primaryValue = data[0]?.value || 0;
@@ -98,7 +111,7 @@ const AtomicWidgetCard = ({
                 return (
                     <div className="flex items-center gap-3 h-16">
                         <div className="w-12 h-12 rounded-full border-4 border-gray-100 border-t-purple-500 border-r-purple-500 rotate-45 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-purple-700">{atomicMetadata.target}%</span>
+                            <span className="text-[10px] font-bold text-purple-700 -rotate-45">{atomicMetadata.target}%</span>
                         </div>
                         <div className="flex flex-col">
                             <span className="font-bold text-lg text-gray-800">{primaryValue}</span>
@@ -151,13 +164,14 @@ const AtomicWidgetCard = ({
         <div
             onClick={onToggle}
             className={`
-                relative group cursor-pointer transition-all duration-300
+                relative group cursor-pointer transition-all duration-300 animate-fadeIn
                 rounded-2xl border p-4 flex flex-col justify-between h-[180px]
                 ${isSelected
                     ? 'bg-blue-50/80 border-blue-500 shadow-md ring-2 ring-blue-200 transform scale-[1.02]'
                     : 'bg-white border-gray-100 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1'
                 }
             `}
+            style={{ animationDelay: `${animationDelay}ms` }}
         >
             {isSelected && (
                 <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm z-10">
@@ -188,10 +202,25 @@ const AtomicWidgetCard = ({
     );
 };
 
+// Skeleton Widget Card
+const WidgetSkeleton = () => (
+    <div className="rounded-2xl border border-gray-100 p-4 h-[180px] bg-white animate-pulse">
+        <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-gray-200"></div>
+            <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+        </div>
+        <div className="h-16 bg-gray-100 rounded-xl"></div>
+    </div>
+);
+
 // Main Component
 const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDashboard }) => {
     const [widgets, setWidgets] = useState<Widget[]>([]);
     const [loading, setLoading] = useState(true);
+    const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -200,14 +229,75 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
     const [dashboardDesc, setDashboardDesc] = useState('');
     const [isPublishing, setIsPublishing] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
+    const [streamProgress, setStreamProgress] = useState(0);
+    const eventSourceRef = useRef<EventSource | null>(null);
 
-    const fetchWidgets = async () => {
+    const fetchWidgetsStream = useCallback(() => {
+        // Close any existing connection
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+        }
+
         setLoading(true);
+        setStreaming(true);
         setError(null);
+        setWidgets([]);
+        setStreamMeta(null);
+        setStreamProgress(0);
+
+        const params = new URLSearchParams();
+        if (activeCategory !== 'ALL') params.append('category', activeCategory);
+
+        const url = `${API_BASE_URL}/widgets/stream${params.toString() ? '?' + params.toString() : ''}`;
+
+        const eventSource = new EventSource(url);
+        eventSourceRef.current = eventSource;
+
+        eventSource.addEventListener('meta', (e) => {
+            const meta = JSON.parse(e.data) as StreamMeta;
+            setStreamMeta(meta);
+        });
+
+        eventSource.addEventListener('widget', (e) => {
+            const widget = JSON.parse(e.data) as Widget;
+            setWidgets(prev => {
+                const newWidgets = [...prev, widget];
+                if (streamMeta) {
+                    setStreamProgress(Math.round((newWidgets.length / streamMeta.total) * 100));
+                }
+                return newWidgets;
+            });
+            setLoading(false);
+        });
+
+        eventSource.addEventListener('complete', () => {
+            setStreaming(false);
+            setStreamProgress(100);
+            eventSource.close();
+        });
+
+        eventSource.addEventListener('error', (e: any) => {
+            console.error('SSE Error:', e);
+            setStreaming(false);
+            eventSource.close();
+            fallbackFetch();
+        });
+
+        eventSource.onerror = () => {
+            setStreaming(false);
+            eventSource.close();
+            if (widgets.length === 0) {
+                fallbackFetch();
+            }
+        };
+    }, [activeCategory, streamMeta]);
+
+    const fallbackFetch = async () => {
         try {
+            setLoading(true);
             const response = await api.getWidgets({
                 category: activeCategory !== 'ALL' ? activeCategory : undefined,
-                search: searchQuery || undefined,
                 limit: 100
             });
 
@@ -217,7 +307,7 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
                 setError('تعذر جلب المؤشرات');
             }
         } catch (err) {
-            console.error('Error fetching widgets:', err);
+            console.error('Fallback fetch error:', err);
             setError('تعذر الاتصال بالخادم');
         } finally {
             setLoading(false);
@@ -225,7 +315,13 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
     };
 
     useEffect(() => {
-        fetchWidgets();
+        fetchWidgetsStream();
+
+        return () => {
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+            }
+        };
     }, [activeCategory]);
 
     // Filter widgets by search
@@ -239,11 +335,14 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
         );
     }, [widgets, searchQuery]);
 
-    // Get unique categories
+    // Get categories from stream meta or compute from widgets
     const categories = useMemo(() => {
+        if (streamMeta?.categories) {
+            return ['ALL', ...streamMeta.categories.map(c => c.id)];
+        }
         const cats = new Set(widgets.map(w => w.category));
         return ['ALL', ...Array.from(cats)];
-    }, [widgets]);
+    }, [widgets, streamMeta]);
 
     const toggleWidget = (id: string) => {
         setSelectedWidgets(prev =>
@@ -271,6 +370,18 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
         setDashboardDesc('');
     };
 
+    const typeStats = useMemo(() => {
+        if (streamMeta?.typeStats) return streamMeta.typeStats;
+        return {
+            progress: widgets.filter(w => w.atomicType === 'progress').length,
+            sparkline: widgets.filter(w => w.atomicType === 'sparkline').length,
+            metric: widgets.filter(w => w.atomicType === 'metric').length,
+            donut: widgets.filter(w => w.atomicType === 'donut').length,
+            status: widgets.filter(w => w.atomicType === 'status').length,
+            gauge: widgets.filter(w => w.atomicType === 'gauge').length
+        };
+    }, [widgets, streamMeta]);
+
     return (
         <div className="flex h-[calc(100vh-80px)] overflow-hidden bg-slate-50">
             {/* LEFT: Widget Repository */}
@@ -282,29 +393,71 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
                             <h1 className="text-2xl font-black text-slate-900 mb-1 flex items-center gap-2">
                                 <LayoutTemplate className="text-blue-600" />
                                 استوديو الخبراء
+                                {streaming && (
+                                    <span className="relative">
+                                        <Sparkles size={20} className="text-amber-500 animate-pulse" />
+                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                                    </span>
+                                )}
                             </h1>
-                            <p className="text-slate-500 text-sm">
-                                {loading ? 'جاري التحميل...' : `مكتبة المؤشرات الذكية (${widgets.length} عنصر)`}
+                            <p className="text-slate-500 text-sm flex items-center gap-2">
+                                {loading && widgets.length === 0 ? (
+                                    'جاري التحميل...'
+                                ) : streaming ? (
+                                    <>
+                                        <Radio size={14} className="text-green-500 animate-pulse" />
+                                        جاري تحميل المؤشرات ({widgets.length} / {streamMeta?.total || '?'})
+                                    </>
+                                ) : (
+                                    <>
+                                        <Database size={14} className="text-blue-500" />
+                                        مكتبة المؤشرات الذكية ({widgets.length} عنصر)
+                                    </>
+                                )}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={fetchWidgets}
-                                disabled={loading}
-                                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                                onClick={fetchWidgetsStream}
+                                disabled={streaming}
+                                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-all"
+                                title="تحديث"
                             >
-                                <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                                {streaming ? (
+                                    <Loader2 size={18} className="animate-spin text-blue-600" />
+                                ) : (
+                                    <RefreshCw size={18} />
+                                )}
                             </button>
                             <div className="hidden lg:flex gap-3 text-xs font-bold text-gray-400">
                                 <span className="flex items-center gap-1">
-                                    <Target size={14} /> {widgets.filter(w => w.atomicType === 'progress').length} Progress
+                                    <Target size={14} /> {typeStats.progress || 0} Progress
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <Activity size={14} /> {widgets.filter(w => w.atomicType === 'sparkline').length} Charts
+                                    <Activity size={14} /> {typeStats.sparkline || 0} Charts
                                 </span>
                             </div>
                         </div>
                     </div>
+
+                    {/* Streaming Progress */}
+                    {streaming && (
+                        <div className="mb-4 bg-blue-50 rounded-xl p-3 border border-blue-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-blue-700 text-xs font-bold flex items-center gap-2">
+                                    <Radio size={14} className="animate-pulse" />
+                                    جاري تحميل المؤشرات من قاعدة البيانات...
+                                </span>
+                                <span className="text-blue-600 text-xs font-bold">{streamProgress}%</span>
+                            </div>
+                            <div className="w-full bg-blue-200 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300"
+                                    style={{ width: `${streamProgress}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-white p-2 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4">
                         <div className="relative flex-1">
@@ -334,21 +487,25 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
                     </div>
                 </div>
 
-                {/* Loading State */}
-                {loading && (
-                    <div className="flex-1 flex items-center justify-center">
-                        <Loader2 size={48} className="animate-spin text-blue-600" />
+                {/* Loading Skeletons */}
+                {loading && widgets.length === 0 && (
+                    <div className="flex-1 overflow-y-auto pb-10 pr-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+                                <WidgetSkeleton key={i} />
+                            ))}
+                        </div>
                     </div>
                 )}
 
                 {/* Error State */}
-                {error && !loading && (
+                {error && !loading && widgets.length === 0 && (
                     <div className="flex-1 flex items-center justify-center">
                         <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
                             <p className="text-red-600 mb-4">{error}</p>
                             <button
-                                onClick={fetchWidgets}
-                                className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold"
+                                onClick={fetchWidgetsStream}
+                                className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
                             >
                                 إعادة المحاولة
                             </button>
@@ -357,19 +514,20 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
                 )}
 
                 {/* Grid */}
-                {!loading && !error && (
+                {widgets.length > 0 && (
                     <div className="flex-1 overflow-y-auto pb-10 pr-2 custom-scrollbar">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                            {filteredWidgets.map(widget => (
+                            {filteredWidgets.map((widget, index) => (
                                 <AtomicWidgetCard
                                     key={widget.id}
                                     widget={widget}
                                     isSelected={selectedWidgets.includes(widget.id)}
                                     onToggle={() => toggleWidget(widget.id)}
+                                    animationDelay={Math.min(index * 20, 500)}
                                 />
                             ))}
                         </div>
-                        {filteredWidgets.length === 0 && (
+                        {filteredWidgets.length === 0 && !streaming && (
                             <div className="text-center py-20 text-gray-400">
                                 لا توجد مؤشرات تطابق بحثك
                             </div>
@@ -420,7 +578,7 @@ const ExpertBuilderWrapper: React.FC<ExpertBuilderWrapperProps> = ({ onPublishDa
                             const w = widgets.find(aw => aw.id === id);
                             if (!w) return null;
                             return (
-                                <div key={id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between gap-3 group hover:border-blue-300 transition-all">
+                                <div key={id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between gap-3 group hover:border-blue-300 transition-all animate-fadeIn">
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <div className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 flex items-center justify-center shrink-0">
                                             {index + 1}
