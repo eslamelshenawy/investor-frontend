@@ -3,7 +3,7 @@
  * UI/UX محسّن
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Search,
     Database,
@@ -32,7 +32,8 @@ import {
     TableProperties,
     Sparkles,
     Activity,
-    Eye
+    Eye,
+    Wifi
 } from 'lucide-react';
 
 // ============================================
@@ -77,6 +78,7 @@ const DatasetsPage: React.FC = () => {
 
     // Loading State
     const [loading, setLoading] = useState(true);
+    const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Filters & Pagination
@@ -88,6 +90,10 @@ const DatasetsPage: React.FC = () => {
     // View
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showFilters, setShowFilters] = useState(false);
+
+    // Refs for EventSource cleanup
+    const datasetsEventSourceRef = useRef<EventSource | null>(null);
+    const categoriesEventSourceRef = useRef<EventSource | null>(null);
 
     // ============================================
     // DEBOUNCE SEARCH
@@ -101,14 +107,78 @@ const DatasetsPage: React.FC = () => {
     }, [searchQuery]);
 
     // ============================================
-    // FETCH DATA
+    // FETCH DATA with WebFlux SSE Streaming
     // ============================================
 
-    const fetchDatasets = useCallback(async (page: number, search: string, category: string | null) => {
-        try {
-            setLoading(true);
-            setError(null);
+    // WebFlux SSE Stream for Datasets
+    const streamDatasets = useCallback((page: number, search: string, category: string | null) => {
+        // Close existing connection
+        if (datasetsEventSourceRef.current) {
+            datasetsEventSourceRef.current.close();
+        }
 
+        setLoading(true);
+        setStreaming(true);
+        setError(null);
+        setDatasets([]);
+
+        const params = new URLSearchParams({
+            page: String(page),
+            limit: String(PAGE_SIZE),
+        });
+        if (search) params.append('search', search);
+        if (category) params.append('category', category);
+
+        const url = `${API_URL}/datasets/stream?${params}`;
+        console.log('[WebFlux] Connecting to datasets stream:', url);
+
+        const eventSource = new EventSource(url);
+        datasetsEventSourceRef.current = eventSource;
+
+        eventSource.addEventListener('meta', (e) => {
+            try {
+                const meta = JSON.parse(e.data);
+                console.log('[WebFlux] Received meta:', meta);
+                setTotalCount(meta.total || 0);
+                setTotalPages(meta.totalPages || Math.ceil((meta.total || 0) / PAGE_SIZE));
+                setLoading(false);
+            } catch (err) {
+                console.error('[WebFlux] Error parsing meta:', err);
+            }
+        });
+
+        eventSource.addEventListener('dataset', (e) => {
+            try {
+                const dataset = JSON.parse(e.data);
+                console.log('[WebFlux] Received dataset:', dataset.titleAr || dataset.titleEn);
+                setDatasets(prev => {
+                    if (prev.some(d => d.id === dataset.id)) return prev;
+                    return [...prev, dataset];
+                });
+            } catch (err) {
+                console.error('[WebFlux] Error parsing dataset:', err);
+            }
+        });
+
+        eventSource.addEventListener('complete', () => {
+            console.log('[WebFlux] Datasets stream complete');
+            setStreaming(false);
+            setLoading(false);
+            eventSource.close();
+        });
+
+        eventSource.onerror = (err) => {
+            console.error('[WebFlux] Datasets stream error:', err);
+            eventSource.close();
+            // Fallback to regular API
+            fetchDatasetsRegular(page, search, category);
+        };
+    }, []);
+
+    // Regular API fallback for datasets
+    const fetchDatasetsRegular = useCallback(async (page: number, search: string, category: string | null) => {
+        try {
+            console.log('[API] Fetching datasets via regular API...');
             const params = new URLSearchParams({
                 page: String(page),
                 limit: String(PAGE_SIZE),
@@ -132,11 +202,52 @@ const DatasetsPage: React.FC = () => {
             setError(err.message);
         } finally {
             setLoading(false);
+            setStreaming(false);
         }
     }, []);
 
-    const fetchCategories = useCallback(async () => {
+    // WebFlux SSE Stream for Categories
+    const streamCategories = useCallback(() => {
+        // Close existing connection
+        if (categoriesEventSourceRef.current) {
+            categoriesEventSourceRef.current.close();
+        }
+
+        const url = `${API_URL}/datasets/categories/stream`;
+        console.log('[WebFlux] Connecting to categories stream:', url);
+
+        const eventSource = new EventSource(url);
+        categoriesEventSourceRef.current = eventSource;
+
+        eventSource.addEventListener('category', (e) => {
+            try {
+                const category = JSON.parse(e.data);
+                console.log('[WebFlux] Received category:', category.name);
+                setCategories(prev => {
+                    if (prev.some(c => c.name === category.name)) return prev;
+                    return [...prev, category];
+                });
+            } catch (err) {
+                console.error('[WebFlux] Error parsing category:', err);
+            }
+        });
+
+        eventSource.addEventListener('complete', () => {
+            console.log('[WebFlux] Categories stream complete');
+            eventSource.close();
+        });
+
+        eventSource.onerror = () => {
+            eventSource.close();
+            // Fallback to regular API
+            fetchCategoriesRegular();
+        };
+    }, []);
+
+    // Regular API fallback for categories
+    const fetchCategoriesRegular = useCallback(async () => {
         try {
+            console.log('[API] Fetching categories via regular API...');
             const response = await fetch(`${API_URL}/datasets/categories`);
             if (response.ok) {
                 const data = await response.json();
@@ -158,12 +269,22 @@ const DatasetsPage: React.FC = () => {
     }, [debouncedSearch, selectedCategory]);
 
     useEffect(() => {
-        fetchDatasets(currentPage, debouncedSearch, selectedCategory);
-    }, [currentPage, debouncedSearch, selectedCategory, fetchDatasets]);
+        streamDatasets(currentPage, debouncedSearch, selectedCategory);
+    }, [currentPage, debouncedSearch, selectedCategory, streamDatasets]);
 
     useEffect(() => {
-        fetchCategories();
-    }, [fetchCategories]);
+        streamCategories();
+
+        // Cleanup on unmount
+        return () => {
+            if (datasetsEventSourceRef.current) {
+                datasetsEventSourceRef.current.close();
+            }
+            if (categoriesEventSourceRef.current) {
+                categoriesEventSourceRef.current.close();
+            }
+        };
+    }, [streamCategories]);
 
     // ============================================
     // HANDLERS
@@ -405,12 +526,12 @@ const DatasetsPage: React.FC = () => {
 
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => fetchDatasets(currentPage, debouncedSearch, selectedCategory)}
-                                        disabled={loading}
+                                        onClick={() => streamDatasets(currentPage, debouncedSearch, selectedCategory)}
+                                        disabled={loading || streaming}
                                         className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-700 disabled:opacity-50 transition-colors"
                                         title="تحديث"
                                     >
-                                        <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                                        <RefreshCw className={`w-5 h-5 ${loading || streaming ? 'animate-spin' : ''}`} />
                                     </button>
 
                                     <div className="flex bg-slate-100 rounded-xl p-1">
@@ -465,11 +586,21 @@ const DatasetsPage: React.FC = () => {
                             )}
                         </div>
 
+                        {/* WebFlux Streaming Indicator */}
+                        {streaming && datasets.length > 0 && (
+                            <div className="flex items-center justify-center gap-2 mb-6">
+                                <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full text-sm text-blue-600">
+                                    <Wifi className="w-4 h-4 animate-pulse" />
+                                    <span>جاري تحميل المزيد من البيانات عبر WebFlux...</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Content */}
-                        {loading ? (
+                        {loading && datasets.length === 0 ? (
                             <LoadingState />
                         ) : error ? (
-                            <ErrorState error={error} onRetry={() => fetchDatasets(currentPage, debouncedSearch, selectedCategory)} />
+                            <ErrorState error={error} onRetry={() => streamDatasets(currentPage, debouncedSearch, selectedCategory)} />
                         ) : datasets.length === 0 ? (
                             <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
                         ) : (
@@ -549,12 +680,16 @@ const StatCard: React.FC<{
 const LoadingState: React.FC = () => (
     <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
+            <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-4 mx-auto w-fit">
+                <Wifi className="w-5 h-5 animate-pulse text-blue-600" />
+                <span className="text-blue-600 font-medium">WebFlux Stream</span>
+            </div>
             <div className="relative">
                 <div className="w-20 h-20 border-4 border-blue-100 rounded-full"></div>
                 <div className="w-20 h-20 border-4 border-blue-600 rounded-full border-t-transparent animate-spin absolute top-0 left-0"></div>
             </div>
             <p className="text-slate-600 font-medium mt-6">جاري تحميل البيانات...</p>
-            <p className="text-slate-400 text-sm mt-1">يتم جلب البيانات من قاعدة البيانات</p>
+            <p className="text-slate-400 text-sm mt-1">يتم جلب البيانات عبر WebFlux streaming</p>
         </div>
     </div>
 );
