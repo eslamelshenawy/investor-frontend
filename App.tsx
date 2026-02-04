@@ -74,6 +74,7 @@ import TimelineWrapper from './components/TimelineWrapper';
 import DataAnalysisPage from './components/DataAnalysisPage';
 import OfficialDashboardsWrapper from './components/OfficialDashboardsWrapper';
 import DatasetsPage from './components/DatasetsPage';
+import PublicHomePage from './components/PublicHomePage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -88,10 +89,10 @@ const MobileBottomNav = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,20px)] bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 lg:hidden flex justify-around items-start pt-3 px-2 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] transition-all">
       <div
-        onClick={() => navigate('/')}
-        className={`flex flex-col items-center justify-center w-full space-y-1 cursor-pointer active:scale-90 transition-transform duration-200 ${isPathActive('/', true) ? 'text-blue-600' : 'text-gray-400'}`}
+        onClick={() => navigate('/dashboard')}
+        className={`flex flex-col items-center justify-center w-full space-y-1 cursor-pointer active:scale-90 transition-transform duration-200 ${isPathActive('/dashboard', true) ? 'text-blue-600' : 'text-gray-400'}`}
       >
-        <Compass size={24} strokeWidth={isPathActive('/', true) ? 2.5 : 2} />
+        <Compass size={24} strokeWidth={isPathActive('/dashboard', true) ? 2.5 : 2} />
         <span className="text-[10px] font-bold">الرئيسية</span>
       </div>
 
@@ -141,7 +142,9 @@ interface NavItemProps {
 const NavItem = ({ to, icon: Icon, children, end = false, className = '', badge = null }: NavItemProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isActive = end ? location.pathname === to : location.pathname.startsWith(to) && (to === '/' ? location.pathname === '/' : true);
+  const isActive = end
+    ? (location.pathname === to || (to === '/dashboard' && location.pathname === '/'))
+    : location.pathname.startsWith(to) && (to === '/dashboard' ? (location.pathname === '/dashboard' || location.pathname === '/') : true);
 
   const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group cursor-pointer select-none`;
   const activeClass = `bg-blue-600 text-white shadow-lg shadow-blue-900/40`;
@@ -259,7 +262,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         )}
 
         <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
-          <NavItem to="/" icon={Compass} end>مركز الاكتشاف</NavItem>
+          <NavItem to="/dashboard" icon={Compass} end>مركز الاكتشاف</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
           <NavItem to="/followers" icon={Users}>المجتمع</NavItem>
@@ -317,7 +320,7 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
   const location = useLocation();
 
   const getPageInfo = (pathname: string) => {
-    if (pathname === '/') return { title: 'مركز الاكتشاف', section: 'الرئيسية' };
+    if (pathname === '/' || pathname === '/dashboard') return { title: 'مركز الاكتشاف', section: 'الرئيسية' };
     if (pathname.includes('/dashboards')) return { title: 'اللوحات الرسمية', section: 'البيانات' };
     if (pathname.includes('/my-dashboards')) return { title: 'مساحة العمل الخاصة', section: 'لوحاتي' };
     if (pathname.includes('/signals')) return { title: 'إشارات السوق', section: 'الذكاء الاصطناعي' };
@@ -861,6 +864,7 @@ const AppContent = () => {
         <div className="animate-fadeIn">
           <Routes>
             <Route path="/" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
+            <Route path="/dashboard" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
             <Route path="/dashboards" element={<OfficialDashboardsWrapper userRole={currentUser.role} />} />
             <Route path="/dashboards/:id" element={<DashboardDetailPage />} />
             <Route path="/signals" element={<AISignalsPage />} />
@@ -884,7 +888,7 @@ const AppContent = () => {
                 onRemoveWidget={handleRemoveWidget}
               />
             } />
-            <Route path="/dataset/:id" element={<DatasetContent dataset={DATASETS[0]} onBack={() => navigate('/')} role={currentUser.role} />} />
+            <Route path="/dataset/:id" element={<DatasetContent dataset={DATASETS[0]} onBack={() => navigate('/dashboard')} role={currentUser.role} />} />
             <Route path="/builder" element={<ChartBuilderPage />} />
             <Route path="/queries" element={<ChartBuilderPage />} />
             <Route path="/analysis" element={<DataAnalysisPage />} />
@@ -977,24 +981,35 @@ const AppWithAuth = () => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  const publicPaths = ['/login', '/register'];
+  const publicPaths = ['/login', '/register', '/'];
   const isPublicPath = publicPaths.includes(location.pathname);
 
-  // Redirect authenticated users from login/register
-  if (isAuthenticated && isPublicPath) {
-    // Admin goes to admin dashboard, others to home
+  // Redirect authenticated users from login/register to dashboard
+  if (isAuthenticated && (location.pathname === '/login' || location.pathname === '/register')) {
+    // Admin goes to admin dashboard, others to home feed
     const role = user?.role?.toUpperCase();
     if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
       return <Navigate to="/admin" replace />;
     }
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
     <Routes>
+      {/* Public routes - accessible without login */}
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <PublicHomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      {/* All routes require authentication */}
+
+      {/* Protected routes - require authentication */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <AppContent />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/*"
         element={
