@@ -2,6 +2,9 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { FeedItem, FeedContentType, User } from '../types';
 import FeedCard from './FeedCard';
 import { api } from '../src/services/api';
+
+// API Base URL for SSE streams
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 import {
     Filter,
     LayoutGrid,
@@ -52,6 +55,10 @@ interface HomeFeedProps {
     feedItems: FeedItem[];
     user?: User;
     onOpenWizard?: () => void;
+    onLike?: (itemId: string) => void;
+    onSave?: (itemId: string) => void;
+    onRefresh?: () => void;
+    isStreaming?: boolean;
 }
 
 interface StatsData {
@@ -236,7 +243,7 @@ const LiveIndicator: React.FC<{ label?: string }> = ({ label = 'مباشر' }) =
 
 const ITEMS_PER_PAGE = 25;
 
-const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) => {
+const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard, onLike, onSave, onRefresh, isStreaming }) => {
     // --- STATE ---
     const [activeTab, setActiveTab] = useState('ALL');
     const [activeType, setActiveType] = useState<string | null>(null);
@@ -266,24 +273,79 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     // Current time for live updates
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    // --- FETCH STATS (100% REAL DATA - NO FALLBACKS) ---
-    const fetchStats = useCallback(async () => {
+    // Ref for stats EventSource
+    const statsEventSourceRef = useRef<EventSource | null>(null);
+
+    // --- FETCH STATS via WebFlux SSE (100% REAL DATA - NO FALLBACKS) ---
+    const fetchStats = useCallback(() => {
         setStatsLoading(true);
         setStatsError(false);
+
+        const url = `${API_BASE_URL}/stats/stream`;
+        console.log('[WebFlux] Connecting to stats stream:', url);
+
+        // Close existing connection
+        if (statsEventSourceRef.current) {
+            statsEventSourceRef.current.close();
+        }
+
+        const eventSource = new EventSource(url);
+        statsEventSourceRef.current = eventSource;
+
+        eventSource.addEventListener('stats', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                console.log('[WebFlux] Received stats:', data);
+                if (data.isRealData || data.totalDatasets > 0) {
+                    setStats({
+                        totalDatasets: data.totalDatasets || 0,
+                        totalCategories: data.totalCategories || 0,
+                        totalSignals: data.totalSignals || 0,
+                        activeSignals: data.activeSignals || 0,
+                        totalUsers: data.totalUsers || 0,
+                        totalContent: data.totalContent || 0,
+                        totalViews: data.totalViews || 0,
+                        newThisWeek: data.newThisWeek || 0,
+                        weeklyGrowth: data.weeklyGrowth || 0,
+                        isRealData: true
+                    });
+                    setStatsLoading(false);
+                }
+            } catch (err) {
+                console.error('[WebFlux] Error parsing stats:', err);
+            }
+        });
+
+        eventSource.addEventListener('complete', () => {
+            console.log('[WebFlux] Stats stream complete');
+            setStatsLoading(false);
+            eventSource.close();
+        });
+
+        eventSource.onerror = () => {
+            console.error('[WebFlux] Stats stream error, falling back to API');
+            eventSource.close();
+            // Fallback to regular API
+            fetchStatsRegular();
+        };
+    }, []);
+
+    // Regular API fallback for stats
+    const fetchStatsRegular = useCallback(async () => {
         try {
             const response = await api.get('/stats/overview');
-            if (response.success && response.data && response.data.isRealData) {
+            if (response.success && response.data) {
                 setStats({
-                    totalDatasets: response.data.totalDatasets,
-                    totalCategories: response.data.totalCategories,
-                    totalSignals: response.data.totalSignals,
-                    activeSignals: response.data.activeSignals,
-                    totalUsers: response.data.totalUsers,
-                    totalContent: response.data.totalContent,
-                    totalViews: response.data.totalViews,
-                    newThisWeek: response.data.newThisWeek,
-                    weeklyGrowth: response.data.weeklyGrowth,
-                    isRealData: true
+                    totalDatasets: response.data.totalDatasets || 0,
+                    totalCategories: response.data.totalCategories || 0,
+                    totalSignals: response.data.totalSignals || 0,
+                    activeSignals: response.data.activeSignals || 0,
+                    totalUsers: response.data.totalUsers || 0,
+                    totalContent: response.data.totalContent || 0,
+                    totalViews: response.data.totalViews || 0,
+                    newThisWeek: response.data.newThisWeek || 0,
+                    weeklyGrowth: response.data.weeklyGrowth || 0,
+                    isRealData: response.data.isRealData || false
                 });
             } else {
                 setStatsError(true);
@@ -360,6 +422,13 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
         fetchStats();
         fetchTrending();
         fetchQuickStats();
+
+        // Cleanup on unmount
+        return () => {
+            if (statsEventSourceRef.current) {
+                statsEventSourceRef.current.close();
+            }
+        };
     }, [fetchStats, fetchTrending, fetchQuickStats]);
 
     useEffect(() => {
@@ -376,6 +445,10 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
     const handleRefresh = async () => {
         setIsRefreshing(true);
         await Promise.all([fetchStats(), fetchTrending(), fetchQuickStats(), fetchUserStats()]);
+        // Also call external refresh if provided
+        if (onRefresh) {
+            onRefresh();
+        }
         setTimeout(() => setIsRefreshing(false), 1000);
     };
 
@@ -738,7 +811,11 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard }) =>
                                             className="animate-fadeInUp mb-4 sm:mb-6"
                                             style={{ animationDelay: `${Math.min(idx * 50, 500)}ms` }}
                                         >
-                                            <FeedCard item={item} />
+                                            <FeedCard
+                                                item={item}
+                                                onLike={onLike}
+                                                onSave={onSave}
+                                            />
                                         </div>
                                     ))}
                                 </div>

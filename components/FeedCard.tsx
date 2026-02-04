@@ -40,13 +40,17 @@ import WidgetChart from './WidgetChart';
 interface FeedCardProps {
     item: FeedItem;
     onAction?: (action: string, itemId: string) => void;
+    onLike?: (itemId: string) => void;
+    onSave?: (itemId: string) => void;
 }
 
-const FeedCard: React.FC<FeedCardProps> = ({ item, onAction }) => {
+const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) => {
     const navigate = useNavigate();
-    const [liked, setLiked] = useState(false);
-    const [saved, setSaved] = useState(false);
+    const [liked, setLiked] = useState(item.hasLiked || false);
+    const [saved, setSaved] = useState(item.hasSaved || false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // --- RENDERERS ---
 
@@ -538,10 +542,19 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction }) => {
             <div className="pt-3 sm:pt-4 border-t border-gray-50 flex items-center justify-between">
                 <div className="flex gap-1 sm:gap-2 md:gap-4">
                     <button
-                        onClick={() => setLiked(!liked)}
-                        className={`group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all ${liked ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50 text-gray-500'}`}
+                        onClick={async () => {
+                            if (isLiking) return;
+                            setIsLiking(true);
+                            if (onLike) {
+                                await onLike(item.id);
+                            }
+                            setLiked(!liked);
+                            setIsLiking(false);
+                        }}
+                        disabled={isLiking}
+                        className={`group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all ${liked ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50 text-gray-500'} ${isLiking ? 'opacity-50' : ''}`}
                     >
-                        <Heart size={16} className={`transition-transform group-hover:scale-110 sm:w-[18px] sm:h-[18px] ${liked ? 'fill-current' : ''}`} />
+                        <Heart size={16} className={`transition-transform group-hover:scale-110 sm:w-[18px] sm:h-[18px] ${liked ? 'fill-current' : ''} ${isLiking ? 'animate-pulse' : ''}`} />
                         <span className="text-[10px] sm:text-xs font-bold">{item.engagement.likes + (liked ? 1 : 0)}</span>
                     </button>
 
@@ -552,10 +565,19 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction }) => {
                 </div>
 
                 <button
-                    onClick={() => setSaved(!saved)}
-                    className={`p-1.5 sm:p-2 rounded-lg transition-all ${saved ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
+                    onClick={async () => {
+                        if (isSaving) return;
+                        setIsSaving(true);
+                        if (onSave) {
+                            await onSave(item.id);
+                        }
+                        setSaved(!saved);
+                        setIsSaving(false);
+                    }}
+                    disabled={isSaving}
+                    className={`p-1.5 sm:p-2 rounded-lg transition-all ${saved ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'} ${isSaving ? 'opacity-50' : ''}`}
                 >
-                    <Bookmark size={18} className={`sm:w-5 sm:h-5 ${saved ? 'fill-current' : ''}`} />
+                    <Bookmark size={18} className={`sm:w-5 sm:h-5 ${saved ? 'fill-current' : ''} ${isSaving ? 'animate-pulse' : ''}`} />
                 </button>
             </div>
         </div>

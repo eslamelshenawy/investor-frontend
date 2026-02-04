@@ -1,14 +1,16 @@
 /**
  * Home Feed Wrapper - مغلف صفحة الرئيسية
- * Fetches content from API and passes to HomeFeed
+ * WebFlux SSE Streaming Edition - Real Data Only
  */
 
-import React, { useState, useEffect } from 'react';
-import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, RefreshCw, AlertTriangle, Wifi } from 'lucide-react';
 import { api } from '../src/services/api';
 import { FeedItem, FeedContentType, User } from '../types';
 import HomeFeed from './HomeFeed';
-import { FEED_ITEMS } from '../constants';
+
+// API Base URL for SSE streams
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
 
 interface HomeFeedWrapperProps {
   user?: User;
@@ -77,42 +79,153 @@ function transformContent(content: APIContent): FeedItem {
 
 const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard }) => {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [streaming, setStreaming] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchContent = async () => {
-    setLoading(true);
-    setError(null);
+  // Ref for EventSource cleanup
+  const feedEventSourceRef = useRef<EventSource | null>(null);
 
+  // WebFlux SSE Stream for Feed Content
+  const streamFeed = useCallback(() => {
+    const url = `${API_BASE_URL}/feed/stream`;
+    console.log('[WebFlux] Connecting to feed stream:', url);
+
+    const eventSource = new EventSource(url);
+    feedEventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('[WebFlux] Feed stream connected');
+    };
+
+    eventSource.addEventListener('content', (e) => {
+      try {
+        const content = JSON.parse(e.data) as APIContent;
+        const feedItem = transformContent(content);
+        console.log('[WebFlux] Received content:', feedItem.title);
+        setFeedItems(prev => {
+          if (prev.some(item => item.id === feedItem.id)) return prev;
+          return [...prev, feedItem];
+        });
+      } catch (err) {
+        console.error('[WebFlux] Error parsing content:', err);
+      }
+    });
+
+    eventSource.addEventListener('complete', () => {
+      console.log('[WebFlux] Feed stream complete');
+      setStreaming(false);
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error('[WebFlux] Feed stream error:', err);
+      eventSource.close();
+      // Fallback to regular API
+      fetchFeedRegular();
+    };
+  }, []);
+
+  // Regular API fallback
+  const fetchFeedRegular = useCallback(async () => {
     try {
+      console.log('[API] Fetching feed via regular API...');
       const response = await api.getFeed({ limit: 50 });
 
       if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
         const transformedItems = (response.data as APIContent[]).map(transformContent);
-        // Combine API content with some mock items for variety
-        const combinedItems = [...transformedItems, ...FEED_ITEMS.slice(0, 10)];
-        setFeedItems(combinedItems);
+        setFeedItems(transformedItems);
+        console.log(`[API] Loaded ${transformedItems.length} items`);
       } else {
-        // Use fallback items if no content from API
-        setFeedItems(FEED_ITEMS);
+        console.log('[API] No content available');
+        setFeedItems([]);
       }
     } catch (err) {
-      console.error('Error fetching content:', err);
-      // Use fallback items on error
-      setFeedItems(FEED_ITEMS);
-      setError('تعذر جلب المحتوى الجديد، يتم عرض محتوى سابق');
+      console.error('[API] Error fetching feed:', err);
+      setError('تعذر جلب المحتوى. يرجى المحاولة لاحقاً.');
+      setFeedItems([]);
     } finally {
-      setLoading(false);
+      setStreaming(false);
     }
-  };
-
-  useEffect(() => {
-    fetchContent();
   }, []);
 
-  if (loading) {
+  // Handle like action - calls API
+  const handleLike = useCallback(async (itemId: string) => {
+    try {
+      const response = await api.post(`/content/${itemId}/like`);
+      if (response.success) {
+        setFeedItems(prev => prev.map(item => {
+          if (item.id === itemId) {
+            return {
+              ...item,
+              hasLiked: !item.hasLiked,
+              engagement: {
+                ...item.engagement,
+                likes: item.hasLiked ? item.engagement.likes - 1 : item.engagement.likes + 1
+              }
+            };
+          }
+          return item;
+        }));
+      }
+    } catch (err) {
+      console.error('Error liking content:', err);
+    }
+  }, []);
+
+  // Handle save/favorite action - calls API
+  const handleSave = useCallback(async (itemId: string) => {
+    try {
+      const response = await api.post(`/content/${itemId}/save`);
+      if (response.success) {
+        setFeedItems(prev => prev.map(item => {
+          if (item.id === itemId) {
+            return {
+              ...item,
+              hasSaved: !item.hasSaved,
+              engagement: {
+                ...item.engagement,
+                saves: item.hasSaved ? item.engagement.saves - 1 : item.engagement.saves + 1
+              }
+            };
+          }
+          return item;
+        }));
+      }
+    } catch (err) {
+      console.error('Error saving content:', err);
+    }
+  }, []);
+
+  // Refresh data
+  const refreshData = useCallback(() => {
+    if (feedEventSourceRef.current) {
+      feedEventSourceRef.current.close();
+    }
+    setFeedItems([]);
+    setStreaming(true);
+    setError(null);
+    streamFeed();
+  }, [streamFeed]);
+
+  // Initialize stream on mount
+  useEffect(() => {
+    streamFeed();
+
+    return () => {
+      if (feedEventSourceRef.current) {
+        feedEventSourceRef.current.close();
+      }
+    };
+  }, [streamFeed]);
+
+  // Loading state
+  if (streaming && feedItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-4">
+          <Wifi className="w-5 h-5 animate-pulse text-blue-600" />
+          <span className="text-blue-600 font-medium">جاري تحميل المحتوى عبر WebFlux...</span>
+        </div>
         <Loader2 size={48} className="text-blue-600 animate-spin mb-4" />
         <p className="text-gray-600 font-medium">جاري تحميل المحتوى...</p>
       </div>
@@ -121,12 +234,22 @@ const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard })
 
   return (
     <div>
+      {/* Streaming indicator */}
+      {streaming && feedItems.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-sm text-blue-600">
+            <Wifi className="w-4 h-4 animate-pulse" />
+            <span>جاري تحميل المزيد...</span>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 flex items-center gap-3">
           <AlertTriangle size={20} className="text-yellow-600" />
           <span className="text-yellow-700 text-sm flex-1">{error}</span>
           <button
-            onClick={fetchContent}
+            onClick={refreshData}
             className="flex items-center gap-1 text-yellow-700 hover:text-yellow-800 text-sm font-medium"
           >
             <RefreshCw size={16} />
@@ -134,10 +257,15 @@ const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard })
           </button>
         </div>
       )}
+
       <HomeFeed
         feedItems={feedItems}
         user={user}
         onOpenWizard={onOpenWizard}
+        onLike={handleLike}
+        onSave={handleSave}
+        onRefresh={refreshData}
+        isStreaming={streaming}
       />
     </div>
   );
