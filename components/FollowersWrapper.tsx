@@ -1,9 +1,9 @@
 /**
  * Followers Wrapper - مغلف صفحة الجهات والخبراء
- * Fetches entities from API and displays them dynamically
+ * Uses WebFlux-style SSE streaming for progressive data loading
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
    Users,
    Search,
@@ -20,7 +20,9 @@ import {
    BarChart3,
    Landmark,
    Loader2,
-   RefreshCw
+   RefreshCw,
+   Zap,
+   Radio
 } from 'lucide-react';
 import { api } from '../src/services/api';
 
@@ -48,22 +50,93 @@ interface Entity {
    impact: 'critical' | 'high' | 'medium' | 'low';
 }
 
+interface StreamMeta {
+   total: number;
+   official: number;
+   experts: number;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-production-e254.up.railway.app/api';
+
 const FollowersWrapper = () => {
    const [entities, setEntities] = useState<Entity[]>([]);
    const [loading, setLoading] = useState(true);
+   const [streaming, setStreaming] = useState(false);
    const [error, setError] = useState<string | null>(null);
    const [searchQuery, setSearchQuery] = useState('');
    const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'official' | 'experts'>('all');
    const [typeFilter, setTypeFilter] = useState<string>('all');
    const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+   const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
+   const [streamProgress, setStreamProgress] = useState(0);
+   const eventSourceRef = useRef<EventSource | null>(null);
 
-   const fetchEntities = async () => {
+   const fetchEntitiesStream = useCallback(() => {
+      // Close any existing connection
+      if (eventSourceRef.current) {
+         eventSourceRef.current.close();
+      }
+
       setLoading(true);
+      setStreaming(true);
       setError(null);
+      setEntities([]);
+      setStreamMeta(null);
+      setStreamProgress(0);
+
+      const params = new URLSearchParams();
+      if (typeFilter !== 'all') params.append('type', typeFilter);
+
+      const url = `${API_BASE_URL}/entities/stream${params.toString() ? '?' + params.toString() : ''}`;
+
+      const eventSource = new EventSource(url);
+      eventSourceRef.current = eventSource;
+
+      eventSource.addEventListener('meta', (e) => {
+         const meta = JSON.parse(e.data) as StreamMeta;
+         setStreamMeta(meta);
+      });
+
+      eventSource.addEventListener('entity', (e) => {
+         const entity = JSON.parse(e.data) as Entity;
+         setEntities(prev => {
+            const newEntities = [...prev, entity];
+            if (streamMeta) {
+               setStreamProgress(Math.round((newEntities.length / streamMeta.total) * 100));
+            }
+            return newEntities;
+         });
+         setLoading(false);
+      });
+
+      eventSource.addEventListener('complete', () => {
+         setStreaming(false);
+         setStreamProgress(100);
+         eventSource.close();
+      });
+
+      eventSource.addEventListener('error', (e: any) => {
+         console.error('SSE Error:', e);
+         setStreaming(false);
+         eventSource.close();
+         // Fallback to regular API if streaming fails
+         fallbackFetch();
+      });
+
+      eventSource.onerror = () => {
+         setStreaming(false);
+         eventSource.close();
+         if (entities.length === 0) {
+            fallbackFetch();
+         }
+      };
+   }, [typeFilter, streamMeta]);
+
+   const fallbackFetch = async () => {
       try {
+         setLoading(true);
          const response = await api.getEntities({
             type: typeFilter !== 'all' ? typeFilter : undefined,
-            search: searchQuery || undefined,
             limit: 50
          });
 
@@ -73,7 +146,7 @@ const FollowersWrapper = () => {
             setError('تعذر جلب الجهات والخبراء');
          }
       } catch (err) {
-         console.error('Error fetching entities:', err);
+         console.error('Fallback fetch error:', err);
          setError('تعذر الاتصال بالخادم');
       } finally {
          setLoading(false);
@@ -81,7 +154,13 @@ const FollowersWrapper = () => {
    };
 
    useEffect(() => {
-      fetchEntities();
+      fetchEntitiesStream();
+
+      return () => {
+         if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+         }
+      };
    }, [typeFilter]);
 
    // Filter entities based on search and active filter
@@ -113,7 +192,6 @@ const FollowersWrapper = () => {
    }, [entities, searchQuery, activeFilter, followingIds]);
 
    const toggleFollow = async (id: string) => {
-      // Optimistic update
       setFollowingIds(prev => {
          const newSet = new Set(prev);
          if (newSet.has(id)) {
@@ -124,21 +202,19 @@ const FollowersWrapper = () => {
          return newSet;
       });
 
-      // Try API call (if authenticated)
       try {
          await api.toggleFollowEntity(id);
       } catch (err) {
-         // Ignore auth errors for demo - keep optimistic update
          console.log('Follow toggled locally');
       }
    };
 
    const stats = useMemo(() => ({
-      total: entities.length,
+      total: streamMeta?.total || entities.length,
       following: followingIds.size,
-      official: entities.filter(e => e.type === 'ministry' || e.type === 'authority').length,
-      experts: entities.filter(e => e.type === 'expert' || e.type === 'analyst').length
-   }), [entities, followingIds]);
+      official: streamMeta?.official || entities.filter(e => e.type === 'ministry' || e.type === 'authority').length,
+      experts: streamMeta?.experts || entities.filter(e => e.type === 'expert' || e.type === 'analyst').length
+   }), [entities, followingIds, streamMeta]);
 
    const getVerificationBadge = (entity: Entity) => {
       if (entity.verificationLevel === 'official') {
@@ -162,10 +238,10 @@ const FollowersWrapper = () => {
 
    const getImpactBadge = (impact: string) => {
       const badges = {
-         critical: { color: 'bg-red-100 text-red-700 border-red-200', label: 'تأثير حرج', icon: '' },
-         high: { color: 'bg-orange-100 text-orange-700 border-orange-200', label: 'تأثير عالي', icon: '' },
-         medium: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'تأثير متوسط', icon: '' },
-         low: { color: 'bg-gray-100 text-gray-600 border-gray-200', label: 'تأثير منخفض', icon: '' }
+         critical: { color: 'bg-red-100 text-red-700 border-red-200', label: 'تأثير حرج' },
+         high: { color: 'bg-orange-100 text-orange-700 border-orange-200', label: 'تأثير عالي' },
+         medium: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'تأثير متوسط' },
+         low: { color: 'bg-gray-100 text-gray-600 border-gray-200', label: 'تأثير منخفض' }
       };
       const badge = badges[impact as keyof typeof badges] || badges.medium;
       return (
@@ -174,6 +250,34 @@ const FollowersWrapper = () => {
          </span>
       );
    };
+
+   // Skeleton loader for cards
+   const EntitySkeleton = () => (
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden animate-pulse">
+         <div className="h-32 bg-gray-200"></div>
+         <div className="p-6">
+            <div className="flex items-start gap-4 mb-4">
+               <div className="w-20 h-20 rounded-2xl bg-gray-200"></div>
+               <div className="flex-1">
+                  <div className="h-6 bg-gray-200 rounded-lg w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded-lg w-1/2 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded-lg w-1/3"></div>
+               </div>
+            </div>
+            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
+            <div className="flex gap-2 mb-4">
+               <div className="h-6 bg-gray-200 rounded-lg w-20"></div>
+               <div className="h-6 bg-gray-200 rounded-lg w-24"></div>
+               <div className="h-6 bg-gray-200 rounded-lg w-16"></div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+               <div className="h-16 bg-gray-200 rounded-xl"></div>
+               <div className="h-16 bg-gray-200 rounded-xl"></div>
+               <div className="h-16 bg-gray-200 rounded-xl"></div>
+            </div>
+         </div>
+      </div>
+   );
 
    return (
       <div className="max-w-7xl mx-auto p-4 lg:p-8 animate-fadeIn">
@@ -195,34 +299,66 @@ const FollowersWrapper = () => {
                   </div>
                </div>
 
-               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
+               {/* Streaming Progress Indicator */}
+               {streaming && (
+                  <div className="mb-6 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+                     <div className="flex items-center gap-3 mb-2">
+                        <div className="relative">
+                           <Radio size={20} className="text-green-400 animate-pulse" />
+                           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping"></span>
+                        </div>
+                        <span className="text-white font-bold text-sm">جاري تحميل البيانات...</span>
+                        <span className="text-blue-200 text-sm">{entities.length} / {streamMeta?.total || '?'}</span>
+                     </div>
+                     <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                        <div
+                           className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full transition-all duration-300 ease-out"
+                           style={{ width: `${streamProgress}%` }}
+                        ></div>
+                     </div>
+                  </div>
+               )}
+
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/15">
                      <div className="flex items-center gap-2 mb-2">
                         <Landmark size={18} className="text-blue-200" />
                         <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">إجمالي الجهات</p>
                      </div>
-                     <h3 className="text-3xl font-black text-white">{loading ? '-' : stats.total}</h3>
+                     <h3 className="text-3xl font-black text-white">
+                        {loading && entities.length === 0 ? (
+                           <span className="inline-block w-12 h-8 bg-white/20 rounded animate-pulse"></span>
+                        ) : stats.total}
+                     </h3>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/15">
                      <div className="flex items-center gap-2 mb-2">
                         <UserCheck size={18} className="text-green-200" />
                         <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">تتابعها</p>
                      </div>
                      <h3 className="text-3xl font-black text-white">{stats.following}</h3>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/15">
                      <div className="flex items-center gap-2 mb-2">
                         <Shield size={18} className="text-yellow-200" />
                         <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">جهات رسمية</p>
                      </div>
-                     <h3 className="text-3xl font-black text-white">{loading ? '-' : stats.official}</h3>
+                     <h3 className="text-3xl font-black text-white">
+                        {loading && entities.length === 0 ? (
+                           <span className="inline-block w-8 h-8 bg-white/20 rounded animate-pulse"></span>
+                        ) : stats.official}
+                     </h3>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/15">
                      <div className="flex items-center gap-2 mb-2">
                         <Award size={18} className="text-purple-200" />
                         <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">خبراء</p>
                      </div>
-                     <h3 className="text-3xl font-black text-white">{loading ? '-' : stats.experts}</h3>
+                     <h3 className="text-3xl font-black text-white">
+                        {loading && entities.length === 0 ? (
+                           <span className="inline-block w-8 h-8 bg-white/20 rounded animate-pulse"></span>
+                        ) : stats.experts}
+                     </h3>
                   </div>
                </div>
             </div>
@@ -254,11 +390,16 @@ const FollowersWrapper = () => {
                      <option value="analyst">محللون</option>
                   </select>
                   <button
-                     onClick={fetchEntities}
-                     disabled={loading}
-                     className="p-3.5 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50"
+                     onClick={fetchEntitiesStream}
+                     disabled={streaming}
+                     className="p-3.5 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
+                     title="تحديث"
                   >
-                     <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                     {streaming ? (
+                        <Loader2 size={18} className="animate-spin text-blue-600" />
+                     ) : (
+                        <RefreshCw size={18} />
+                     )}
                   </button>
                </div>
             </div>
@@ -305,33 +446,34 @@ const FollowersWrapper = () => {
             </div>
          </div>
 
-         {/* Loading State */}
-         {loading && (
-            <div className="flex items-center justify-center py-20">
-               <Loader2 size={48} className="animate-spin text-blue-600" />
-            </div>
-         )}
-
          {/* Error State */}
-         {error && !loading && (
+         {error && !loading && entities.length === 0 && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
                <p className="text-red-600 mb-4">{error}</p>
                <button
-                  onClick={fetchEntities}
-                  className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold"
+                  onClick={fetchEntitiesStream}
+                  className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
                >
                   إعادة المحاولة
                </button>
             </div>
          )}
 
-         {/* Grid of Entities */}
-         {!loading && !error && (
+         {/* Loading Skeletons */}
+         {loading && entities.length === 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-               {filteredEntities.map(entity => (
+               {[1, 2, 3, 4].map(i => <EntitySkeleton key={i} />)}
+            </div>
+         )}
+
+         {/* Grid of Entities */}
+         {entities.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               {filteredEntities.map((entity, index) => (
                   <div
                      key={entity.id}
-                     className="bg-white rounded-3xl border border-gray-100 shadow-lg hover:shadow-2xl hover:border-blue-200 transition-all duration-300 group overflow-hidden"
+                     className="bg-white rounded-3xl border border-gray-100 shadow-lg hover:shadow-2xl hover:border-blue-200 transition-all duration-300 group overflow-hidden animate-fadeIn"
+                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                      {/* Cover Image */}
                      {entity.coverImage && (
@@ -436,18 +578,18 @@ const FollowersWrapper = () => {
 
                         {/* Stats and Info */}
                         <div className="grid grid-cols-3 gap-3 mb-4">
-                           <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                           <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100 hover:bg-gray-100 transition-colors">
                               <p className="text-xs text-gray-500 font-bold mb-1">متابعون</p>
                               <p className="text-lg font-black text-gray-900">{entity.stats.followers}</p>
                            </div>
-                           <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                           <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100 hover:bg-gray-100 transition-colors">
                               <p className="text-xs text-gray-500 font-bold mb-1">منشورات</p>
                               <p className="text-lg font-black text-gray-900">{entity.stats.posts.toLocaleString()}</p>
                            </div>
                            {entity.stats.datasets !== undefined && (
-                              <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
-                                 <p className="text-xs text-gray-500 font-bold mb-1">بيانات</p>
-                                 <p className="text-lg font-black text-gray-900">{entity.stats.datasets}</p>
+                              <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100 hover:bg-blue-100 transition-colors">
+                                 <p className="text-xs text-blue-600 font-bold mb-1">بيانات</p>
+                                 <p className="text-lg font-black text-blue-700">{entity.stats.datasets}</p>
                               </div>
                            )}
                         </div>
@@ -480,11 +622,25 @@ const FollowersWrapper = () => {
                      </div>
                   </div>
                ))}
+
+               {/* Streaming indicator at the end */}
+               {streaming && entities.length > 0 && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border-2 border-dashed border-blue-200 p-8 flex items-center justify-center">
+                     <div className="text-center">
+                        <div className="relative inline-block mb-3">
+                           <Zap size={32} className="text-blue-500" />
+                           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping"></span>
+                        </div>
+                        <p className="text-blue-600 font-bold">جاري تحميل المزيد...</p>
+                        <p className="text-blue-400 text-sm">{streamProgress}%</p>
+                     </div>
+                  </div>
+               )}
             </div>
          )}
 
          {/* Empty State */}
-         {!loading && !error && filteredEntities.length === 0 && (
+         {!loading && !error && !streaming && filteredEntities.length === 0 && entities.length > 0 && (
             <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
                   <Search size={40} />
