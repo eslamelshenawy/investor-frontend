@@ -76,6 +76,7 @@ import OfficialDashboardsWrapper from './components/OfficialDashboardsWrapper';
 import DatasetsPage from './components/DatasetsPage';
 import PublicHomePage from './components/PublicHomePage';
 import DatasetDetailPage from './components/DatasetDetailPage';
+import MyDashboardsPage from './components/MyDashboardsPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -878,17 +879,7 @@ const AppContent = () => {
               <ExpertBuilderWrapper onPublishDashboard={handlePublishDashboard} />
             } />
 
-            <Route path="/my-dashboards" element={
-              <MyDashboards
-                dashboards={userDashboards}
-                widgets={allWidgets}
-                currentUser={currentUser}
-                onCreate={handleCreateDashboard}
-                onAddWidget={handleAddWidget}
-                onAddExternalWidget={handleAddExternalWidget}
-                onRemoveWidget={handleRemoveWidget}
-              />
-            } />
+            <Route path="/my-dashboards" element={<MyDashboardsPage />} />
             <Route path="/dataset/:id" element={<DatasetContent dataset={DATASETS[0]} onBack={() => navigate('/dashboard')} role={currentUser.role} />} />
             <Route path="/builder" element={<ChartBuilderPage />} />
             <Route path="/queries" element={<ChartBuilderPage />} />
