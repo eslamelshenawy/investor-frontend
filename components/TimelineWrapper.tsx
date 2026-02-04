@@ -204,20 +204,86 @@ const transformToTimelineEvent = (item: ApiTimelineItem): TimelineEvent & { item
 
 const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
   apiBaseUrl = `${API_BASE}/content`,
-  limit = 30,
+  limit = 50,
   onItemClick,
   className = '',
 }) => {
   const [events, setEvents] = useState<(TimelineEvent & { itemType: string })[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<(TimelineEvent & { itemType: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [streaming, setStreaming] = useState(false);
+  const [streamProgress, setStreamProgress] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [useStreaming, setUseStreaming] = useState(true);
 
-  const fetchTimeline = async (pageNum: number = 1) => {
+  // WebFlux-style streaming fetch using Server-Sent Events
+  const fetchTimelineStream = () => {
+    setStreaming(true);
+    setLoading(true);
+    setError(null);
+    setEvents([]);
+    setStreamProgress('جاري الاتصال...');
+
+    const eventSource = new EventSource(`${apiBaseUrl}/timeline/stream?limit=${limit}`);
+    const newEvents: (TimelineEvent & { itemType: string })[] = [];
+
+    eventSource.addEventListener('start', (e) => {
+      const data = JSON.parse(e.data);
+      setStreamProgress(data.message);
+    });
+
+    eventSource.addEventListener('item', (e) => {
+      const item = JSON.parse(e.data) as ApiTimelineItem;
+      const transformedEvent = transformToTimelineEvent(item);
+      newEvents.push(transformedEvent);
+      // Update events progressively for real-time feel
+      setEvents([...newEvents].sort((a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ));
+    });
+
+    eventSource.addEventListener('progress', (e) => {
+      const data = JSON.parse(e.data);
+      const sourceLabels: Record<string, string> = {
+        content: 'المحتوى',
+        signals: 'الإشارات',
+        datasets: 'البيانات',
+        syncLogs: 'المزامنة',
+      };
+      setStreamProgress(`تم تحميل ${sourceLabels[data.source] || data.source}: ${data.count}`);
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      setTotal(data.total);
+      setStreamProgress('');
+      setStreaming(false);
+      setLoading(false);
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      console.error('Stream error:', e);
+      eventSource.close();
+      setStreaming(false);
+      // Fallback to regular fetch on stream error
+      fetchTimelineFallback(1);
+    });
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      setStreaming(false);
+      // Fallback to regular fetch
+      fetchTimelineFallback(1);
+    };
+  };
+
+  // Fallback to regular fetch
+  const fetchTimelineFallback = async (pageNum: number = 1) => {
     setLoading(true);
     setError(null);
 
@@ -256,6 +322,14 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
     }
   };
 
+  const fetchTimeline = (pageNum: number = 1) => {
+    if (useStreaming && pageNum === 1) {
+      fetchTimelineStream();
+    } else {
+      fetchTimelineFallback(pageNum);
+    }
+  };
+
   useEffect(() => {
     fetchTimeline(1);
   }, [apiBaseUrl, limit]);
@@ -291,7 +365,7 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
     sync: events.filter(e => e.itemType === 'sync').length,
   };
 
-  // Loading State
+  // Loading State with streaming progress
   if (loading && events.length === 0) {
     return (
       <div className={`flex flex-col items-center justify-center py-20 ${className}`}>
@@ -303,8 +377,18 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
             <Sparkles size={12} className="text-white" />
           </div>
         </div>
-        <p className="text-gray-600 mt-6 font-medium">جاري تحميل الجدول الزمني...</p>
-        <p className="text-gray-400 text-sm mt-1">يتم جلب أحدث البيانات</p>
+        <p className="text-gray-600 mt-6 font-medium">
+          {streaming ? 'WebFlux Streaming...' : 'جاري تحميل الجدول الزمني...'}
+        </p>
+        <p className="text-gray-400 text-sm mt-1">
+          {streamProgress || 'يتم جلب أحدث البيانات'}
+        </p>
+        {streaming && (
+          <div className="mt-4 flex items-center gap-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-xs text-emerald-600 font-medium">بث مباشر</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -351,20 +435,42 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
         {/* Title Row */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">سجل التغييرات</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+              سجل التغييرات
+              {streaming && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  WebFlux
+                </span>
+              )}
+            </h1>
             <p className="text-gray-500 text-sm flex items-center gap-2">
               <Calendar size={14} />
-              آخر التحديثات والأحداث في الوقت الفعلي
+              {streamProgress || 'آخر التحديثات والأحداث في الوقت الفعلي'}
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 shadow-sm"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            تحديث
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setUseStreaming(!useStreaming)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                useStreaming
+                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              title={useStreaming ? 'وضع البث المباشر' : 'وضع التحميل العادي'}
+            >
+              <Sparkles size={12} />
+              {useStreaming ? 'بث' : 'عادي'}
+            </button>
+            <button
+              onClick={handleRefresh}
+              disabled={loading || streaming}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 shadow-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading || streaming ? 'animate-spin' : ''}`} />
+              تحديث
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
