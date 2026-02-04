@@ -8,7 +8,7 @@
  * All data comes from real Saudi Open Data Portal
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Sparkles,
     TrendingUp,
@@ -36,7 +36,8 @@ import {
     Loader2,
     RefreshCw,
     Play,
-    ServerCrash
+    ServerCrash,
+    Wifi
 } from 'lucide-react';
 import { api } from '../src/services/api';
 
@@ -456,7 +457,7 @@ const AISignalsPage: React.FC = () => {
     const [selectedSignal, setSelectedSignal] = useState<AISignal | null>(null);
     const [filter, setFilter] = useState<'all' | SignalType>('all');
     const [signals, setSignals] = useState<AISignal[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [streaming, setStreaming] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // WebFlux Stats
@@ -467,33 +468,122 @@ const AISignalsPage: React.FC = () => {
     });
     const [generating, setGenerating] = useState(false);
 
-    // WebFlux: Fetch signals from API - REAL DATA ONLY
-    const fetchSignals = async () => {
-        setLoading(true);
-        setError(null);
+    // Refs for EventSource cleanup
+    const signalsEventSourceRef = useRef<EventSource | null>(null);
+    const statsEventSourceRef = useRef<EventSource | null>(null);
+
+    // WebFlux SSE: Stream signals from API - REAL DATA ONLY
+    const streamSignals = useCallback(() => {
+        const url = `${API_BASE}/signals/stream`;
+        console.log('[WebFlux] Connecting to signals stream:', url);
+
+        const eventSource = new EventSource(url);
+        signalsEventSourceRef.current = eventSource;
+
+        eventSource.onopen = () => {
+            console.log('[WebFlux] Signals stream connected');
+        };
+
+        eventSource.addEventListener('signal', (e) => {
+            try {
+                const apiSignal = JSON.parse(e.data) as APISignal;
+                const signal = transformSignal(apiSignal);
+                console.log('[WebFlux] Received signal:', signal.title);
+                setSignals(prev => {
+                    if (prev.some(s => s.id === signal.id)) return prev;
+                    return [...prev, signal];
+                });
+            } catch (err) {
+                console.error('[WebFlux] Error parsing signal:', err);
+            }
+        });
+
+        eventSource.addEventListener('meta', (e) => {
+            try {
+                const meta = JSON.parse(e.data);
+                console.log('[WebFlux] Received meta:', meta);
+                setStats(prev => ({
+                    ...prev,
+                    totalSignals: meta.total || prev.totalSignals
+                }));
+            } catch (err) {
+                console.error('[WebFlux] Error parsing meta:', err);
+            }
+        });
+
+        eventSource.addEventListener('complete', () => {
+            console.log('[WebFlux] Signals stream complete');
+            setStreaming(false);
+            eventSource.close();
+        });
+
+        eventSource.onerror = (err) => {
+            console.error('[WebFlux] Signals stream error:', err);
+            eventSource.close();
+            // Fallback to regular API
+            fetchSignalsRegular();
+        };
+    }, []);
+
+    // Regular API fallback for signals
+    const fetchSignalsRegular = useCallback(async () => {
         try {
-            console.log('🚀 WebFlux: Fetching signals from API...');
+            console.log('[API] Fetching signals via regular API...');
             const response = await api.getSignals({ limit: 50 });
             if (response.success && response.data && (response.data as APISignal[]).length > 0) {
                 const transformedSignals = (response.data as APISignal[]).map(transformSignal);
                 setSignals(transformedSignals);
                 setStats(prev => ({ ...prev, totalSignals: transformedSignals.length }));
-                console.log(`✅ WebFlux: Loaded ${transformedSignals.length} real signals`);
+                console.log(`[API] Loaded ${transformedSignals.length} signals`);
             } else {
-                console.log('📭 WebFlux: No signals in database');
+                console.log('[API] No signals in database');
                 setSignals([]);
             }
         } catch (err) {
-            console.error('❌ WebFlux: Error fetching signals:', err);
+            console.error('[API] Error fetching signals:', err);
             setError('تعذر تحميل الإشارات. يرجى المحاولة لاحقاً.');
             setSignals([]);
         } finally {
-            setLoading(false);
+            setStreaming(false);
         }
-    };
+    }, []);
 
-    // WebFlux: Fetch stats from API
-    const fetchStats = async () => {
+    // WebFlux SSE: Stream stats from API
+    const streamStats = useCallback(() => {
+        const url = `${API_BASE}/stats/stream`;
+        console.log('[WebFlux] Connecting to stats stream:', url);
+
+        const eventSource = new EventSource(url);
+        statsEventSourceRef.current = eventSource;
+
+        eventSource.addEventListener('stats', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                console.log('[WebFlux] Received stats:', data);
+                setStats(prev => ({
+                    totalDatasets: data.totalDatasets || prev.totalDatasets,
+                    totalSignals: data.totalSignals || prev.totalSignals,
+                    lastUpdate: data.lastSyncAt || prev.lastUpdate
+                }));
+            } catch (err) {
+                console.error('[WebFlux] Error parsing stats:', err);
+            }
+        });
+
+        eventSource.addEventListener('complete', () => {
+            console.log('[WebFlux] Stats stream complete');
+            eventSource.close();
+        });
+
+        eventSource.onerror = () => {
+            eventSource.close();
+            // Fallback to regular API
+            fetchStatsRegular();
+        };
+    }, []);
+
+    // Regular API fallback for stats
+    const fetchStatsRegular = useCallback(async () => {
         try {
             const response = await fetch(`${API_BASE}/stats/overview`);
             if (response.ok) {
@@ -509,22 +599,22 @@ const AISignalsPage: React.FC = () => {
         } catch (err) {
             console.log('Stats fetch failed, using local count');
         }
-    };
+    }, [signals.length]);
 
     // WebFlux: Generate signals from real data
     const generateSignals = async () => {
         setGenerating(true);
         setError(null);
         try {
-            console.log('🔄 WebFlux: Triggering signal generation...');
+            console.log('[WebFlux] Triggering signal generation...');
 
             // Use api service to include auth token automatically
             const response = await api.post('/signals/analyze');
 
             if (response.success) {
-                console.log('✅ WebFlux: Signals generated:', response.data);
+                console.log('[WebFlux] Signals generated:', response.data);
                 // Reload signals after generation
-                await fetchSignals();
+                refreshData();
             } else if (response.error?.includes('unauthorized') || response.error?.includes('Unauthorized')) {
                 // User not authorized - show appropriate message
                 setError('يجب تسجيل الدخول كمسؤول لتوليد الإشارات');
@@ -532,21 +622,53 @@ const AISignalsPage: React.FC = () => {
                 throw new Error(response.errorAr || response.error || 'فشل في توليد الإشارات');
             }
         } catch (err) {
-            console.error('❌ WebFlux: Generation failed:', err);
+            console.error('[WebFlux] Generation failed:', err);
             setError('تعذر توليد الإشارات. جاري المحاولة من البيانات المتاحة...');
 
             // Even if generation fails, try to fetch any existing signals
-            await fetchSignals();
+            refreshData();
         } finally {
             setGenerating(false);
         }
     };
 
-    // WebFlux: Initial fetch
+    // Refresh data by restarting streams
+    const refreshData = useCallback(() => {
+        // Close existing streams
+        if (signalsEventSourceRef.current) {
+            signalsEventSourceRef.current.close();
+        }
+        if (statsEventSourceRef.current) {
+            statsEventSourceRef.current.close();
+        }
+
+        // Reset state
+        setSignals([]);
+        setStreaming(true);
+        setError(null);
+
+        // Start new streams
+        streamSignals();
+        streamStats();
+    }, [streamSignals, streamStats]);
+
+    // WebFlux: Initialize streams on mount
     useEffect(() => {
-        fetchSignals();
-        fetchStats();
-    }, []);
+        streamSignals();
+        streamStats();
+
+        return () => {
+            if (signalsEventSourceRef.current) {
+                signalsEventSourceRef.current.close();
+            }
+            if (statsEventSourceRef.current) {
+                statsEventSourceRef.current.close();
+            }
+        };
+    }, [streamSignals, streamStats]);
+
+    // Alias for loading state
+    const loading = streaming && signals.length === 0;
 
     const filteredSignals = filter === 'all'
         ? signals
@@ -647,19 +769,33 @@ const AISignalsPage: React.FC = () => {
                         </button>
                     </div>
                     <button
-                        onClick={fetchSignals}
-                        disabled={loading}
+                        onClick={refreshData}
+                        disabled={streaming}
                         className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                     >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                        <RefreshCw size={16} className={streaming ? 'animate-spin' : ''} />
                         تحديث
                     </button>
                 </div>
             </div>
 
+            {/* WebFlux Streaming Indicator */}
+            {streaming && signals.length > 0 && (
+                <div className="flex items-center justify-center gap-2 mb-6">
+                    <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full text-sm text-blue-600">
+                        <Wifi className="w-4 h-4 animate-pulse" />
+                        <span>جاري تحميل المزيد من الإشارات عبر WebFlux...</span>
+                    </div>
+                </div>
+            )}
+
             {/* Signals Grid */}
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 mb-8">
+                    <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-4">
+                        <Wifi className="w-5 h-5 animate-pulse text-blue-600" />
+                        <span className="text-blue-600 font-medium">WebFlux Stream</span>
+                    </div>
                     <Loader2 size={48} className="text-blue-600 animate-spin mb-4" />
                     <p className="text-gray-600 font-medium">جاري تحميل الإشارات...</p>
                 </div>
@@ -669,7 +805,7 @@ const AISignalsPage: React.FC = () => {
                     <h3 className="text-lg font-bold text-red-700 mb-2">خطأ في التحميل</h3>
                     <p className="text-red-600 mb-4">{error}</p>
                     <button
-                        onClick={fetchSignals}
+                        onClick={refreshData}
                         className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors"
                     >
                         إعادة المحاولة
