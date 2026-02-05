@@ -53,6 +53,9 @@ function transformContent(content: APIContent): FeedItem {
     tags = [];
   }
 
+  const excerpt = content.excerptAr || content.excerpt || '';
+  const coverImage = content.coverImage || '';
+
   return {
     id: content.id,
     title: content.titleAr || content.title,
@@ -69,15 +72,24 @@ function transformContent(content: APIContent): FeedItem {
     engagement: {
       views: content.viewCount || 0,
       likes: content.likeCount || 0,
-      comments: 0, // Real comments will come from comments API
+      comments: 0,
       shares: 0,
       saves: content.saveCount || 0,
     },
-    excerpt: content.excerptAr || content.excerpt || '',
-    // Use real cover image if available, otherwise use content-type based placeholder
-    coverImage: content.coverImage || getDefaultCoverImage(content.type),
+    excerpt,
+    coverImage: coverImage || getDefaultCoverImage(content.type),
     hasLiked: false,
     hasSaved: false,
+    payload: {
+      imageUrl: coverImage,
+      excerpt,
+      headline: content.titleAr || content.title,
+      summary: excerpt,
+      quote: '',
+      expertImage: '',
+      expertName: '',
+      expertRole: '',
+    },
   };
 }
 

@@ -443,9 +443,9 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard, onLi
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             items = items.filter(item =>
-                item.title.toLowerCase().includes(q) ||
-                item.author.name.toLowerCase().includes(q) ||
-                item.tags.some(tag => tag.toLowerCase().includes(q))
+                item.title?.toLowerCase().includes(q) ||
+                item.author?.name?.toLowerCase().includes(q) ||
+                (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(q)))
             );
         }
 

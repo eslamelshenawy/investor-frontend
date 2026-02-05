@@ -97,6 +97,14 @@ interface RecommendationsData {
 // HELPERS
 // ============================================
 
+function safeParseTags(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags;
+  if (typeof tags === 'string') {
+    try { return JSON.parse(tags); } catch { return []; }
+  }
+  return [];
+}
+
 function formatRelativeDate(dateStr: string): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -488,7 +496,11 @@ const RecommendationsPage: React.FC = () => {
       const response = await api.getRecommendations();
 
       if (response.success && response.data) {
-        setData(response.data as unknown as RecommendationsData);
+        const raw = response.data as unknown as RecommendationsData;
+        if (raw.content) {
+          raw.content = raw.content.map((c: any) => ({ ...c, tags: safeParseTags(c.tags) }));
+        }
+        setData(raw);
       } else {
         setError(response.errorAr || response.error || 'تعذر تحميل التوصيات');
       }

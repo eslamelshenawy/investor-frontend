@@ -86,6 +86,14 @@ const FILTER_TABS: FilterTab[] = [
   { key: 'insight', label: 'رؤى', type: 'INSIGHT' },
 ];
 
+function safeParseTags(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags;
+  if (typeof tags === 'string') {
+    try { return JSON.parse(tags); } catch { return []; }
+  }
+  return [];
+}
+
 const ITEMS_PER_PAGE = 12;
 
 // ---------------------------------------------------------------------------
@@ -422,7 +430,7 @@ const BlogPage: React.FC = () => {
       const data: FeedResponse = await res.json();
 
       if (data.success) {
-        setItems(data.data || []);
+        setItems((data.data || []).map((item: any) => ({ ...item, tags: safeParseTags(item.tags) })));
         if (data.pagination) {
           setTotalPages(data.pagination.totalPages || 1);
           setTotalItems(data.pagination.total || 0);

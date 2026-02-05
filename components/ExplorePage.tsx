@@ -75,6 +75,14 @@ interface SignalItem {
   createdAt: string;
 }
 
+function safeParseTags(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags;
+  if (typeof tags === 'string') {
+    try { return JSON.parse(tags); } catch { return []; }
+  }
+  return [];
+}
+
 interface TagItem {
   tag: string;
   count: number;
@@ -384,7 +392,7 @@ const ExplorePage: React.FC = () => {
         const data = await response.json();
         if (data.success && data.data) {
           const items = Array.isArray(data.data) ? data.data : (data.data.items || []);
-          setContentItems(items);
+          setContentItems(items.map((item: any) => ({ ...item, tags: safeParseTags(item.tags) })));
         }
       }
     } catch (err) {
