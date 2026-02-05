@@ -276,62 +276,10 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard, onLi
     // Ref for stats EventSource
     const statsEventSourceRef = useRef<EventSource | null>(null);
 
-    // --- FETCH STATS via WebFlux SSE (100% REAL DATA - NO FALLBACKS) ---
-    const fetchStats = useCallback(() => {
+    // --- FETCH STATS via REST API (100% REAL DATA) ---
+    const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         setStatsError(false);
-
-        const url = `${API_BASE_URL}/stats/stream`;
-        console.log('[WebFlux] Connecting to stats stream:', url);
-
-        // Close existing connection
-        if (statsEventSourceRef.current) {
-            statsEventSourceRef.current.close();
-        }
-
-        const eventSource = new EventSource(url);
-        statsEventSourceRef.current = eventSource;
-
-        eventSource.addEventListener('stats', (e) => {
-            try {
-                const data = JSON.parse(e.data);
-                console.log('[WebFlux] Received stats:', data);
-                if (data.isRealData || data.totalDatasets > 0) {
-                    setStats({
-                        totalDatasets: data.totalDatasets || 0,
-                        totalCategories: data.totalCategories || 0,
-                        totalSignals: data.totalSignals || 0,
-                        activeSignals: data.activeSignals || 0,
-                        totalUsers: data.totalUsers || 0,
-                        totalContent: data.totalContent || 0,
-                        totalViews: data.totalViews || 0,
-                        newThisWeek: data.newThisWeek || 0,
-                        weeklyGrowth: data.weeklyGrowth || 0,
-                        isRealData: true
-                    });
-                    setStatsLoading(false);
-                }
-            } catch (err) {
-                console.error('[WebFlux] Error parsing stats:', err);
-            }
-        });
-
-        eventSource.addEventListener('complete', () => {
-            console.log('[WebFlux] Stats stream complete');
-            setStatsLoading(false);
-            eventSource.close();
-        });
-
-        eventSource.onerror = () => {
-            console.error('[WebFlux] Stats stream error, falling back to API');
-            eventSource.close();
-            // Fallback to regular API
-            fetchStatsRegular();
-        };
-    }, []);
-
-    // Regular API fallback for stats
-    const fetchStatsRegular = useCallback(async () => {
         try {
             const response = await api.get('/stats/overview');
             if (response.success && response.data) {
@@ -423,12 +371,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ feedItems, user, onOpenWizard, onLi
         fetchTrending();
         fetchQuickStats();
 
-        // Cleanup on unmount
-        return () => {
-            if (statsEventSourceRef.current) {
-                statsEventSourceRef.current.close();
-            }
-        };
+        return () => {};
     }, [fetchStats, fetchTrending, fetchQuickStats]);
 
     useEffect(() => {

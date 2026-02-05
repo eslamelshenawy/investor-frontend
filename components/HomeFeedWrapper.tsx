@@ -103,7 +103,7 @@ const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard })
 
   // WebFlux SSE Stream for Feed Content
   const streamFeed = useCallback(() => {
-    const url = `${API_BASE_URL}/feed/stream`;
+    const url = `${API_BASE_URL}/content/feed/stream`;
     console.log('[WebFlux] Connecting to feed stream:', url);
 
     const eventSource = new EventSource(url);
@@ -167,16 +167,16 @@ const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard })
   // Handle like action - calls API
   const handleLike = useCallback(async (itemId: string) => {
     try {
-      const response = await api.post(`/content/${itemId}/like`);
-      if (response.success) {
+      const response = await api.likeContent(itemId);
+      if (response.success && response.data) {
         setFeedItems(prev => prev.map(item => {
           if (item.id === itemId) {
             return {
               ...item,
-              hasLiked: !item.hasLiked,
+              hasLiked: response.data!.liked,
               engagement: {
                 ...item.engagement,
-                likes: item.hasLiked ? item.engagement.likes - 1 : item.engagement.likes + 1
+                likes: response.data!.likeCount
               }
             };
           }
@@ -191,16 +191,16 @@ const HomeFeedWrapper: React.FC<HomeFeedWrapperProps> = ({ user, onOpenWizard })
   // Handle save/favorite action - calls API
   const handleSave = useCallback(async (itemId: string) => {
     try {
-      const response = await api.post(`/content/${itemId}/save`);
-      if (response.success) {
+      const response = await api.saveContent(itemId);
+      if (response.success && response.data) {
         setFeedItems(prev => prev.map(item => {
           if (item.id === itemId) {
             return {
               ...item,
-              hasSaved: !item.hasSaved,
+              hasSaved: response.data!.saved,
               engagement: {
                 ...item.engagement,
-                saves: item.hasSaved ? item.engagement.saves - 1 : item.engagement.saves + 1
+                saves: response.data!.saveCount
               }
             };
           }

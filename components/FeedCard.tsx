@@ -48,6 +48,8 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
     const navigate = useNavigate();
     const [liked, setLiked] = useState(item.hasLiked || false);
     const [saved, setSaved] = useState(item.hasSaved || false);
+    const [likeCount, setLikeCount] = useState(item.engagement.likes || 0);
+    const [saveCount, setSaveCount] = useState(item.engagement.saves || 0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -545,20 +547,25 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                         onClick={async () => {
                             if (isLiking) return;
                             setIsLiking(true);
+                            const newLiked = !liked;
+                            setLiked(newLiked);
+                            setLikeCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
                             if (onLike) {
                                 await onLike(item.id);
                             }
-                            setLiked(!liked);
                             setIsLiking(false);
                         }}
                         disabled={isLiking}
                         className={`group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all ${liked ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50 text-gray-500'} ${isLiking ? 'opacity-50' : ''}`}
                     >
                         <Heart size={16} className={`transition-transform group-hover:scale-110 sm:w-[18px] sm:h-[18px] ${liked ? 'fill-current' : ''} ${isLiking ? 'animate-pulse' : ''}`} />
-                        <span className="text-[10px] sm:text-xs font-bold">{item.engagement.likes + (liked ? 1 : 0)}</span>
+                        <span className="text-[10px] sm:text-xs font-bold">{likeCount}</span>
                     </button>
 
-                    <button className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray-50 text-gray-500 transition-all">
+                    <button
+                        onClick={() => navigate(`/content/${item.id}`)}
+                        className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray-50 text-gray-500 transition-all"
+                    >
                         <Share2 size={16} className="transition-transform group-hover:scale-110 sm:w-[18px] sm:h-[18px]" />
                         <span className="text-[10px] sm:text-xs font-bold hidden xs:inline">مشاركة</span>
                     </button>
@@ -568,10 +575,12 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                     onClick={async () => {
                         if (isSaving) return;
                         setIsSaving(true);
+                        const newSaved = !saved;
+                        setSaved(newSaved);
+                        setSaveCount(prev => newSaved ? prev + 1 : Math.max(0, prev - 1));
                         if (onSave) {
                             await onSave(item.id);
                         }
-                        setSaved(!saved);
                         setIsSaving(false);
                     }}
                     disabled={isSaving}

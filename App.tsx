@@ -30,7 +30,11 @@ import {
   ClipboardList,
   Layout,
   LayoutTemplate,
-  Bookmark
+  Bookmark,
+  FileText,
+  FileCheck,
+  PenSquare,
+  UsersRound
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -77,6 +81,11 @@ import DatasetsPage from './components/DatasetsPage';
 import PublicHomePage from './components/PublicHomePage';
 import DatasetDetailPage from './components/DatasetDetailPage';
 import MyDashboardsPage from './components/MyDashboardsPage';
+import CreatePostPage from './components/CreatePostPage';
+import MyContentPage from './components/MyContentPage';
+import ContentWorkflowPage from './components/ContentWorkflowPage';
+import UserManagementPage from './components/UserManagementPage';
+import ContentDetailPage from './components/ContentDetailPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -254,9 +263,15 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         {/* Admin Panel - Top Priority */}
         {isAdmin && (
           <>
-            <div className="mb-3">
+            <div className="mb-3 space-y-1">
               <NavItem to="/admin" icon={Shield} className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 hover:text-amber-300 hover:from-amber-500/30 hover:to-orange-500/30">
                 لوحة التحكم
+              </NavItem>
+              <NavItem to="/admin/users" icon={UsersRound} className="text-amber-400/70 hover:text-amber-300">
+                إدارة المستخدمين
+              </NavItem>
+              <NavItem to="/content-workflow" icon={FileCheck} className="text-amber-400/70 hover:text-amber-300">
+                مراجعة المحتوى
               </NavItem>
             </div>
             <div className="my-2 border-t border-slate-800/40 mx-2"></div>
@@ -285,6 +300,16 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
             </>
           )}
         </NavGroup>
+
+        {(isWriter || isExpert || isAnalyst || isDesigner || isAdmin) && (
+          <>
+            <div className="my-2 border-t border-slate-800/40 mx-2"></div>
+            <NavGroup title="صناعة المحتوى" open={sections.authoring} onToggle={() => toggle('authoring')}>
+              <NavItem to="/create-post" icon={PenSquare} className="text-emerald-400 hover:text-emerald-300">إنشاء منشور</NavItem>
+              <NavItem to="/my-content" icon={FileText}>منشوراتي</NavItem>
+            </NavGroup>
+          </>
+        )}
 
         <div className="my-2 border-t border-slate-800/40 mx-2"></div>
 
@@ -328,7 +353,12 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/signals')) return { title: 'إشارات السوق', section: 'الذكاء الاصطناعي' };
     if (pathname.includes('/timeline')) return { title: 'سجل التغييرات', section: 'المتابعة' };
     if (pathname.includes('/followers')) return { title: 'اكتشاف المتابعين', section: 'المجتمع' };
+    if (pathname.includes('/admin/users')) return { title: 'إدارة المستخدمين', section: 'Admin' };
     if (pathname.includes('/admin')) return { title: 'إدارة النظام', section: 'Admin' };
+    if (pathname.includes('/create-post')) return { title: 'إنشاء منشور', section: 'المحتوى' };
+    if (pathname.includes('/my-content')) return { title: 'منشوراتي', section: 'المحتوى' };
+    if (pathname.includes('/content-workflow')) return { title: 'مراجعة المحتوى', section: 'المحتوى' };
+    if (pathname.includes('/content/')) return { title: 'تفاصيل المنشور', section: 'المحتوى' };
     if (pathname.includes('/dataset')) return { title: 'تفاصيل البيانات', section: 'الستكشاف' };
     if (pathname.includes('/builder')) return { title: 'Dashboard Builder', section: 'تحليل' };
     if (pathname.includes('/queries')) return { title: 'الاستعلامات', section: 'تحليل' };
@@ -886,6 +916,11 @@ const AppContent = () => {
             <Route path="/analysis" element={<DataAnalysisPage />} />
             <Route path="/verification" element={<DataAnalysisPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/create-post" element={<CreatePostPage />} />
+            <Route path="/my-content" element={<MyContentPage />} />
+            <Route path="/content-workflow" element={<ContentWorkflowPage />} />
+            <Route path="/content/:id" element={<ContentDetailPage />} />
             <Route path="/datasets" element={<DatasetsPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />

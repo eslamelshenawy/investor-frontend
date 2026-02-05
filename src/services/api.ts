@@ -529,6 +529,182 @@ class ApiService {
   async getWidgetTypes() {
     return this.get<{ id: string; label: string; labelEn: string }[]>('/widgets/types');
   }
+
+  // =====================
+  // Content Interactions
+  // =====================
+
+  async likeContent(id: string) {
+    return this.post<{ liked: boolean; likeCount: number; contentId: string }>(`/content/${id}/like`);
+  }
+
+  async saveContent(id: string) {
+    return this.post<{ saved: boolean; saveCount: number; contentId: string }>(`/content/${id}/save`);
+  }
+
+  async shareContent(id: string) {
+    return this.post<{ shared: boolean; shareCount: number; contentId: string }>(`/content/${id}/share`);
+  }
+
+  async getEngagement(id: string) {
+    return this.get<{
+      likeCount: number; saveCount: number; commentCount: number;
+      shareCount: number; viewCount: number; hasLiked: boolean; hasSaved: boolean;
+    }>(`/content/${id}/engagement`);
+  }
+
+  // =====================
+  // Comments
+  // =====================
+
+  async getComments(contentId: string, params?: { page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    const qs = query.toString();
+    return this.get<CommentItem[]>(`/content/${contentId}/comments${qs ? `?${qs}` : ''}`);
+  }
+
+  async createComment(contentId: string, body: string, parentId?: string) {
+    return this.post<CommentItem>(`/content/${contentId}/comments`, { body, parentId });
+  }
+
+  async updateComment(contentId: string, commentId: string, body: string) {
+    return this.put<CommentItem>(`/content/${contentId}/comments/${commentId}`, { body });
+  }
+
+  async deleteComment(contentId: string, commentId: string) {
+    return this.delete<{ deleted: boolean }>(`/content/${contentId}/comments/${commentId}`);
+  }
+
+  // =====================
+  // Content Creation & Workflow
+  // =====================
+
+  async createContentPost(data: {
+    type: string; title: string; titleAr: string;
+    body: string; bodyAr: string; excerpt?: string;
+    excerptAr?: string; tags?: string[]; metadata?: Record<string, unknown>;
+  }) {
+    return this.post<Content>('/content/create', data);
+  }
+
+  async updateContentPost(id: string, data: Partial<{
+    title: string; titleAr: string; body: string; bodyAr: string;
+    excerpt: string; excerptAr: string; tags: string[]; metadata: Record<string, unknown>;
+  }>) {
+    return this.put<Content>(`/content/edit/${id}`, data);
+  }
+
+  async deleteContentPost(id: string) {
+    return this.delete<{ deleted: boolean }>(`/content/remove/${id}`);
+  }
+
+  async getMyContent(params?: { status?: string; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    const qs = query.toString();
+    return this.get<Content[]>(`/content/my${qs ? `?${qs}` : ''}`);
+  }
+
+  async submitForReview(id: string) {
+    return this.request<Content>(`/content/${id}/submit`, { method: 'PATCH' });
+  }
+
+  async reviewContent(id: string, action: 'approve' | 'reject', note?: string) {
+    return this.request<Content>(`/content/${id}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, note }),
+    });
+  }
+
+  async scheduleContent(id: string, scheduledAt: string) {
+    return this.request<Content>(`/content/${id}/schedule`, {
+      method: 'PATCH',
+      body: JSON.stringify({ scheduledAt }),
+    });
+  }
+
+  async publishContent(id: string) {
+    return this.request<Content>(`/content/${id}/publish`, { method: 'PATCH' });
+  }
+
+  async pinContent(id: string) {
+    return this.request<Content>(`/content/${id}/pin`, { method: 'PATCH' });
+  }
+
+  async getPendingContent(params?: { status?: string; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    const qs = query.toString();
+    return this.get<Content[]>(`/content/pending${qs ? `?${qs}` : ''}`);
+  }
+
+  // =====================
+  // Admin User Management
+  // =====================
+
+  async getAdminUsers(params?: {
+    search?: string; role?: string; isActive?: string;
+    page?: number; limit?: number; sort?: string; order?: string;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.role) query.append('role', params.role);
+    if (params?.isActive) query.append('isActive', params.isActive);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.sort) query.append('sort', params.sort);
+    if (params?.order) query.append('order', params.order);
+    const qs = query.toString();
+    return this.get<AdminUser[]>(`/admin/users${qs ? `?${qs}` : ''}`);
+  }
+
+  async getAdminUser(id: string) {
+    return this.get<AdminUser>(`/admin/users/${id}`);
+  }
+
+  async createAdminUser(data: {
+    email: string; password: string; name: string;
+    nameAr?: string; role?: string; bio?: string; phone?: string;
+  }) {
+    return this.post<AdminUser>('/admin/users', data);
+  }
+
+  async updateAdminUser(id: string, data: {
+    name?: string; nameAr?: string; email?: string;
+    bio?: string; phone?: string; avatar?: string;
+  }) {
+    return this.put<AdminUser>(`/admin/users/${id}`, data);
+  }
+
+  async updateAdminUserRole(id: string, role: string) {
+    return this.request<AdminUser>(`/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async toggleAdminUserStatus(id: string) {
+    return this.request<AdminUser>(`/admin/users/${id}/status`, { method: 'PATCH' });
+  }
+
+  async bulkUserAction(userIds: string[], action: string, role?: string) {
+    return this.post<{ affected: number }>('/admin/users/bulk-action', { userIds, action, role });
+  }
+
+  async getAuditLogs(params?: { page?: number; limit?: number; action?: string }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.action) query.append('action', params.action);
+    const qs = query.toString();
+    return this.get<AuditLog[]>(`/admin/audit-logs${qs ? `?${qs}` : ''}`);
+  }
 }
 
 // Types
@@ -663,6 +839,51 @@ interface Widget {
   };
 }
 
+interface CommentItem {
+  id: string;
+  contentId: string;
+  userId: string;
+  parentId?: string;
+  body: string;
+  bodyAr?: string;
+  isEdited: boolean;
+  user: { id: string; name: string; nameAr?: string; avatar?: string; role: string };
+  replies?: CommentItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  nameAr?: string;
+  avatar?: string;
+  role: string;
+  isActive: boolean;
+  emailVerified: boolean;
+  lastLoginAt?: string;
+  bio?: string;
+  phone?: string;
+  createdAt: string;
+  _count?: {
+    contents: number;
+    comments: number;
+    dashboards: number;
+  };
+}
+
+interface AuditLog {
+  id: string;
+  actorId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details: string;
+  createdAt: string;
+}
+
 // Export singleton instance
 export const api = new ApiService();
+export type { ApiResponse, CommentItem, AdminUser, AuditLog, Content, User };
 export default api;

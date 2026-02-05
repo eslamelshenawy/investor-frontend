@@ -548,42 +548,8 @@ const AISignalsPage: React.FC = () => {
         }
     }, []);
 
-    // WebFlux SSE: Stream stats from API
-    const streamStats = useCallback(() => {
-        const url = `${API_BASE}/stats/stream`;
-        console.log('[WebFlux] Connecting to stats stream:', url);
-
-        const eventSource = new EventSource(url);
-        statsEventSourceRef.current = eventSource;
-
-        eventSource.addEventListener('stats', (e) => {
-            try {
-                const data = JSON.parse(e.data);
-                console.log('[WebFlux] Received stats:', data);
-                setStats(prev => ({
-                    totalDatasets: data.totalDatasets || prev.totalDatasets,
-                    totalSignals: data.totalSignals || prev.totalSignals,
-                    lastUpdate: data.lastSyncAt || prev.lastUpdate
-                }));
-            } catch (err) {
-                console.error('[WebFlux] Error parsing stats:', err);
-            }
-        });
-
-        eventSource.addEventListener('complete', () => {
-            console.log('[WebFlux] Stats stream complete');
-            eventSource.close();
-        });
-
-        eventSource.onerror = () => {
-            eventSource.close();
-            // Fallback to regular API
-            fetchStatsRegular();
-        };
-    }, []);
-
-    // Regular API fallback for stats
-    const fetchStatsRegular = useCallback(async () => {
+    // Fetch stats via REST API
+    const fetchStatsData = useCallback(async () => {
         try {
             const response = await fetch(`${API_BASE}/stats/overview`);
             if (response.ok) {
@@ -638,10 +604,6 @@ const AISignalsPage: React.FC = () => {
         if (signalsEventSourceRef.current) {
             signalsEventSourceRef.current.close();
         }
-        if (statsEventSourceRef.current) {
-            statsEventSourceRef.current.close();
-        }
-
         // Reset state
         setSignals([]);
         setStreaming(true);
@@ -649,23 +611,20 @@ const AISignalsPage: React.FC = () => {
 
         // Start new streams
         streamSignals();
-        streamStats();
-    }, [streamSignals, streamStats]);
+        fetchStatsData();
+    }, [streamSignals, fetchStatsData]);
 
     // WebFlux: Initialize streams on mount
     useEffect(() => {
         streamSignals();
-        streamStats();
+        fetchStatsData();
 
         return () => {
             if (signalsEventSourceRef.current) {
                 signalsEventSourceRef.current.close();
             }
-            if (statsEventSourceRef.current) {
-                statsEventSourceRef.current.close();
-            }
         };
-    }, [streamSignals, streamStats]);
+    }, [streamSignals, fetchStatsData]);
 
     // Alias for loading state
     const loading = streaming && signals.length === 0;

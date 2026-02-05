@@ -149,7 +149,10 @@ export interface FeedItem {
     likes: number;
     shares: number;
     saves: number;
+    comments: number;
   };
+  hasLiked?: boolean;
+  hasSaved?: boolean;
   payload: any; // Flexible payload based on content type
 }
 
