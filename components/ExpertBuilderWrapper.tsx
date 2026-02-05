@@ -58,7 +58,7 @@ interface ExpertBuilderWrapperProps {
     onPublishDashboard?: (name: string, description: string, selectedWidgets: string[]) => void;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Atomic Widget Card Component
 const AtomicWidgetCard = ({

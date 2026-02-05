@@ -56,7 +56,7 @@ interface StreamMeta {
    experts: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Fallback data when API is unavailable
 const FALLBACK_ENTITIES: Entity[] = [

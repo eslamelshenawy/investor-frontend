@@ -17,7 +17,7 @@ import {
 import { api } from '../src/services/api';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // ---------------------------------------------------------------------------
 // Types & constants

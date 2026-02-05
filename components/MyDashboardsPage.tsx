@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 // API Base URL for SSE streams
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Types
 interface Dashboard {

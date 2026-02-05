@@ -42,7 +42,7 @@ import {
 import { api } from '../src/services/api';
 
 // WebFlux: API Base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'https://investor-backend-3p3m.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // ============================================
 // TYPES - الأنواع
