@@ -44,7 +44,9 @@ interface FeedCardProps {
     onSave?: (itemId: string) => void;
 }
 
-const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) => {
+const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, onSave }) => {
+    // Ensure payload and engagement always exist to prevent undefined errors
+    const item = { ...rawItem, payload: rawItem.payload || {}, engagement: rawItem.engagement || { likes: 0, shares: 0, saves: 0, comments: 0 } };
     const navigate = useNavigate();
     const [liked, setLiked] = useState(item.hasLiked || false);
     const [saved, setSaved] = useState(item.hasSaved || false);
@@ -177,7 +179,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                    {item.payload.highlights.map((point: any, idx: number) => (
+                    {(item.payload.highlights || []).map((point: any, idx: number) => (
                         <div key={idx} className="bg-white/5 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-white/5 hover:bg-white/10 transition-colors">
                             <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1">{point.label}</p>
                             <p className="text-sm sm:text-lg font-bold text-white tracking-wide">{point.value}</p>
@@ -276,12 +278,12 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                     <p className="text-xs text-gray-400 mt-1 mr-8">أنجز الخطوات التالية</p>
                 </div>
                 <div className="text-center bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
-                    <span className="block text-xl font-black text-gray-900">{Math.round((item.payload.items.filter((i: any) => i.checked).length / item.payload.items.length) * 100)}%</span>
+                    <span className="block text-xl font-black text-gray-900">{Math.round(((item.payload.items || []).filter((i: any) => i.checked).length / (item.payload.items || []).length) * 100 || 0)}%</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase">اكتمال</span>
                 </div>
             </div>
             <div className="space-y-3">
-                {item.payload.items.map((checkItem: any, i: number) => (
+                {(item.payload.items || []).map((checkItem: any, i: number) => (
                     <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group ${checkItem.checked ? 'bg-green-50 border-green-100' : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm'}`}>
                         <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shadow-sm ${checkItem.checked ? 'bg-green-500 border-green-500 scale-100' : 'bg-white border-gray-300 group-hover:border-green-400 scale-90 group-hover:scale-100'}`}>
                             {checkItem.checked && <Check size={14} className="text-white stroke-[4]" />}
@@ -308,7 +310,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                 <span className="text-xs text-gray-500">{item.payload.totalVotes} صوت • ينتهي خلال 2 يوم</span>
             </div>
             <div className="space-y-3">
-                {item.payload.options.map((opt: any, idx: number) => (
+                {(item.payload.options || []).map((opt: any, idx: number) => (
                     <div key={idx} className="relative group cursor-pointer">
                         <div className="flex justify-between text-xs font-bold mb-1 z-10 relative px-1">
                             <span>{opt.label}</span>
@@ -508,7 +510,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                 </div>
 
                 <div className="space-y-2 flex-1">
-                    {item.payload.assets.map((asset: any, idx: number) => (
+                    {(item.payload.assets || []).map((asset: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-xs">
                             <span className="flex items-center gap-2 font-bold text-gray-600">
                                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: asset.color }}></span>
