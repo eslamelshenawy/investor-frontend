@@ -91,10 +91,10 @@ const MobileBottomNav = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,20px)] bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 lg:hidden flex justify-around items-start pt-3 px-2 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] transition-all">
       <div
-        onClick={() => navigate('/dashboard')}
-        className={`flex flex-col items-center justify-center w-full space-y-1 cursor-pointer active:scale-90 transition-transform duration-200 ${isPathActive('/dashboard', true) ? 'text-blue-600' : 'text-gray-400'}`}
+        onClick={() => navigate('/')}
+        className={`flex flex-col items-center justify-center w-full space-y-1 cursor-pointer active:scale-90 transition-transform duration-200 ${isPathActive('/', true) ? 'text-blue-600' : 'text-gray-400'}`}
       >
-        <Compass size={24} strokeWidth={isPathActive('/dashboard', true) ? 2.5 : 2} />
+        <Compass size={24} strokeWidth={isPathActive('/', true) ? 2.5 : 2} />
         <span className="text-[10px] font-bold">الرئيسية</span>
       </div>
 
@@ -145,8 +145,8 @@ const NavItem = ({ to, icon: Icon, children, end = false, className = '', badge 
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = end
-    ? (location.pathname === to || (to === '/dashboard' && location.pathname === '/'))
-    : location.pathname.startsWith(to) && (to === '/dashboard' ? (location.pathname === '/dashboard' || location.pathname === '/') : true);
+    ? location.pathname === to
+    : location.pathname.startsWith(to) && to !== '/';
 
   const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group cursor-pointer select-none`;
   const activeClass = `bg-blue-600 text-white shadow-lg shadow-blue-900/40`;
@@ -264,7 +264,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         )}
 
         <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
-          <NavItem to="/dashboard" icon={Compass} end>مركز الاكتشاف</NavItem>
+          <NavItem to="/" icon={Compass} end>الرئيسية</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
           <NavItem to="/followers" icon={Users}>المجتمع</NavItem>
