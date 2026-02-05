@@ -1,9 +1,9 @@
 /**
  * HEATMAP PAGE - خرائط الحرارة
- * تصور بصري لتوزيع البيانات والإشارات عبر القطاعات والمناطق والزمن
+ * SSE-powered visualization of data and signal distribution
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Map,
   BarChart3,
@@ -42,26 +42,19 @@ interface TemporalHeatmapItem {
   datasetUpdates: number;
 }
 
-interface HeatmapData {
-  sectorHeatmap: SectorHeatmapItem[];
-  regionHeatmap: RegionHeatmapItem[];
-  temporalHeatmap: TemporalHeatmapItem[];
-  lastUpdated: string;
-}
-
 type TabKey = 'sector' | 'region' | 'temporal';
 
 // ============================================
-// COLOR HELPERS
+// HELPERS
 // ============================================
 
-function getIntensityStyle(value: number, max: number): { bg: string; text: string; badge: string } {
-  if (max === 0) return { bg: 'bg-gray-50 border-gray-200', text: 'text-gray-500', badge: 'bg-gray-100 text-gray-600' };
+function getIntensityStyle(value: number, max: number) {
+  if (max === 0) return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-500' };
   const ratio = value / max;
-  if (ratio >= 0.85) return { bg: 'bg-red-50 border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700' };
-  if (ratio >= 0.55) return { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' };
-  if (ratio >= 0.25) return { bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700' };
-  return { bg: 'bg-gray-50 border-gray-200', text: 'text-gray-600', badge: 'bg-gray-100 text-gray-600' };
+  if (ratio >= 0.85) return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' };
+  if (ratio >= 0.55) return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' };
+  if (ratio >= 0.25) return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' };
+  return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600' };
 }
 
 function getBarColor(value: number, max: number): string {
@@ -73,7 +66,7 @@ function getBarColor(value: number, max: number): string {
   return 'bg-gray-400';
 }
 
-function impactLabel(avg: number): { label: string; color: string } {
+function impactLabel(avg: number) {
   if (avg >= 80) return { label: 'حرج', color: 'text-red-600 bg-red-50' };
   if (avg >= 60) return { label: 'مرتفع', color: 'text-amber-600 bg-amber-50' };
   if (avg >= 35) return { label: 'متوسط', color: 'text-blue-600 bg-blue-50' };
@@ -86,28 +79,24 @@ function formatNumber(n: number): string {
 }
 
 function monthLabel(ym: string): string {
-  const monthNames: Record<string, string> = {
+  const names: Record<string, string> = {
     '01': 'يناير', '02': 'فبراير', '03': 'مارس', '04': 'أبريل',
     '05': 'مايو', '06': 'يونيو', '07': 'يوليو', '08': 'أغسطس',
     '09': 'سبتمبر', '10': 'أكتوبر', '11': 'نوفمبر', '12': 'ديسمبر',
   };
   const [year, month] = ym.split('-');
-  return `${monthNames[month] || month} ${year}`;
+  return `${names[month] || month} ${year}`;
 }
 
 function monthShort(ym: string): string {
-  const monthNames: Record<string, string> = {
+  const names: Record<string, string> = {
     '01': 'ينا', '02': 'فبر', '03': 'مار', '04': 'أبر',
     '05': 'ماي', '06': 'يون', '07': 'يول', '08': 'أغس',
     '09': 'سبت', '10': 'أكت', '11': 'نوف', '12': 'ديس',
   };
   const [, month] = ym.split('-');
-  return monthNames[month] || month;
+  return names[month] || month;
 }
-
-// ============================================
-// TAB CONFIG
-// ============================================
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType; desc: string }[] = [
   { key: 'sector', label: 'قطاعي', icon: BarChart3, desc: 'توزيع البيانات حسب القطاعات' },
@@ -119,18 +108,17 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType; desc: string 
 // SUB-COMPONENTS
 // ============================================
 
-function StatCard({ icon: Icon, label, value, sub, color }: {
-  icon: React.ElementType; label: string; value: string; sub?: string; color: string;
+function StatCard({ icon: Icon, label, value, color }: {
+  icon: React.ElementType; label: string; value: string; color: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center shrink-0`}>
-        <Icon size={20} />
+    <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3">
+      <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center shrink-0`}>
+        <Icon size={18} />
       </div>
       <div>
-        <p className="text-2xl font-black text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
-        {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-xl font-black text-gray-900">{value}</p>
+        <p className="text-[11px] text-gray-500">{label}</p>
       </div>
     </div>
   );
@@ -144,26 +132,26 @@ function Legend() {
     { color: 'bg-red-400', label: 'حرج' },
   ];
   return (
-    <div className="flex items-center gap-4 justify-center mt-6 pt-5 border-t border-gray-100">
-      <span className="text-xs text-gray-400 font-medium">مقياس الكثافة:</span>
+    <div className="flex items-center gap-4 justify-center mt-5 pt-4 border-t border-gray-100">
+      <span className="text-[11px] text-gray-400">مقياس الكثافة:</span>
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
-          <span className={`w-3 h-3 rounded-sm ${item.color}`} />
-          <span className="text-xs text-gray-500">{item.label}</span>
+          <span className={`w-2.5 h-2.5 rounded-sm ${item.color}`} />
+          <span className="text-[11px] text-gray-500">{item.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// ── Sector Heatmap ──────────────────────────────
+// ── Sector Grid ─────────────────────────────
 
 function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
-        <BarChart3 size={40} className="mx-auto mb-3 opacity-40" />
-        <p>لا توجد بيانات قطاعية متاحة</p>
+        <BarChart3 size={36} className="mx-auto mb-3 opacity-40" />
+        <p className="text-sm">لا توجد بيانات قطاعية</p>
       </div>
     );
   }
@@ -174,43 +162,31 @@ function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {items.map((item) => {
         const style = getIntensityStyle(item.datasetCount, maxDatasets);
-        const widthPercent = Math.max((item.datasetCount / maxDatasets) * 100, 3);
+        const widthPct = Math.max((item.datasetCount / maxDatasets) * 100, 3);
         const impact = impactLabel(item.avgImpact);
         return (
           <div
             key={item.sector}
-            className={`${style.bg} border rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-default group`}
+            className={`${style.bg} border ${style.border} rounded-xl p-4 transition-all hover:shadow-md cursor-default`}
           >
-            <h3 className="text-sm font-bold text-gray-800 truncate mb-3" title={item.sector}>
-              {item.sector}
-            </h3>
-            {/* Mini bar */}
+            <h3 className="text-sm font-bold text-gray-800 truncate mb-3">{item.sector}</h3>
             <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
-              <div
-                className={`h-full rounded-full transition-all ${getBarColor(item.datasetCount, maxDatasets)}`}
-                style={{ width: `${widthPercent}%` }}
-              />
+              <div className={`h-full rounded-full ${getBarColor(item.datasetCount, maxDatasets)}`} style={{ width: `${widthPct}%` }} />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-[11px]">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                  <Database size={10} /> مجموعات بيانات
-                </span>
-                <span className={`text-sm font-bold ${style.text}`}>
-                  {formatNumber(item.datasetCount)}
-                </span>
+                <span className="text-gray-500 flex items-center gap-1"><Database size={10} /> بيانات</span>
+                <span className={`font-bold ${style.text}`}>{formatNumber(item.datasetCount)}</span>
               </div>
               {item.signalCount > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                    <Signal size={10} /> إشارات
-                  </span>
-                  <span className="text-sm font-semibold text-gray-700">{item.signalCount}</span>
+                  <span className="text-gray-500 flex items-center gap-1"><Signal size={10} /> إشارات</span>
+                  <span className="font-bold text-gray-700">{item.signalCount}</span>
                 </div>
               )}
               {item.avgImpact > 0 && (
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-[11px] text-gray-500">التأثير</span>
+                  <span className="text-gray-500">التأثير</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${impact.color}`}>
                     {item.avgImpact}% {impact.label}
                   </span>
@@ -224,14 +200,14 @@ function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
   );
 }
 
-// ── Region Heatmap ──────────────────────────────
+// ── Region Grid ─────────────────────────────
 
 function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
-        <Map size={40} className="mx-auto mb-3 opacity-40" />
-        <p>لا توجد بيانات جغرافية متاحة</p>
+        <Map size={36} className="mx-auto mb-3 opacity-40" />
+        <p className="text-sm">لا توجد بيانات جغرافية</p>
       </div>
     );
   }
@@ -239,27 +215,24 @@ function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   const maxSignals = Math.max(...items.map((i) => i.signalCount), 1);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {items.map((item) => {
         const style = getIntensityStyle(item.signalCount, maxSignals);
         const impact = impactLabel(item.avgImpact);
         return (
-          <div
-            key={item.region}
-            className={`${style.bg} border rounded-xl p-5 transition-all hover:shadow-md cursor-default`}
-          >
+          <div key={item.region} className={`${style.bg} border ${style.border} rounded-xl p-4 transition-all hover:shadow-md cursor-default`}>
             <div className="flex items-center gap-2 mb-3">
-              <Map size={16} className="text-gray-400" />
+              <Map size={14} className="text-gray-400" />
               <h3 className="text-sm font-bold text-gray-800">{item.region}</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 text-[11px]">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">إشارات</span>
-                <span className={`text-lg font-black ${style.text}`}>{item.signalCount}</span>
+                <span className="text-gray-500">إشارات</span>
+                <span className={`text-base font-black ${style.text}`}>{item.signalCount}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">التأثير</span>
-                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${impact.color}`}>
+                <span className="text-gray-500">التأثير</span>
+                <span className={`font-bold px-2 py-0.5 rounded-full ${impact.color}`}>
                   {item.avgImpact}% {impact.label}
                 </span>
               </div>
@@ -271,89 +244,71 @@ function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   );
 }
 
-// ── Temporal Heatmap ────────────────────────────
+// ── Temporal Timeline ───────────────────────
 
 function TemporalTimeline({ items }: { items: TemporalHeatmapItem[] }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
-        <Clock size={40} className="mx-auto mb-3 opacity-40" />
-        <p>لا توجد بيانات زمنية متاحة</p>
+        <Clock size={36} className="mx-auto mb-3 opacity-40" />
+        <p className="text-sm">لا توجد بيانات زمنية</p>
       </div>
     );
   }
 
   const maxActivity = Math.max(...items.map((i) => i.signalCount + i.datasetUpdates), 1);
-  const maxBarHeight = 140;
+  const maxBarHeight = 120;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Bar chart */}
-      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-        <div className="flex items-end gap-3 justify-center overflow-x-auto pb-2" style={{ minHeight: maxBarHeight + 50 }}>
+      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div className="flex items-end gap-2.5 justify-center overflow-x-auto pb-2" style={{ minHeight: maxBarHeight + 40 }}>
           {items.map((item) => {
             const total = item.signalCount + item.datasetUpdates;
             const height = Math.max((total / maxActivity) * maxBarHeight, 4);
             const signalH = total > 0 ? (item.signalCount / total) * height : 0;
             const datasetH = total > 0 ? (item.datasetUpdates / total) * height : 0;
-            const hasActivity = total > 0;
             return (
-              <div key={item.month} className="flex flex-col items-center gap-1.5 min-w-[48px] group">
-                <span className={`text-[10px] font-bold transition-colors ${hasActivity ? 'text-gray-700' : 'text-gray-300'}`}>
-                  {hasActivity ? formatNumber(total) : '0'}
+              <div key={item.month} className="flex flex-col items-center gap-1 min-w-[40px] group">
+                <span className={`text-[10px] font-bold ${total > 0 ? 'text-gray-700' : 'text-gray-300'}`}>
+                  {total > 0 ? formatNumber(total) : '0'}
                 </span>
-                <div className="flex flex-col-reverse rounded-t-lg overflow-hidden" style={{ height: `${height}px`, width: '32px' }}>
+                <div className="flex flex-col-reverse rounded-t overflow-hidden" style={{ height: `${height}px`, width: '28px' }}>
                   {datasetH > 0 && (
-                    <div
-                      className="w-full bg-blue-400 group-hover:bg-blue-500 transition-colors"
-                      style={{ height: `${datasetH}px` }}
-                      title={`تحديثات بيانات: ${formatNumber(item.datasetUpdates)}`}
-                    />
+                    <div className="w-full bg-blue-400 group-hover:bg-blue-500 transition-colors" style={{ height: `${datasetH}px` }} />
                   )}
                   {signalH > 0 && (
-                    <div
-                      className="w-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors"
-                      style={{ height: `${signalH}px` }}
-                      title={`إشارات: ${item.signalCount}`}
-                    />
+                    <div className="w-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors" style={{ height: `${signalH}px` }} />
                   )}
-                  {!hasActivity && (
-                    <div className="w-full bg-gray-200 rounded-t" style={{ height: '4px' }} />
-                  )}
+                  {total === 0 && <div className="w-full bg-gray-200 rounded-t" style={{ height: '4px' }} />}
                 </div>
-                <span className="text-[10px] text-gray-500 font-medium text-center leading-tight">
-                  {monthShort(item.month)}
-                </span>
+                <span className="text-[10px] text-gray-500 font-medium">{monthShort(item.month)}</span>
               </div>
             );
           })}
         </div>
-
-        {/* Inline legend */}
-        <div className="flex items-center gap-5 justify-center mt-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center gap-5 justify-center mt-3 pt-3 border-t border-gray-200">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-emerald-400" />
-            <span className="text-xs text-gray-500">إشارات</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400" />
+            <span className="text-[11px] text-gray-500">إشارات</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-blue-400" />
-            <span className="text-xs text-gray-500">تحديثات بيانات</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-blue-400" />
+            <span className="text-[11px] text-gray-500">تحديثات بيانات</span>
           </div>
         </div>
       </div>
 
-      {/* Monthly detail cards */}
+      {/* Monthly cards */}
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
         {items.map((item) => {
           const total = item.signalCount + item.datasetUpdates;
           const style = getIntensityStyle(total, maxActivity);
           return (
-            <div
-              key={item.month}
-              className={`${style.bg} border rounded-xl p-3 text-center transition-all hover:shadow-sm cursor-default`}
-            >
+            <div key={item.month} className={`${style.bg} border ${style.border} rounded-xl p-3 text-center hover:shadow-sm transition-all cursor-default`}>
               <p className="text-[11px] text-gray-500 font-medium mb-1">{monthLabel(item.month)}</p>
-              <p className={`text-xl font-black ${style.text}`}>{formatNumber(total)}</p>
+              <p className={`text-lg font-black ${style.text}`}>{formatNumber(total)}</p>
               <p className="text-[10px] text-gray-400 mt-1">
                 {item.signalCount} إشارة · {formatNumber(item.datasetUpdates)} تحديث
               </p>
@@ -366,184 +321,271 @@ function TemporalTimeline({ items }: { items: TemporalHeatmapItem[] }) {
 }
 
 // ============================================
+// LOADING SKELETON
+// ============================================
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100" />
+              <div className="space-y-2 flex-1">
+                <div className="h-5 bg-gray-100 rounded w-16" />
+                <div className="h-3 bg-gray-50 rounded w-20" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-6 animate-pulse">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-28 bg-gray-50 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
 const HeatmapPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('sector');
-  const [data, setData] = useState<HeatmapData | null>(null);
+  const [sectorData, setSectorData] = useState<SectorHeatmapItem[]>([]);
+  const [regionData, setRegionData] = useState<RegionHeatmapItem[]>([]);
+  const [temporalData, setTemporalData] = useState<TemporalHeatmapItem[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const [sectionsLoaded, setSectionsLoaded] = useState(0);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-      setError(null);
-
-      const response = await fetch(`${API_BASE}/heatmap`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const json = await response.json();
-      if (json.success && json.data) {
-        setData(json.data);
-      } else {
-        throw new Error(json.error || 'Unknown error');
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'فشل في تحميل البيانات';
-      setError(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const connectStream = useCallback(() => {
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
     }
+
+    setLoading(true);
+    setError(null);
+    setSectionsLoaded(0);
+
+    const es = new EventSource(`${API_BASE}/heatmap/stream`);
+    eventSourceRef.current = es;
+
+    es.addEventListener('sector', (e) => {
+      try {
+        setSectorData(JSON.parse(e.data));
+        setSectionsLoaded((p) => p + 1);
+      } catch { /* ignore parse errors */ }
+    });
+
+    es.addEventListener('region', (e) => {
+      try {
+        setRegionData(JSON.parse(e.data));
+        setSectionsLoaded((p) => p + 1);
+      } catch { /* ignore */ }
+    });
+
+    es.addEventListener('temporal', (e) => {
+      try {
+        setTemporalData(JSON.parse(e.data));
+        setSectionsLoaded((p) => p + 1);
+      } catch { /* ignore */ }
+    });
+
+    es.addEventListener('meta', (e) => {
+      try {
+        const meta = JSON.parse(e.data);
+        if (meta.lastUpdated) setLastUpdated(meta.lastUpdated);
+      } catch { /* ignore */ }
+    });
+
+    es.addEventListener('complete', () => {
+      setLoading(false);
+      es.close();
+    });
+
+    es.addEventListener('error', (e) => {
+      const data = (e as MessageEvent)?.data;
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          setError(parsed.message || 'فشل في تحميل البيانات');
+        } catch {
+          setError('فشل في تحميل البيانات');
+        }
+      }
+      setLoading(false);
+      es.close();
+    });
+
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        setLoading(false);
+      } else {
+        setError('فشل في الاتصال بالخادم');
+        setLoading(false);
+        es.close();
+      }
+    };
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    connectStream();
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, [connectStream]);
 
-  // Loading
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
-        <div className="text-center">
-          <RefreshCw size={32} className="mx-auto mb-3 text-blue-500 animate-spin" />
-          <p className="text-gray-500 text-sm">جاري تحميل خرائط الحرارة...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error
-  if (error && !data) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
-        <div className="text-center max-w-md bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-          <Activity size={40} className="mx-auto mb-3 text-red-400" />
-          <p className="text-gray-800 font-bold mb-2">تعذر تحميل البيانات</p>
-          <p className="text-gray-500 text-sm mb-4">{error}</p>
-          <button
-            onClick={() => fetchData()}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-xl transition-colors font-bold"
-          >
-            إعادة المحاولة
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const totalDatasets = data?.sectorHeatmap.reduce((s, i) => s + i.datasetCount, 0) || 0;
-  const totalSignals = data?.sectorHeatmap.reduce((s, i) => s + i.signalCount, 0) || 0;
-  const totalSectors = data?.sectorHeatmap.length || 0;
+  const hasData = sectorData.length > 0 || regionData.length > 0 || temporalData.length > 0;
+  const totalDatasets = sectorData.reduce((s, i) => s + i.datasetCount, 0);
+  const totalSignals = sectorData.reduce((s, i) => s + i.signalCount, 0);
+  const totalSectors = sectorData.length;
 
   return (
-    <div className="min-h-screen bg-white" dir="rtl">
-      {/* Header */}
-      <div className="bg-gradient-to-bl from-blue-50 via-white to-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <Activity size={22} className="text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black text-gray-900">خرائط الحرارة</h1>
-                  <p className="text-sm text-gray-500">تصور بصري لتوزيع البيانات والإشارات</p>
-                </div>
+    <div className="min-h-screen bg-gray-50/50" dir="rtl">
+      {/* ─── Header ─── */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200/60">
+                <Activity size={22} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-gray-900">خرائط الحرارة</h1>
+                <p className="text-[13px] text-gray-400 mt-0.5">تصور بصري لتوزيع البيانات والإشارات</p>
               </div>
             </div>
             <button
-              onClick={() => fetchData(true)}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 text-sm rounded-xl transition-colors disabled:opacity-50 shadow-sm font-medium"
+              onClick={connectStream}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
             >
-              <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
               تحديث
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
-            <StatCard icon={Layers} label="إجمالي القطاعات" value={String(totalSectors)} color="bg-blue-100 text-blue-600" />
-            <StatCard icon={Database} label="مجموعات البيانات" value={formatNumber(totalDatasets)} color="bg-emerald-100 text-emerald-600" />
-            <StatCard icon={Zap} label="الإشارات" value={String(totalSignals)} color="bg-amber-100 text-amber-600" />
-            <StatCard icon={TrendingUp} label="آخر تحديث" value={data?.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString('ar-SA') : '-'} color="bg-purple-100 text-purple-600" />
+          {hasData && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+              <StatCard icon={Layers} label="القطاعات" value={String(totalSectors)} color="bg-blue-100 text-blue-600" />
+              <StatCard icon={Database} label="مجموعات البيانات" value={formatNumber(totalDatasets)} color="bg-emerald-100 text-emerald-600" />
+              <StatCard icon={Zap} label="الإشارات" value={String(totalSignals)} color="bg-amber-100 text-amber-600" />
+              <StatCard icon={TrendingUp} label="آخر تحديث" value={lastUpdated ? new Date(lastUpdated).toLocaleDateString('ar-SA') : '-'} color="bg-purple-100 text-purple-600" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ─── Tabs ─── */}
+      {hasData && (
+        <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="flex gap-1 py-2">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeTab === tab.key
+                        ? 'bg-gray-900 text-white shadow-sm'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                    }`}
+                  >
+                    <Icon size={15} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="flex gap-2 bg-gray-100 p-1.5 rounded-xl w-fit">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Icon size={16} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="text-xs text-gray-400 mt-2 mr-2">
-          {TABS.find(t => t.key === activeTab)?.desc}
-        </p>
-      </div>
+      {/* ─── Content ─── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Loading */}
+        {loading && !hasData && <LoadingSkeleton />}
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          {activeTab === 'sector' && (
-            <>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-gray-900">خريطة القطاعات</h2>
-                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
-                  {totalSectors} قطاع
-                </span>
-              </div>
-              <SectorGrid items={data?.sectorHeatmap || []} />
-              <Legend />
-            </>
-          )}
+        {/* Streaming progress */}
+        {loading && sectionsLoaded > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <RefreshCw size={14} className="animate-spin text-blue-500" />
+              <span>جاري تحميل البيانات... ({sectionsLoaded}/3)</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1 mt-2 overflow-hidden">
+              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${(sectionsLoaded / 3) * 100}%` }} />
+            </div>
+          </div>
+        )}
 
-          {activeTab === 'region' && (
-            <>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-gray-900">خريطة المناطق</h2>
-                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
-                  {data?.regionHeatmap.length || 0} منطقة
-                </span>
-              </div>
-              <RegionGrid items={data?.regionHeatmap || []} />
-              <Legend />
-            </>
-          )}
+        {/* Error */}
+        {error && !hasData && (
+          <div className="bg-white rounded-2xl border border-red-100 p-10 text-center max-w-md mx-auto mt-12">
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <Activity size={24} className="text-red-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">تعذر تحميل البيانات</h3>
+            <p className="text-sm text-gray-500 mb-6">{error}</p>
+            <button
+              onClick={connectStream}
+              className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-bold transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCw size={15} />إعادة المحاولة
+            </button>
+          </div>
+        )}
 
-          {activeTab === 'temporal' && (
-            <>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-gray-900">النشاط الزمني</h2>
-                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
-                  آخر 12 شهر
-                </span>
-              </div>
-              <TemporalTimeline items={data?.temporalHeatmap || []} />
-            </>
-          )}
-        </div>
+        {/* Data Sections */}
+        {hasData && (
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6">
+            {activeTab === 'sector' && (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">خريطة القطاعات</h2>
+                  <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">{totalSectors} قطاع</span>
+                </div>
+                <SectorGrid items={sectorData} />
+                <Legend />
+              </>
+            )}
+
+            {activeTab === 'region' && (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">خريطة المناطق</h2>
+                  <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">{regionData.length} منطقة</span>
+                </div>
+                <RegionGrid items={regionData} />
+                <Legend />
+              </>
+            )}
+
+            {activeTab === 'temporal' && (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-bold text-gray-900">النشاط الزمني</h2>
+                  <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">آخر 12 شهر</span>
+                </div>
+                <TemporalTimeline items={temporalData} />
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
