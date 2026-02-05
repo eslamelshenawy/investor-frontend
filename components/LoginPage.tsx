@@ -46,7 +46,7 @@ const FEATURES = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, complete2FA } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,6 +54,11 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 2FA state
+  const [show2FA, setShow2FA] = useState(false);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [pending2FAUserId, setPending2FAUserId] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +73,12 @@ const LoginPage = () => {
     const result = await login(email, password);
     setIsLoading(false);
 
+    if (result.requires2FA && result.userId) {
+      setPending2FAUserId(result.userId);
+      setShow2FA(true);
+      return;
+    }
+
     if (result.success) {
       const role = result.user?.role?.toUpperCase();
       if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
@@ -77,6 +88,27 @@ const LoginPage = () => {
       }
     } else {
       setError(result.error || 'حدث خطأ في تسجيل الدخول');
+    }
+  };
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!twoFACode) { setError('الرجاء إدخال رمز المصادقة'); return; }
+
+    setIsLoading(true);
+    const result = await complete2FA(pending2FAUserId, twoFACode);
+    setIsLoading(false);
+
+    if (result.success) {
+      const role = result.user?.role?.toUpperCase();
+      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } else {
+      setError(result.error || 'رمز المصادقة غير صحيح');
     }
   };
 
@@ -178,6 +210,44 @@ const LoginPage = () => {
             </div>
           )}
 
+          {show2FA ? (
+            <form onSubmit={handle2FASubmit} className="space-y-5">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Lock size={28} className="text-blue-600" />
+                </div>
+                <h3 className="text-lg font-black text-gray-900 mb-1">المصادقة الثنائية</h3>
+                <p className="text-sm text-gray-500">أدخل الرمز من تطبيق المصادقة</p>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={twoFACode}
+                  onChange={(e) => { setTwoFACode(e.target.value.replace(/\D/g, '')); setError(''); }}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-4 text-center text-2xl font-mono text-gray-900 tracking-[0.5em] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                  placeholder="000000"
+                  maxLength={6}
+                  dir="ltr"
+                  autoFocus
+                  autoComplete="one-time-code"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading || twoFACode.length < 6}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+              >
+                {isLoading ? <><Loader2 size={20} className="animate-spin" /> جارٍ التحقق...</> : 'تحقق'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShow2FA(false); setTwoFACode(''); setError(''); }}
+                className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+              >
+                العودة لتسجيل الدخول
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>

@@ -21,10 +21,11 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User; requires2FA?: boolean; userId?: string }>;
   register: (data: { email: string; password: string; name: string; nameAr?: string }) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => void;
   updateUser: (user: User) => void;
+  complete2FA: (userId: string, token: string) => Promise<{ success: boolean; error?: string; user?: User }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api.login(email, password);
 
       if (response.success && response.data) {
+        // Check if 2FA is required
+        if ((response.data as any).requires2FA) {
+          return { success: false, requires2FA: true, userId: (response.data as any).userId };
+        }
         setUser(response.data.user);
         return { success: true, user: response.data.user };
       }
@@ -74,6 +79,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         success: false,
         error: response.errorAr || response.error || 'حدث خطأ في تسجيل الدخول'
       };
+    } catch {
+      return { success: false, error: 'حدث خطأ في الاتصال بالخادم' };
+    }
+  };
+
+  const complete2FA = async (userId: string, token: string) => {
+    try {
+      const response = await api.validate2FA(userId, token);
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        return { success: true, user: response.data.user };
+      }
+      return { success: false, error: response.errorAr || response.error || 'رمز المصادقة غير صحيح' };
     } catch {
       return { success: false, error: 'حدث خطأ في الاتصال بالخادم' };
     }
@@ -117,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         updateUser,
+        complete2FA,
       }}
     >
       {children}

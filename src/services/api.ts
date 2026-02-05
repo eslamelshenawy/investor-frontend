@@ -257,6 +257,30 @@ class ApiService {
   }
 
   // =====================
+  // 2FA
+  // =====================
+
+  async get2FAStatus() {
+    return this.get<{ enabled: boolean }>('/auth/2fa/status');
+  }
+
+  async setup2FA() {
+    return this.post<{ secret: string; qrCode: string }>('/auth/2fa/setup', {});
+  }
+
+  async verify2FA(token: string) {
+    return this.post<{ enabled: boolean; backupCodes: string[] }>('/auth/2fa/verify', { token });
+  }
+
+  async disable2FA(token: string) {
+    return this.post<{ enabled: boolean }>('/auth/2fa/disable', { token });
+  }
+
+  async validate2FA(userId: string, token?: string, backupCode?: string) {
+    return this.post<{ user: User; token: string }>('/auth/2fa/validate', { userId, token, backupCode });
+  }
+
+  // =====================
   // File Upload
   // =====================
 
