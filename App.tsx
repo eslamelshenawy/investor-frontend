@@ -37,7 +37,15 @@ import {
   UsersRound,
   Download,
   Map,
-  Lightbulb
+  Lightbulb,
+  ArrowLeftRight,
+  FileBarChart,
+  ShieldCheck,
+  UserSearch,
+  Settings,
+  Library,
+  TrendingUp,
+  ScanSearch
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -110,6 +118,15 @@ import BlogPage from './components/BlogPage';
 import ExportPage from './components/ExportPage';
 import RecommendationsPage from './components/RecommendationsPage';
 import HeatmapPage from './components/HeatmapPage';
+import ExpertDiscoveryPage from './components/ExpertDiscoveryPage';
+import PlanDetailsPage from './components/PlanDetailsPage';
+import SystemSettingsPage from './components/SystemSettingsPage';
+import SmartComparisonsPage from './components/SmartComparisonsPage';
+import DataVerificationPage from './components/DataVerificationPage';
+import CustomReportsPage from './components/CustomReportsPage';
+import WidgetLibraryPage from './components/WidgetLibraryPage';
+import AIEconomicSummaryPage from './components/AIEconomicSummaryPage';
+import PatternRecognitionPage from './components/PatternRecognitionPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -300,6 +317,9 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
               <NavItem to="/content-workflow" icon={FileCheck} className="text-amber-400/70 hover:text-amber-300">
                 مراجعة المحتوى
               </NavItem>
+              <NavItem to="/admin/settings" icon={Settings} className="text-amber-400/70 hover:text-amber-300">
+                إعدادات النظام
+              </NavItem>
             </div>
             <div className="my-2 border-t border-slate-800/40 mx-2"></div>
           </>
@@ -311,6 +331,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           <NavItem to="/heatmap" icon={Map}>خرائط الحرارة</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
           <NavItem to="/followers" icon={Users}>المجتمع</NavItem>
+          <NavItem to="/experts" icon={UserSearch}>اكتشاف الخبراء</NavItem>
         </NavGroup>
 
         <div className="my-2 border-t border-slate-800/40 mx-2"></div>
@@ -319,14 +340,22 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           <NavItem to="/datasets" icon={Database}>مجموعات البيانات</NavItem>
           <NavItem to="/dashboards" icon={LayoutDashboard}>كل اللوحات</NavItem>
           <NavItem to="/recommendations" icon={Lightbulb}>التوصيات الذكية</NavItem>
+          <NavItem to="/comparisons" icon={ArrowLeftRight}>المقارنات الذكية</NavItem>
+          <NavItem to="/economic-summary" icon={TrendingUp}>الملخص الاقتصادي</NavItem>
+          <NavItem to="/patterns" icon={ScanSearch}>اكتشاف الأنماط</NavItem>
           <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
           {isExpert && (
-            <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
+            <>
+              <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
+              <NavItem to="/data-verification" icon={ShieldCheck} className="text-emerald-400 hover:text-emerald-300">مراجعة البيانات</NavItem>
+              <NavItem to="/custom-reports" icon={FileBarChart} className="text-purple-400 hover:text-purple-300">التقارير المخصصة</NavItem>
+            </>
           )}
           {isAnalyst && (
             <>
               <NavItem to="/builder" icon={PieChart}>بناء اللوحات</NavItem>
               <NavItem to="/queries" icon={Search}>المسح البياني</NavItem>
+              <NavItem to="/widget-library" icon={Library}>مكتبة المؤشرات</NavItem>
             </>
           )}
         </NavGroup>
@@ -399,6 +428,14 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/heatmap')) return { title: 'خرائط الحرارة', section: 'الذكاء الاصطناعي' };
     if (pathname.includes('/explore')) return { title: 'استكشاف', section: 'الرئيسية' };
     if (pathname.includes('/blog')) return { title: 'المدونة', section: 'المحتوى' };
+    if (pathname.includes('/experts')) return { title: 'اكتشاف الخبراء', section: 'المجتمع' };
+    if (pathname.includes('/comparisons')) return { title: 'المقارنات الذكية', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/economic-summary')) return { title: 'الملخص الاقتصادي', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/patterns')) return { title: 'اكتشاف الأنماط', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/data-verification')) return { title: 'مراجعة البيانات', section: 'البيانات' };
+    if (pathname.includes('/custom-reports')) return { title: 'التقارير المخصصة', section: 'التحليل' };
+    if (pathname.includes('/widget-library')) return { title: 'مكتبة المؤشرات', section: 'البيانات' };
+    if (pathname.includes('/admin/settings')) return { title: 'إعدادات النظام', section: 'Admin' };
     return { title: 'لوحة التحكم', section: 'رادار' };
   };
 
@@ -971,6 +1008,14 @@ const AppContent = () => {
             <Route path="/export" element={<ExportPage />} />
             <Route path="/recommendations" element={<RecommendationsPage />} />
             <Route path="/heatmap" element={<HeatmapPage />} />
+            <Route path="/experts" element={<ExpertDiscoveryPage />} />
+            <Route path="/comparisons" element={<SmartComparisonsPage />} />
+            <Route path="/economic-summary" element={<AIEconomicSummaryPage />} />
+            <Route path="/patterns" element={<PatternRecognitionPage />} />
+            <Route path="/data-verification" element={<DataVerificationPage />} />
+            <Route path="/custom-reports" element={<CustomReportsPage />} />
+            <Route path="/widget-library" element={<WidgetLibraryPage />} />
+            <Route path="/admin/settings" element={<SystemSettingsPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
           </Routes>
@@ -1012,6 +1057,39 @@ const GuestMobileBottomNav = () => {
         <Plus size={24} strokeWidth={2} />
         <span className="text-[10px] font-bold">حساب جديد</span>
       </div>
+    </div>
+  );
+};
+
+// --- Public Content Layout (for guest-accessible content pages) ---
+const PublicContentLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans" dir="rtl">
+      <header className="h-[60px] lg:h-[72px] sticky top-0 z-40 w-full backdrop-blur-xl bg-white/90 border-b border-gray-200/80">
+        <div className="px-4 lg:px-8 h-full flex items-center justify-between gap-4">
+          <a href="#/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Activity size={24} className="text-white" />
+            </div>
+            <div>
+              <h1 className="font-black text-lg text-gray-900">رادار المستثمر</h1>
+              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Investor Radar</p>
+            </div>
+          </a>
+          <div className="flex items-center gap-3">
+            <a href="#/login" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-blue-600 transition-colors hidden sm:block">
+              تسجيل الدخول
+            </a>
+            <a href="#/register" className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+              إنشاء حساب
+            </a>
+          </div>
+        </div>
+      </header>
+      <main className="animate-fadeIn pb-24 lg:pb-0">
+        {children}
+      </main>
+      <GuestMobileBottomNav />
     </div>
   );
 };
@@ -1092,7 +1170,22 @@ const AppWithAuth = () => {
       <Route path="/data-sources" element={<DataSourcesPage />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/blog" element={<BlogPage />} />
-      <Route path="/heatmap" element={<HeatmapPage />} />
+      <Route path="/plan-details" element={<PlanDetailsPage />} />
+
+      {/* Public content preview - accessible without login */}
+      {!isAuthenticated && (
+        <>
+          <Route path="/timeline" element={<PublicContentLayout><TimelineWrapper /></PublicContentLayout>} />
+          <Route path="/dashboards" element={<PublicContentLayout><OfficialDashboardsWrapper /></PublicContentLayout>} />
+          <Route path="/signals" element={<PublicContentLayout><AISignalsPage /></PublicContentLayout>} />
+          <Route path="/heatmap" element={<PublicContentLayout><HeatmapPage /></PublicContentLayout>} />
+          <Route path="/content/:id" element={<PublicContentLayout><ContentDetailPage /></PublicContentLayout>} />
+          <Route path="/experts" element={<PublicContentLayout><ExpertDiscoveryPage /></PublicContentLayout>} />
+          <Route path="/comparisons" element={<PublicContentLayout><SmartComparisonsPage /></PublicContentLayout>} />
+          <Route path="/economic-summary" element={<PublicContentLayout><AIEconomicSummaryPage /></PublicContentLayout>} />
+          <Route path="/patterns" element={<PublicContentLayout><PatternRecognitionPage /></PublicContentLayout>} />
+        </>
+      )}
 
       {/* Protected routes - require authentication */}
       <Route

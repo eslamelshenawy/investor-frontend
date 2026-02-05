@@ -731,7 +731,7 @@ export default function UserManagementPage() {
   // ============================================
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 sm:px-6 lg:px-8">
+    <div dir="rtl" className="px-4 py-6 text-gray-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         {/* ---- Page Header ---- */}
         <div className="mb-8 flex items-center justify-between">

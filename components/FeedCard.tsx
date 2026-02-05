@@ -375,6 +375,125 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
         );
     };
 
+    const renderVideo = () => (
+        <div className="mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 group cursor-pointer bg-black aspect-video">
+            {item.payload.thumbnailUrl && (
+                <img
+                    src={item.payload.thumbnailUrl}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity"
+                    alt="Video thumbnail"
+                />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-xl hover:bg-white hover:scale-110 transition-all"
+                >
+                    <Play size={24} className="mr-[-2px] sm:w-7 sm:h-7" />
+                </button>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-white">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Play size={12} className="text-red-400" />
+                        <span className="text-[10px] sm:text-xs font-bold">{item.payload.duration || 'فيديو'}</span>
+                    </div>
+                    {item.payload.views && (
+                        <span className="text-[10px] sm:text-xs text-gray-300">{item.payload.views.toLocaleString()} مشاهدة</span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderAudio = () => (
+        <div className="mt-3 sm:mt-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-violet-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/30 rounded-full blur-3xl -mr-10 -mt-10"></div>
+            <div className="relative z-10 flex items-center gap-3 sm:gap-4">
+                <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-all ${isPlaying ? 'bg-violet-600 text-white scale-95' : 'bg-white text-violet-600 hover:scale-105'}`}
+                >
+                    {isPlaying ? <div className="flex gap-1"><div className="w-1 h-5 bg-white rounded-full animate-pulse"></div><div className="w-1 h-5 bg-white rounded-full animate-pulse delay-75"></div></div> : <Headphones size={22} className="sm:w-6 sm:h-6" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                    <p className="text-violet-900 font-bold text-sm sm:text-base truncate">{item.payload.audioTitle || item.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Clock size={12} className="text-violet-400" />
+                        <span className="text-[10px] sm:text-xs text-violet-500 font-medium">{item.payload.duration || 'بودكاست'}</span>
+                    </div>
+                    {/* Waveform */}
+                    <div className="flex items-end gap-[2px] mt-2 h-6">
+                        {[...Array(30)].map((_, i) => (
+                            <div key={i} className={`w-1 rounded-full transition-all ${isPlaying ? 'bg-violet-400 animate-pulse' : 'bg-violet-200'}`}
+                                style={{ height: `${Math.random() * 100}%`, animationDelay: `${i * 50}ms` }}></div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderImage = () => (
+        <div className="mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100 group cursor-pointer">
+            {item.payload.imageUrl ? (
+                <div className="relative">
+                    <img
+                        src={item.payload.imageUrl}
+                        className="w-full max-h-[500px] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        alt={item.payload.caption || item.title}
+                    />
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                        <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-black/40 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/60 transition-colors">
+                            <Maximize2 size={14} className="sm:w-4 sm:h-4" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                    <FileText size={32} className="text-gray-300" />
+                </div>
+            )}
+            {item.payload.caption && (
+                <div className="p-3 sm:p-4 bg-white border-t border-gray-100">
+                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{item.payload.caption}</p>
+                </div>
+            )}
+        </div>
+    );
+
+    const renderWidget = () => (
+        <div className="mt-3 sm:mt-4 border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-50 rounded-lg sm:rounded-xl flex items-center justify-center text-blue-600 border border-blue-100">
+                        <BarChart2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    </div>
+                    <div>
+                        <p className="text-xs sm:text-sm font-bold text-gray-900">{item.payload.widgetTitle || item.title}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-400">{item.payload.dataSource || 'بيانات مباشرة'}</p>
+                    </div>
+                </div>
+                {item.payload.change != null && (
+                    <span className={`text-xs sm:text-sm font-bold px-2 py-1 rounded-lg ${item.payload.change >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                        {item.payload.change >= 0 ? '+' : ''}{item.payload.change}%
+                    </span>
+                )}
+            </div>
+            {item.payload.chartData ? (
+                <WidgetChart data={item.payload.chartData} type={item.payload.chartType || 'line'} />
+            ) : (
+                <div className="h-32 sm:h-40 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
+                    <div className="text-center">
+                        <BarChart2 size={24} className="text-gray-300 mx-auto mb-2" />
+                        <p className="text-[10px] sm:text-xs text-gray-400">رسم بياني تفاعلي</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
     const renderPortfolio = () => (
         <div className="mt-4 border border-gray-100 rounded-2xl p-5 shadow-sm bg-white">
             <div className="flex items-center justify-between mb-4">
@@ -532,10 +651,14 @@ const FeedCard: React.FC<FeedCardProps> = ({ item, onAction, onLike, onSave }) =
                 {item.contentType === FeedContentType.Q_AND_A && renderQAndA()}
                 {item.contentType === FeedContentType.CHECKLIST && renderChecklist()}
 
-                {/* Generic fallback for others */}
-                {(item.contentType === FeedContentType.VIDEO || item.contentType === FeedContentType.AUDIO || item.contentType === FeedContentType.IMAGE || item.contentType === FeedContentType.WIDGET) && (
+                {/* Media types */}
+                {item.contentType === FeedContentType.VIDEO && renderVideo()}
+                {item.contentType === FeedContentType.AUDIO && renderAudio()}
+                {item.contentType === FeedContentType.IMAGE && renderImage()}
+                {item.contentType === FeedContentType.WIDGET && renderWidget()}
+                {item.contentType === FeedContentType.CAROUSEL && (
                     <div className="p-10 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-sm">محتوى {item.contentType}</p>
+                        <p className="text-gray-400 text-sm">محتوى عرض شرائح</p>
                     </div>
                 )}
             </div>

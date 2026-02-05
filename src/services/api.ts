@@ -237,8 +237,14 @@ class ApiService {
   async updateProfile(data: {
     name?: string; nameAr?: string; avatar?: string | null;
     bio?: string | null; bioAr?: string | null; phone?: string | null;
+    location?: string | null; locationAr?: string | null;
+    skills?: string | null; coverImage?: string | null;
   }) {
     return this.put<UserProfile>('/auth/me', data);
+  }
+
+  async getMyNetwork() {
+    return this.get<{ followers: NetworkUser[]; following: NetworkUser[] }>('/auth/me/network');
   }
 
   async getPublicProfile(userId: string) {
@@ -1017,6 +1023,10 @@ interface UserProfile extends User {
   bio?: string;
   bioAr?: string;
   phone?: string;
+  location?: string;
+  locationAr?: string;
+  skills?: string;
+  coverImage?: string;
   emailVerified: boolean;
   lastLoginAt?: string;
   createdAt: string;
@@ -1029,6 +1039,28 @@ interface UserProfile extends User {
     following: number;
     followers: number;
   };
+  recentContent?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    titleAr: string;
+    excerptAr?: string;
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    publishedAt: string;
+  }>;
+  totalViews?: number;
+  totalLikes?: number;
+}
+
+interface NetworkUser {
+  id: string;
+  name: string;
+  nameAr?: string;
+  avatar?: string;
+  role: string;
+  followedAt: string;
 }
 
 interface PublicProfile {

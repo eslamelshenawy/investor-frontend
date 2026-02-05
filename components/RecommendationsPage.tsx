@@ -417,7 +417,7 @@ const RecommendationsPage: React.FC = () => {
   const totalCount = data ? data.content.length + data.signals.length + data.datasets.length : 0;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50/50">
+    <div dir="rtl" className="min-h-[80vh]">
       {/* ─── Header ─── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
