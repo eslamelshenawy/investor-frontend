@@ -99,15 +99,15 @@ const ROLE_DISPLAY_NAMES: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  USER: 'bg-gray-600 text-gray-100',
-  ANALYST: 'bg-cyan-700 text-cyan-100',
-  EXPERT: 'bg-purple-700 text-purple-100',
-  WRITER: 'bg-amber-700 text-amber-100',
-  DESIGNER: 'bg-pink-700 text-pink-100',
-  EDITOR: 'bg-teal-700 text-teal-100',
-  CONTENT_MANAGER: 'bg-indigo-700 text-indigo-100',
-  ADMIN: 'bg-orange-700 text-orange-100',
-  SUPER_ADMIN: 'bg-red-700 text-red-100',
+  USER: 'bg-gray-100 text-gray-700',
+  ANALYST: 'bg-cyan-50 text-cyan-700',
+  EXPERT: 'bg-purple-50 text-purple-700',
+  WRITER: 'bg-amber-50 text-amber-700',
+  DESIGNER: 'bg-pink-50 text-pink-700',
+  EDITOR: 'bg-teal-50 text-teal-700',
+  CONTENT_MANAGER: 'bg-indigo-50 text-indigo-700',
+  ADMIN: 'bg-orange-50 text-orange-700',
+  SUPER_ADMIN: 'bg-red-50 text-red-700',
 };
 
 const EMPTY_FORM: UserFormData = {
@@ -138,13 +138,13 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/60 p-5">
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
-        <p className="text-sm text-slate-400">{label}</p>
-        <p className="text-2xl font-bold">{value.toLocaleString('ar-EG')}</p>
+        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-2xl font-bold text-gray-900">{value.toLocaleString('ar-EG')}</p>
       </div>
     </div>
   );
@@ -163,13 +163,13 @@ function RoleBadge({ role }: { role: string }) {
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return isActive ? (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-900/50 text-green-400 border border-green-700/50">
-      <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
       نشط
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-900/50 text-red-400 border border-red-700/50">
-      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
       غير نشط
     </span>
   );
@@ -181,7 +181,7 @@ function UserAvatar({ user }: { user: AdminUser }) {
       <img
         src={user.avatar}
         alt={user.name}
-        className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
       />
     );
   }
@@ -191,7 +191,7 @@ function UserAvatar({ user }: { user: AdminUser }) {
     .join('')
     .slice(0, 2);
   return (
-    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold border-2 border-slate-600">
+    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold border-2 border-gray-200">
       {initials}
     </div>
   );
@@ -218,17 +218,17 @@ function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
       {/* Content */}
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-700 bg-slate-800 shadow-2xl">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 p-5">
-          <h2 className="text-lg font-bold">{title}</h2>
+        <div className="flex items-center justify-between border-b border-gray-200 p-5">
+          <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
           >
             <X className="h-5 w-5" />
           </button>
@@ -260,8 +260,8 @@ function UserForm({
   isEdit: boolean;
 }) {
   const fieldClass =
-    'w-full rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500';
-  const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+    'w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500';
+  const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
   return (
     <div className="space-y-4">
@@ -359,7 +359,7 @@ function UserForm({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 pt-3 border-t border-slate-700">
+      <div className="flex items-center gap-3 pt-3 border-t border-gray-200">
         <button
           onClick={onSubmit}
           disabled={isSubmitting}
@@ -375,7 +375,7 @@ function UserForm({
         <button
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2.5 px-6 rounded-lg transition-colors"
+          className="flex items-center justify-center gap-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-colors"
         >
           إلغاء
         </button>
@@ -731,17 +731,17 @@ export default function UserManagementPage() {
   // ============================================
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-900 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         {/* ---- Page Header ---- */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
-              <Users className="h-5 w-5 text-blue-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+              <Users className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">إدارة المستخدمين</h1>
-              <p className="text-sm text-slate-400">إدارة وتنظيم حسابات المستخدمين والأدوار</p>
+              <h1 className="text-2xl font-bold text-gray-900">إدارة المستخدمين</h1>
+              <p className="text-sm text-gray-500">إدارة وتنظيم حسابات المستخدمين والأدوار</p>
             </div>
           </div>
           <button
@@ -755,12 +755,12 @@ export default function UserManagementPage() {
 
         {/* ---- Error Banner ---- */}
         {error && (
-          <div className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+          <div className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <div className="flex items-center gap-2">
               <X className="h-4 w-4 flex-shrink-0" />
               {error}
             </div>
-            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -769,7 +769,7 @@ export default function UserManagementPage() {
         {/* ---- Streaming Indicator ---- */}
         {streaming && users.length > 0 && (
           <div className="mb-4 flex items-center justify-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-sm text-blue-400">
+            <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-600">
               <Wifi className="h-4 w-4 animate-pulse" />
               <span>جاري تحميل المستخدمين...</span>
             </div>
@@ -782,31 +782,31 @@ export default function UserManagementPage() {
             label="إجمالي المستخدمين"
             value={stats.totalUsers}
             icon={Users}
-            color="bg-blue-600/20 text-blue-400"
+            color="bg-blue-100 text-blue-600"
           />
           <StatCard
             label="المستخدمون النشطون"
             value={stats.activeUsers}
             icon={ToggleRight}
-            color="bg-green-600/20 text-green-400"
+            color="bg-green-100 text-green-600"
           />
           <StatCard
             label="جدد هذا الشهر"
             value={stats.newThisMonth}
             icon={UserPlus}
-            color="bg-purple-600/20 text-purple-400"
+            color="bg-purple-100 text-purple-600"
           />
         </div>
 
         {/* ---- Search & Filters ---- */}
-        <div className="mb-6 rounded-xl border border-slate-700 bg-slate-800/60 p-4">
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                className="w-full rounded-lg border border-slate-600 bg-slate-900 py-2.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-4 pr-10 text-sm text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="بحث بالاسم أو البريد الإلكتروني..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -815,7 +815,7 @@ export default function UserManagementPage() {
 
             {/* Role Filter */}
             <select
-              className="min-w-[160px] rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-w-[160px] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
             >
@@ -829,7 +829,7 @@ export default function UserManagementPage() {
 
             {/* Active Filter */}
             <select
-              className="min-w-[140px] rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-w-[140px] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value)}
             >
@@ -842,13 +842,13 @@ export default function UserManagementPage() {
 
         {/* ---- Bulk Actions Bar ---- */}
         {selectedIds.size > 0 && (
-          <div className="mb-4 flex flex-col items-start gap-3 rounded-xl border border-blue-700/50 bg-slate-800/60 p-4 sm:flex-row sm:items-center">
-            <span className="text-blue-400 text-sm font-medium">
+          <div className="mb-4 flex flex-col items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:flex-row sm:items-center">
+            <span className="text-blue-700 text-sm font-medium">
               تم تحديد {selectedIds.size} مستخدم
             </span>
             <div className="flex items-center gap-2 flex-1">
               <select
-                className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 value={bulkAction}
                 onChange={(e) => setBulkAction(e.target.value)}
               >
@@ -860,7 +860,7 @@ export default function UserManagementPage() {
 
               {bulkAction === 'changeRole' && (
                 <select
-                  className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   value={bulkRole}
                   onChange={(e) => setBulkRole(e.target.value)}
                 >
@@ -875,7 +875,7 @@ export default function UserManagementPage() {
               <button
                 onClick={handleBulkAction}
                 disabled={!bulkAction || isBulkProcessing}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 {isBulkProcessing ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -887,7 +887,7 @@ export default function UserManagementPage() {
 
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-slate-400 hover:text-white text-sm transition-colors"
+                className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
               >
                 إلغاء التحديد
               </button>
@@ -896,15 +896,15 @@ export default function UserManagementPage() {
         )}
 
         {/* ---- Users Table ---- */}
-        <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-800/60">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           {loading && users.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Wifi className="mb-3 h-6 w-6 animate-pulse text-blue-400" />
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
-              <p className="mt-3 text-sm text-slate-500">جاري تحميل المستخدمين...</p>
+              <Wifi className="mb-3 h-6 w-6 animate-pulse text-blue-500" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
+              <p className="mt-3 text-sm text-gray-500">جاري تحميل المستخدمين...</p>
             </div>
           ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <Users className="mb-3 h-12 w-12" />
               <p className="text-lg font-medium">لا توجد نتائج</p>
               <p className="text-sm">حاول تغيير معايير البحث أو الفلاتر</p>
@@ -913,28 +913,28 @@ export default function UserManagementPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700">
+                  <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="p-4 text-right">
                       <input
                         type="checkbox"
                         checked={allSelected}
                         onChange={toggleSelectAll}
-                        className="h-4 w-4 cursor-pointer rounded border-slate-500 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 bg-white text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
                       />
                     </th>
-                    <th className="p-4 text-right text-xs font-medium text-slate-400">المستخدم</th>
-                    <th className="p-4 text-right text-xs font-medium text-slate-400">الدور</th>
-                    <th className="p-4 text-right text-xs font-medium text-slate-400">الحالة</th>
-                    <th className="p-4 text-right text-xs font-medium text-slate-400">تاريخ الإنشاء</th>
-                    <th className="p-4 text-right text-xs font-medium text-slate-400">الإجراءات</th>
+                    <th className="p-4 text-right text-xs font-medium text-gray-500">المستخدم</th>
+                    <th className="p-4 text-right text-xs font-medium text-gray-500">الدور</th>
+                    <th className="p-4 text-right text-xs font-medium text-gray-500">الحالة</th>
+                    <th className="p-4 text-right text-xs font-medium text-gray-500">تاريخ الإنشاء</th>
+                    <th className="p-4 text-right text-xs font-medium text-gray-500">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/50">
+                <tbody className="divide-y divide-gray-100">
                   {users.map((user) => (
                     <tr
                       key={user.id}
-                      className={`hover:bg-slate-700/30 transition-colors ${
-                        selectedIds.has(user.id) ? 'bg-blue-900/10' : ''
+                      className={`hover:bg-gray-50 transition-colors ${
+                        selectedIds.has(user.id) ? 'bg-blue-50' : ''
                       }`}
                     >
                       {/* Checkbox */}
@@ -943,7 +943,7 @@ export default function UserManagementPage() {
                           type="checkbox"
                           checked={selectedIds.has(user.id)}
                           onChange={() => toggleSelect(user.id)}
-                          className="w-4 h-4 rounded border-slate-500 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-300 bg-white text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
 
@@ -952,10 +952,10 @@ export default function UserManagementPage() {
                         <div className="flex items-center gap-3">
                           <UserAvatar user={user} />
                           <div>
-                            <p className="text-white font-medium text-sm">
+                            <p className="text-gray-900 font-medium text-sm">
                               {user.nameAr || user.name}
                             </p>
-                            <p className="text-slate-400 text-xs" dir="ltr">
+                            <p className="text-gray-500 text-xs" dir="ltr">
                               {user.email}
                             </p>
                           </div>
@@ -967,7 +967,7 @@ export default function UserManagementPage() {
                         {roleChangeUserId === user.id ? (
                           <div className="flex items-center gap-2">
                             <select
-                              className="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                              className="bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                               value={roleChangeValue}
                               onChange={(e) => setRoleChangeValue(e.target.value)}
                               autoFocus
@@ -980,13 +980,13 @@ export default function UserManagementPage() {
                             </select>
                             <button
                               onClick={() => handleChangeRole(user.id, roleChangeValue)}
-                              className="p-1 rounded bg-green-600/20 text-green-400 hover:bg-green-600/40 transition-colors"
+                              className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
                             >
                               <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => setRoleChangeUserId(null)}
-                              className="p-1 rounded bg-red-600/20 text-red-400 hover:bg-red-600/40 transition-colors"
+                              className="p-1 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1012,7 +1012,7 @@ export default function UserManagementPage() {
 
                       {/* Created At */}
                       <td className="p-4">
-                        <span className="text-slate-400 text-sm">{formatDate(user.createdAt)}</span>
+                        <span className="text-gray-500 text-sm">{formatDate(user.createdAt)}</span>
                       </td>
 
                       {/* Actions */}
@@ -1021,7 +1021,7 @@ export default function UserManagementPage() {
                           {/* Edit */}
                           <button
                             onClick={() => openEditModal(user)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-600/10 transition-colors"
+                            className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             title="تعديل"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -1032,8 +1032,8 @@ export default function UserManagementPage() {
                             onClick={() => handleToggleStatus(user.id)}
                             className={`p-2 rounded-lg transition-colors ${
                               user.isActive
-                                ? 'text-green-400 hover:text-red-400 hover:bg-red-600/10'
-                                : 'text-red-400 hover:text-green-400 hover:bg-green-600/10'
+                                ? 'text-green-600 hover:text-red-600 hover:bg-red-50'
+                                : 'text-red-600 hover:text-green-600 hover:bg-green-50'
                             }`}
                             title={user.isActive ? 'إلغاء التفعيل' : 'تفعيل'}
                           >
@@ -1050,7 +1050,7 @@ export default function UserManagementPage() {
                               setRoleChangeUserId(user.id);
                               setRoleChangeValue(user.role);
                             }}
-                            className="p-2 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-600/10 transition-colors"
+                            className="p-2 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
                             title="تغيير الدور"
                           >
                             <Shield className="w-4 h-4" />
@@ -1066,15 +1066,15 @@ export default function UserManagementPage() {
 
           {/* ---- Pagination ---- */}
           {!loading && users.length > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-700 p-4">
-              <p className="text-sm text-slate-400">
+            <div className="flex items-center justify-between border-t border-gray-200 p-4">
+              <p className="text-sm text-gray-500">
                 عرض {(page - 1) * PAGE_LIMIT + 1} - {Math.min(page * PAGE_LIMIT, totalUsers)} من {totalUsers}
               </p>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-slate-600"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -1097,7 +1097,7 @@ export default function UserManagementPage() {
                       className={`h-9 w-9 rounded-lg text-sm font-medium transition ${
                         pageNum === page
                           ? 'bg-blue-600 text-white'
-                          : 'border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       {pageNum}
@@ -1108,7 +1108,7 @@ export default function UserManagementPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-slate-600"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>

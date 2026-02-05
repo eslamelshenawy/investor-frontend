@@ -34,7 +34,10 @@ import {
   FileText,
   FileCheck,
   PenSquare,
-  UsersRound
+  UsersRound,
+  Download,
+  Map,
+  Lightbulb
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -102,6 +105,11 @@ import AuditLogPage from './components/AuditLogPage';
 import DataTrustPage from './components/DataTrustPage';
 import UseCasesPage from './components/UseCasesPage';
 import DataSourcesPage from './components/DataSourcesPage';
+import ExplorePage from './components/ExplorePage';
+import BlogPage from './components/BlogPage';
+import ExportPage from './components/ExportPage';
+import RecommendationsPage from './components/RecommendationsPage';
+import HeatmapPage from './components/HeatmapPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -300,6 +308,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
           <NavItem to="/" icon={Compass} end>الرئيسية</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
+          <NavItem to="/heatmap" icon={Map}>خرائط الحرارة</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
           <NavItem to="/followers" icon={Users}>المجتمع</NavItem>
         </NavGroup>
@@ -309,6 +318,8 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         <NavGroup title="البيانات والتحليل" open={sections.data} onToggle={() => toggle('data')}>
           <NavItem to="/datasets" icon={Database}>مجموعات البيانات</NavItem>
           <NavItem to="/dashboards" icon={LayoutDashboard}>كل اللوحات</NavItem>
+          <NavItem to="/recommendations" icon={Lightbulb}>التوصيات الذكية</NavItem>
+          <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
           {isExpert && (
             <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
           )}
@@ -383,6 +394,11 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/builder')) return { title: 'Dashboard Builder', section: 'تحليل' };
     if (pathname.includes('/queries')) return { title: 'الاستعلامات', section: 'تحليل' };
     if (pathname.includes('/profile')) return { title: 'ملف المستخدم', section: 'التطبيقات' };
+    if (pathname.includes('/export')) return { title: 'تصدير البيانات', section: 'البيانات' };
+    if (pathname.includes('/recommendations')) return { title: 'التوصيات الذكية', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/heatmap')) return { title: 'خرائط الحرارة', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/explore')) return { title: 'استكشاف', section: 'الرئيسية' };
+    if (pathname.includes('/blog')) return { title: 'المدونة', section: 'المحتوى' };
     return { title: 'لوحة التحكم', section: 'رادار' };
   };
 
@@ -952,6 +968,9 @@ const AppContent = () => {
             <Route path="/datasets" element={<DatasetsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/export" element={<ExportPage />} />
+            <Route path="/recommendations" element={<RecommendationsPage />} />
+            <Route path="/heatmap" element={<HeatmapPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
           </Routes>
@@ -1071,6 +1090,9 @@ const AppWithAuth = () => {
       <Route path="/data-trust" element={<DataTrustPage />} />
       <Route path="/use-cases" element={<UseCasesPage />} />
       <Route path="/data-sources" element={<DataSourcesPage />} />
+      <Route path="/explore" element={<ExplorePage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/heatmap" element={<HeatmapPage />} />
 
       {/* Protected routes - require authentication */}
       <Route

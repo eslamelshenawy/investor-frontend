@@ -45,12 +45,12 @@ interface ContentPost {
 }
 
 const STATUS_CONFIG: Record<ContentStatus, { label: string; bg: string; text: string }> = {
-  DRAFT: { label: 'مسودة', bg: 'bg-slate-600/20', text: 'text-slate-400' },
-  PENDING_REVIEW: { label: 'قيد المراجعة', bg: 'bg-yellow-600/20', text: 'text-yellow-400' },
-  APPROVED: { label: 'موافق عليه', bg: 'bg-blue-600/20', text: 'text-blue-400' },
-  SCHEDULED: { label: 'مجدول', bg: 'bg-purple-600/20', text: 'text-purple-400' },
-  PUBLISHED: { label: 'منشور', bg: 'bg-green-600/20', text: 'text-green-400' },
-  REJECTED: { label: 'مرفوض', bg: 'bg-red-600/20', text: 'text-red-400' },
+  DRAFT: { label: 'مسودة', bg: 'bg-gray-100', text: 'text-gray-600' },
+  PENDING_REVIEW: { label: 'قيد المراجعة', bg: 'bg-yellow-50', text: 'text-yellow-700' },
+  APPROVED: { label: 'موافق عليه', bg: 'bg-blue-50', text: 'text-blue-700' },
+  SCHEDULED: { label: 'مجدول', bg: 'bg-purple-50', text: 'text-purple-700' },
+  PUBLISHED: { label: 'منشور', bg: 'bg-green-50', text: 'text-green-700' },
+  REJECTED: { label: 'مرفوض', bg: 'bg-red-50', text: 'text-red-700' },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -219,7 +219,7 @@ const MyContentPage: React.FC = () => {
 
   const handleNavigateToEdit = (id: string) => {
     // Navigate to edit page – integration depends on router used in the app
-    window.location.href = `/content/edit/${id}`;
+    window.location.href = `/#/content/${id}`;
   };
 
   // ---- Helpers ----
@@ -239,21 +239,21 @@ const MyContentPage: React.FC = () => {
   // ---- Render ----
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-900 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
-              <FileText className="h-5 w-5 text-blue-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+              <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">محتوياتي</h1>
-              <p className="text-sm text-slate-400">إدارة المحتوى الخاص بك</p>
+              <p className="text-sm text-gray-500">إدارة المحتوى الخاص بك</p>
             </div>
           </div>
           <a
-            href="/content/create"
+            href="/#/create-post"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
           >
             <FileText className="h-4 w-4" />
@@ -263,19 +263,19 @@ const MyContentPage: React.FC = () => {
 
         {/* Messages */}
         {successMsg && (
-          <div className="mb-4 rounded-lg border border-green-700 bg-green-900/30 px-4 py-3 text-sm text-green-400">
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             {errorMsg}
           </div>
         )}
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-slate-700 bg-slate-800/60 p-1">
+        <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -283,7 +283,7 @@ const MyContentPage: React.FC = () => {
               className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
                 activeTab === tab.key
                   ? 'bg-blue-600 text-white shadow'
-                  : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
             >
               {tab.label}
@@ -294,7 +294,7 @@ const MyContentPage: React.FC = () => {
         {/* Streaming indicator */}
         {streaming && posts.length > 0 && (
           <div className="mb-4 flex items-center justify-center gap-2">
-            <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full text-sm text-blue-400">
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-full text-sm text-blue-600">
               <Wifi className="w-4 h-4 animate-pulse" />
               <span>جاري تحميل المزيد عبر WebFlux...</span>
             </div>
@@ -304,12 +304,12 @@ const MyContentPage: React.FC = () => {
         {/* Content list */}
         {loading && posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Wifi className="w-6 h-6 animate-pulse text-blue-400 mb-3" />
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
-            <p className="mt-3 text-sm text-slate-500">جاري تحميل المحتوى عبر WebFlux...</p>
+            <Wifi className="w-6 h-6 animate-pulse text-blue-500 mb-3" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
+            <p className="mt-3 text-sm text-gray-500">جاري تحميل المحتوى عبر WebFlux...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
             <FileText className="mb-3 h-12 w-12" />
             <p className="text-lg font-medium">لا يوجد محتوى</p>
             <p className="text-sm">لم يتم العثور على أي محتوى في هذا التصنيف</p>
@@ -326,11 +326,11 @@ const MyContentPage: React.FC = () => {
               return (
                 <div
                   key={post.id}
-                  className="group flex flex-col rounded-xl border border-slate-700 bg-slate-800/60 p-5 transition hover:border-slate-600 hover:bg-slate-800"
+                  className="group flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-gray-300 hover:shadow-md"
                 >
                   {/* Top row: type + status */}
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="rounded-md bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-300">
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                       {TYPE_LABELS[post.type] ?? post.type}
                     </span>
                     <span
@@ -342,21 +342,21 @@ const MyContentPage: React.FC = () => {
 
                   {/* Title */}
                   <h3
-                    className="mb-2 line-clamp-2 cursor-pointer text-base font-semibold text-slate-100 transition group-hover:text-blue-400"
+                    className="mb-2 line-clamp-2 cursor-pointer text-base font-semibold text-gray-900 transition group-hover:text-blue-600"
                     onClick={() => canEdit && handleNavigateToEdit(post.id)}
                   >
                     {post.titleAr || post.title || '(بدون عنوان)'}
                   </h3>
 
                   {/* Date */}
-                  <div className="mb-4 flex items-center gap-1.5 text-xs text-slate-500">
+                  <div className="mb-4 flex items-center gap-1.5 text-xs text-gray-500">
                     <Clock className="h-3.5 w-3.5" />
                     {formatDate(post.updatedAt ?? post.createdAt)}
                   </div>
 
                   {/* Engagement stats */}
                   {post.status === 'PUBLISHED' && (
-                    <div className="mb-4 flex items-center gap-4 text-xs text-slate-500">
+                    <div className="mb-4 flex items-center gap-4 text-xs text-gray-500">
                       {post.views !== undefined && (
                         <span className="flex items-center gap-1">
                           <Eye className="h-3.5 w-3.5" />
@@ -382,12 +382,12 @@ const MyContentPage: React.FC = () => {
                   <div className="flex-1" />
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 border-t border-slate-700 pt-3">
+                  <div className="flex items-center gap-2 border-t border-gray-200 pt-3">
                     {canEdit && (
                       <button
                         onClick={() => handleNavigateToEdit(post.id)}
                         disabled={isActionLoading}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:bg-slate-700 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
                       >
                         <Edit3 className="h-3.5 w-3.5" />
                         تعديل
@@ -399,7 +399,7 @@ const MyContentPage: React.FC = () => {
                         <button
                           onClick={() => handleSubmitForReview(post.id)}
                           disabled={isActionLoading}
-                          className="flex items-center gap-1.5 rounded-lg bg-blue-600/20 px-3 py-1.5 text-xs font-medium text-blue-400 transition hover:bg-blue-600/30 disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
                         >
                           <Send className="h-3.5 w-3.5" />
                           إرسال للمراجعة
@@ -407,7 +407,7 @@ const MyContentPage: React.FC = () => {
                         <button
                           onClick={() => handleDelete(post.id)}
                           disabled={isActionLoading}
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-600/10 disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           حذف
@@ -416,7 +416,7 @@ const MyContentPage: React.FC = () => {
                     )}
 
                     {isActionLoading && (
-                      <div className="mr-auto h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+                      <div className="mr-auto h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                     )}
                   </div>
                 </div>
@@ -431,19 +431,19 @@ const MyContentPage: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1 || loading}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
 
-            <span className="px-3 text-sm text-slate-400">
+            <span className="px-3 text-sm text-gray-500">
               صفحة {page.toLocaleString('ar-SA')} من {totalPages.toLocaleString('ar-SA')}
             </span>
 
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || loading}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>

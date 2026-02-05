@@ -94,30 +94,30 @@ const ContentDetailPage: React.FC = () => {
   return (
     <div dir="rtl" className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6">
       {/* Back Button */}
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm">
         <ArrowRight size={16} />
         <span>العودة</span>
       </button>
 
       {/* Content Header */}
-      <div className="bg-slate-800 rounded-2xl p-6 lg:p-8 border border-slate-700">
+      <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full">{content.type}</span>
+          <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">{content.type}</span>
           {content.publishedAt && (
-            <span className="flex items-center gap-1 text-slate-400 text-xs">
+            <span className="flex items-center gap-1 text-gray-500 text-xs">
               <Clock size={12} />
               {formatDate(content.publishedAt)}
             </span>
           )}
         </div>
 
-        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">{content.titleAr || content.title}</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{content.titleAr || content.title}</h1>
         {content.titleAr && content.title && (
-          <h2 className="text-lg text-slate-400 mb-4">{content.title}</h2>
+          <h2 className="text-lg text-gray-500 mb-4">{content.title}</h2>
         )}
 
         {content.author && (
-          <div className="flex items-center gap-3 mb-6 p-3 bg-slate-700/50 rounded-xl">
+          <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 rounded-xl">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               {content.author.avatar ? (
                 <img src={content.author.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
@@ -126,8 +126,8 @@ const ContentDetailPage: React.FC = () => {
               )}
             </div>
             <div>
-              <p className="text-white font-medium text-sm">{content.author.nameAr || content.author.name}</p>
-              <p className="text-slate-400 text-xs">{content.author.role}</p>
+              <p className="text-gray-900 font-medium text-sm">{content.author.nameAr || content.author.name}</p>
+              <p className="text-gray-500 text-xs">{content.author.role}</p>
             </div>
           </div>
         )}
@@ -136,7 +136,7 @@ const ContentDetailPage: React.FC = () => {
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {tags.map((tag: string, i: number) => (
-              <span key={i} className="flex items-center gap-1 px-2 py-1 bg-slate-700 text-slate-300 rounded-md text-xs">
+              <span key={i} className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
                 <Tag size={10} />
                 {tag}
               </span>
@@ -145,24 +145,24 @@ const ContentDetailPage: React.FC = () => {
         )}
 
         {/* Engagement Bar */}
-        <div className="flex items-center gap-1 pt-4 border-t border-slate-700">
-          <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${liked ? 'bg-red-500/20 text-red-400' : 'hover:bg-slate-700 text-slate-400'}`}>
+        <div className="flex items-center gap-1 pt-4 border-t border-gray-200">
+          <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${liked ? 'bg-red-50 text-red-600' : 'hover:bg-gray-100 text-gray-500'}`}>
             <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
             <span>{engagement.likeCount}</span>
           </button>
-          <button onClick={handleSave} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${saved ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-slate-700 text-slate-400'}`}>
+          <button onClick={handleSave} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${saved ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100 text-gray-500'}`}>
             <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
             <span>{engagement.saveCount}</span>
           </button>
-          <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm hover:bg-slate-700 text-slate-400 transition-all">
+          <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 text-gray-500 transition-all">
             <Share2 size={18} />
             <span>{engagement.shareCount}</span>
           </button>
-          <button onClick={() => setShowComments(!showComments)} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${showComments ? 'bg-slate-700 text-white' : 'hover:bg-slate-700 text-slate-400'}`}>
+          <button onClick={() => setShowComments(!showComments)} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${showComments ? 'bg-gray-200 text-gray-900' : 'hover:bg-gray-100 text-gray-500'}`}>
             <MessageCircle size={18} />
             <span>{engagement.commentCount}</span>
           </button>
-          <div className="mr-auto flex items-center gap-1.5 text-slate-500 text-xs">
+          <div className="mr-auto flex items-center gap-1.5 text-gray-400 text-xs">
             <Eye size={14} />
             <span>{engagement.viewCount}</span>
           </div>
@@ -170,14 +170,14 @@ const ContentDetailPage: React.FC = () => {
       </div>
 
       {/* Content Body */}
-      <div className="bg-slate-800 rounded-2xl p-6 lg:p-8 border border-slate-700">
+      <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-200 shadow-sm">
         {content.excerptAr && (
-          <p className="text-slate-300 text-lg leading-relaxed mb-6 pb-6 border-b border-slate-700 italic">
+          <p className="text-gray-600 text-lg leading-relaxed mb-6 pb-6 border-b border-gray-200 italic">
             {content.excerptAr}
           </p>
         )}
-        <div className="prose prose-invert prose-slate max-w-none">
-          <div className="text-slate-200 leading-relaxed whitespace-pre-wrap text-base">
+        <div className="prose prose-gray max-w-none">
+          <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
             {content.bodyAr || content.body}
           </div>
         </div>

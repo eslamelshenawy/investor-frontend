@@ -49,15 +49,15 @@ function relativeTimeAr(dateStr: string): string {
 function roleBadge(role: string): { label: string; bg: string; text: string } {
   switch (role) {
     case 'admin':
-      return { label: 'مدير', bg: 'bg-red-500/20', text: 'text-red-400' };
+      return { label: 'مدير', bg: 'bg-red-50', text: 'text-red-700' };
     case 'editor':
-      return { label: 'محرر', bg: 'bg-amber-500/20', text: 'text-amber-400' };
+      return { label: 'محرر', bg: 'bg-amber-50', text: 'text-amber-700' };
     case 'analyst':
-      return { label: 'محلل', bg: 'bg-emerald-500/20', text: 'text-emerald-400' };
+      return { label: 'محلل', bg: 'bg-emerald-50', text: 'text-emerald-700' };
     case 'expert':
-      return { label: 'خبير', bg: 'bg-purple-500/20', text: 'text-purple-400' };
+      return { label: 'خبير', bg: 'bg-purple-50', text: 'text-purple-700' };
     default:
-      return { label: 'مستثمر', bg: 'bg-blue-500/20', text: 'text-blue-400' };
+      return { label: 'مستثمر', bg: 'bg-blue-50', text: 'text-blue-700' };
   }
 }
 
@@ -78,14 +78,14 @@ const Avatar: React.FC<{ user: CommentItem['user']; size?: 'sm' | 'md' }> = ({ u
       <img
         src={user.avatar}
         alt={user.nameAr || user.name}
-        className={`${dim} rounded-full object-cover border-2 border-slate-600 flex-shrink-0`}
+        className={`${dim} rounded-full object-cover border-2 border-gray-200 flex-shrink-0`}
       />
     );
   }
 
   return (
-    <div className={`${dim} rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0 border-2 border-slate-500`}>
-      <UserIcon size={iconSize} className="text-slate-300" />
+    <div className={`${dim} rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 border-2 border-gray-300`}>
+      <UserIcon size={iconSize} className="text-gray-500" />
     </div>
   );
 };
@@ -222,14 +222,14 @@ const SingleComment: React.FC<SingleCommentProps> = ({
           <div
             className={`rounded-2xl p-4 transition-colors ${
               isReply
-                ? 'bg-slate-700/50 group-hover:bg-slate-700/70'
-                : 'bg-slate-700/60 group-hover:bg-slate-700/80'
+                ? 'bg-gray-50 group-hover:bg-gray-100'
+                : 'bg-gray-50 group-hover:bg-gray-100'
             }`}
           >
             {/* Header: name, role badge, time, edited */}
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-slate-100 text-sm leading-none">
+                <span className="font-bold text-gray-900 text-sm leading-none">
                   {displayName}
                 </span>
                 <span
@@ -238,12 +238,12 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                   {badge.label}
                 </span>
                 {comment.isEdited && (
-                  <span className="text-[10px] text-slate-500 italic leading-none">
+                  <span className="text-[10px] text-gray-400 italic leading-none">
                     (تم التعديل)
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap flex-shrink-0">
+              <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap flex-shrink-0">
                 {relativeTimeAr(comment.createdAt)}
               </span>
             </div>
@@ -256,21 +256,21 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleSaveEdit)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[60px]"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[60px]"
                   disabled={isSubmitting}
                 />
                 <div className="flex items-center gap-2 justify-end">
                   <button
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="text-xs text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                    className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     إلغاء
                   </button>
                   <button
                     onClick={handleSaveEdit}
                     disabled={isSubmitting || !editBody.trim()}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:text-slate-400 text-white px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-400 text-white px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                   >
                     {isSubmitting && <Loader2 size={12} className="animate-spin" />}
                     حفظ
@@ -278,7 +278,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
                 {comment.body}
               </p>
             )}
@@ -294,7 +294,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                     setIsReplying(!isReplying);
                     setShowDeleteConfirm(false);
                   }}
-                  className="text-[11px] font-semibold text-slate-500 hover:text-blue-400 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors"
+                  className="text-[11px] font-semibold text-gray-500 hover:text-blue-600 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <CornerDownRight size={12} />
                   رد
@@ -310,7 +310,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                     setShowDeleteConfirm(false);
                     setIsReplying(false);
                   }}
-                  className="text-[11px] font-semibold text-slate-500 hover:text-amber-400 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors"
+                  className="text-[11px] font-semibold text-gray-500 hover:text-amber-600 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <Edit3 size={12} />
                   تعديل
@@ -324,7 +324,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                     setShowDeleteConfirm(true);
                     setIsReplying(false);
                   }}
-                  className="text-[11px] font-semibold text-slate-500 hover:text-red-400 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors"
+                  className="text-[11px] font-semibold text-gray-500 hover:text-red-600 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <Trash2 size={12} />
                   حذف
@@ -333,8 +333,8 @@ const SingleComment: React.FC<SingleCommentProps> = ({
 
               {/* Delete confirmation */}
               {isOwner && showDeleteConfirm && (
-                <div className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
-                  <span className="text-[11px] text-red-400 font-semibold ml-1">
+                <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                  <span className="text-[11px] text-red-600 font-semibold ml-1">
                     هل أنت متأكد؟
                   </span>
                   <button

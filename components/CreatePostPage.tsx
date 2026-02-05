@@ -159,34 +159,34 @@ const CreatePostPage: React.FC = () => {
   // ---- Render helpers ----
 
   const inputClass =
-    'w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition';
+    'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition';
 
   const renderPreview = () => (
-    <div className="space-y-6 rounded-xl border border-slate-700 bg-slate-800/60 p-6">
+    <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       {/* Type badge */}
-      <span className="inline-block rounded-full bg-blue-600/20 px-3 py-1 text-xs font-medium text-blue-400">
+      <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
         {TYPE_LABELS[type]}
       </span>
 
       {/* Arabic title & body */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-100">{titleAr || '(بدون عنوان)'}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{titleAr || '(بدون عنوان)'}</h2>
         {excerptAr && (
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">{excerptAr}</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-500">{excerptAr}</p>
         )}
-        <div className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-300">
+        <div className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-gray-700">
           {bodyAr || '(لا يوجد محتوى)'}
         </div>
       </div>
 
       {/* English title & body */}
       {(title || body) && (
-        <div className="border-t border-slate-700 pt-4" dir="ltr">
-          <h3 className="text-xl font-semibold text-slate-200">{title}</h3>
+        <div className="border-t border-gray-200 pt-4" dir="ltr">
+          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
           {excerpt && (
-            <p className="mt-1 text-sm leading-relaxed text-slate-400">{excerpt}</p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">{excerpt}</p>
           )}
-          <div className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-slate-300">
+          <div className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-gray-700">
             {body}
           </div>
         </div>
@@ -194,11 +194,11 @@ const CreatePostPage: React.FC = () => {
 
       {/* Tags */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 border-t border-slate-700 pt-4">
+        <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-4">
           {tags.map((t) => (
             <span
               key={t}
-              className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-3 py-1 text-xs text-slate-300"
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600"
             >
               <Tag className="h-3 w-3" />
               {t}
@@ -212,22 +212,22 @@ const CreatePostPage: React.FC = () => {
   // ---- Main render ----
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-900 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
-            <FileText className="h-5 w-5 text-blue-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <FileText className="h-5 w-5 text-blue-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">إنشاء محتوى جديد</h1>
-            <p className="text-sm text-slate-400">أنشئ مقالًا أو تقريرًا أو تحليلًا جديدًا</p>
+            <p className="text-sm text-gray-500">أنشئ مقالًا أو تقريرًا أو تحليلًا جديدًا</p>
           </div>
         </div>
 
         {/* Success / Error messages */}
         {successMsg && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg border border-green-700 bg-green-900/30 px-4 py-3 text-sm text-green-400">
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             <span>{successMsg}</span>
             <button onClick={() => setSuccessMsg('')} className="mr-auto">
               <X className="h-4 w-4" />
@@ -235,7 +235,7 @@ const CreatePostPage: React.FC = () => {
           </div>
         )}
         {errorMsg && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <span>{errorMsg}</span>
             <button onClick={() => setErrorMsg('')} className="mr-auto">
               <X className="h-4 w-4" />
@@ -247,7 +247,7 @@ const CreatePostPage: React.FC = () => {
         <div className="mb-6 flex justify-end">
           <button
             onClick={() => setPreview((p) => !p)}
-            className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-slate-300 transition hover:bg-slate-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
           >
             <Eye className="h-4 w-4" />
             {preview ? 'العودة للتحرير' : 'معاينة'}
@@ -260,7 +260,7 @@ const CreatePostPage: React.FC = () => {
           <div className="space-y-6">
             {/* Post type selector */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 نوع المحتوى
               </label>
               <select
@@ -279,8 +279,8 @@ const CreatePostPage: React.FC = () => {
             {/* Title (Arabic + English) */}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  العنوان بالعربية <span className="text-red-400">*</span>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  العنوان بالعربية <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -291,7 +291,7 @@ const CreatePostPage: React.FC = () => {
                 />
               </div>
               <div dir="ltr">
-                <label className="mb-1.5 block text-right text-sm font-medium text-slate-300">
+                <label className="mb-1.5 block text-right text-sm font-medium text-gray-700">
                   العنوان بالإنجليزية
                 </label>
                 <input
@@ -307,8 +307,8 @@ const CreatePostPage: React.FC = () => {
             {/* Body (Arabic + English) */}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  المحتوى بالعربية <span className="text-red-400">*</span>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  المحتوى بالعربية <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={bodyAr}
@@ -319,7 +319,7 @@ const CreatePostPage: React.FC = () => {
                 />
               </div>
               <div dir="ltr">
-                <label className="mb-1.5 block text-right text-sm font-medium text-slate-300">
+                <label className="mb-1.5 block text-right text-sm font-medium text-gray-700">
                   المحتوى بالإنجليزية
                 </label>
                 <textarea
@@ -335,8 +335,8 @@ const CreatePostPage: React.FC = () => {
             {/* Excerpts (Arabic + English) */}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  المقتطف بالعربية <span className="text-xs text-slate-500">(اختياري)</span>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  المقتطف بالعربية <span className="text-xs text-gray-400">(اختياري)</span>
                 </label>
                 <textarea
                   value={excerptAr}
@@ -347,8 +347,8 @@ const CreatePostPage: React.FC = () => {
                 />
               </div>
               <div dir="ltr">
-                <label className="mb-1.5 block text-right text-sm font-medium text-slate-300">
-                  المقتطف بالإنجليزية <span className="text-xs text-slate-500">(اختياري)</span>
+                <label className="mb-1.5 block text-right text-sm font-medium text-gray-700">
+                  المقتطف بالإنجليزية <span className="text-xs text-gray-400">(اختياري)</span>
                 </label>
                 <textarea
                   value={excerpt}
@@ -362,20 +362,20 @@ const CreatePostPage: React.FC = () => {
 
             {/* Tags */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 الوسوم
               </label>
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2">
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-full bg-blue-600/20 px-3 py-1 text-xs font-medium text-blue-400"
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600"
                   >
                     <Tag className="h-3 w-3" />
                     {t}
                     <button
                       onClick={() => removeTag(t)}
-                      className="mr-1 rounded-full p-0.5 hover:bg-blue-600/30"
+                      className="mr-1 rounded-full p-0.5 hover:bg-blue-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -387,18 +387,18 @@ const CreatePostPage: React.FC = () => {
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleTagKeyDown}
                   placeholder={tags.length === 0 ? 'اكتب وسمًا واضغط Enter...' : ''}
-                  className="min-w-[120px] flex-1 border-none bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none"
+                  className="min-w-[120px] flex-1 border-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">اكتب الوسم ثم اضغط Enter لإضافته</p>
+              <p className="mt-1 text-xs text-gray-400">اكتب الوسم ثم اضغط Enter لإضافته</p>
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap items-center gap-3 border-t border-slate-700 pt-6">
+            <div className="flex flex-wrap items-center gap-3 border-t border-gray-200 pt-6">
               <button
                 onClick={handleSaveDraft}
                 disabled={loading}
-                className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 حفظ كمسودة
@@ -414,8 +414,8 @@ const CreatePostPage: React.FC = () => {
               </button>
 
               {loading && (
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                   جارٍ المعالجة...
                 </div>
               )}

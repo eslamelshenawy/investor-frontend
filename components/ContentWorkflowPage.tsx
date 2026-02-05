@@ -49,27 +49,27 @@ interface ContentItem {
 const STATUS_CONFIG: Record<WorkflowStatus, { label: string; bg: string; text: string; border: string }> = {
   PENDING_REVIEW: {
     label: 'قيد المراجعة',
-    bg: 'bg-yellow-600/20',
-    text: 'text-yellow-400',
-    border: 'border-yellow-700',
+    bg: 'bg-yellow-50',
+    text: 'text-yellow-700',
+    border: 'border-yellow-200',
   },
   APPROVED: {
     label: 'موافق عليه',
-    bg: 'bg-blue-600/20',
-    text: 'text-blue-400',
-    border: 'border-blue-700',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
   },
   SCHEDULED: {
     label: 'مجدول',
-    bg: 'bg-purple-600/20',
-    text: 'text-purple-400',
-    border: 'border-purple-700',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-200',
   },
   REJECTED: {
     label: 'مرفوض',
-    bg: 'bg-red-600/20',
-    text: 'text-red-400',
-    border: 'border-red-700',
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
   },
 };
 
@@ -330,39 +330,39 @@ const ContentWorkflowPage: React.FC = () => {
   // ---- UI helpers ----
 
   const inputClass =
-    'w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition';
+    'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition';
 
   // ---- Render ----
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-900 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
-            <FileText className="h-5 w-5 text-blue-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <FileText className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">إدارة سير المحتوى</h1>
-            <p className="text-sm text-slate-400">مراجعة وإدارة المحتوى المقدّم من الكتّاب والمحللين</p>
+            <h1 className="text-2xl font-bold text-gray-900">إدارة سير المحتوى</h1>
+            <p className="text-sm text-gray-500">مراجعة وإدارة المحتوى المقدّم من الكتّاب والمحللين</p>
           </div>
         </div>
 
         {/* Messages */}
         {successMsg && (
-          <div className="mb-4 rounded-lg border border-green-700 bg-green-900/30 px-4 py-3 text-sm text-green-400">
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             {errorMsg}
           </div>
         )}
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-slate-700 bg-slate-800/60 p-1">
+        <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
           {TABS.map((tab) => {
             const cfg = STATUS_CONFIG[tab.key];
             return (
@@ -372,7 +372,7 @@ const ContentWorkflowPage: React.FC = () => {
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
                   activeTab === tab.key
                     ? 'bg-blue-600 text-white shadow'
-                    : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
               >
                 {tab.label}
@@ -384,10 +384,10 @@ const ContentWorkflowPage: React.FC = () => {
         {/* Content list */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
             <FileText className="mb-3 h-12 w-12" />
             <p className="text-lg font-medium">لا يوجد محتوى</p>
             <p className="text-sm">لا يوجد محتوى في هذا التصنيف حاليًا</p>
@@ -404,8 +404,8 @@ const ContentWorkflowPage: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className={`rounded-xl border bg-slate-800/60 p-5 transition hover:bg-slate-800 ${
-                    item.pinned ? 'border-blue-600/50' : 'border-slate-700'
+                  className={`rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
+                    item.pinned ? 'border-blue-300' : 'border-gray-200'
                   }`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -413,7 +413,7 @@ const ContentWorkflowPage: React.FC = () => {
                     <div className="flex-1 space-y-2">
                       {/* Badges row */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-md bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-300">
+                        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                           {TYPE_LABELS[item.type] ?? item.type}
                         </span>
                         <span
@@ -422,7 +422,7 @@ const ContentWorkflowPage: React.FC = () => {
                           {statusCfg.label}
                         </span>
                         {item.pinned && (
-                          <span className="flex items-center gap-1 rounded-full bg-blue-600/20 px-2.5 py-0.5 text-xs font-medium text-blue-400">
+                          <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
                             <Pin className="h-3 w-3" />
                             مثبّت
                           </span>
@@ -430,12 +430,12 @@ const ContentWorkflowPage: React.FC = () => {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-lg font-semibold text-slate-100">
+                      <h3 className="text-lg font-semibold text-gray-900">
                         {item.titleAr || item.title || '(بدون عنوان)'}
                       </h3>
 
                       {/* Author & date */}
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                         {item.author && (
                           <span className="flex items-center gap-1.5">
                             <User className="h-3.5 w-3.5" />
@@ -447,7 +447,7 @@ const ContentWorkflowPage: React.FC = () => {
                           {formatDate(item.submittedAt ?? item.createdAt)}
                         </span>
                         {item.scheduledAt && (
-                          <span className="flex items-center gap-1.5 text-purple-400">
+                          <span className="flex items-center gap-1.5 text-purple-600">
                             <Calendar className="h-3.5 w-3.5" />
                             مجدول: {formatDate(item.scheduledAt)}
                           </span>
@@ -456,7 +456,7 @@ const ContentWorkflowPage: React.FC = () => {
 
                       {/* Review note */}
                       {item.reviewNote && (
-                        <div className="mt-2 flex items-start gap-2 rounded-lg bg-slate-700/50 px-3 py-2 text-xs text-slate-400">
+                        <div className="mt-2 flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
                           <MessageSquare className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                           <span>{item.reviewNote}</span>
                         </div>
@@ -471,7 +471,7 @@ const ContentWorkflowPage: React.FC = () => {
                           <button
                             onClick={() => openReviewModal(item, 'approve')}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1.5 rounded-lg bg-green-600/20 px-3.5 py-2 text-xs font-medium text-green-400 transition hover:bg-green-600/30 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3.5 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:opacity-50"
                           >
                             <CheckCircle className="h-4 w-4" />
                             موافقة
@@ -479,7 +479,7 @@ const ContentWorkflowPage: React.FC = () => {
                           <button
                             onClick={() => openReviewModal(item, 'reject')}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1.5 rounded-lg bg-red-600/20 px-3.5 py-2 text-xs font-medium text-red-400 transition hover:bg-red-600/30 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3.5 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
                           >
                             <XCircle className="h-4 w-4" />
                             رفض
@@ -493,7 +493,7 @@ const ContentWorkflowPage: React.FC = () => {
                           <button
                             onClick={() => openScheduleModal(item)}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1.5 rounded-lg bg-purple-600/20 px-3.5 py-2 text-xs font-medium text-purple-400 transition hover:bg-purple-600/30 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg bg-purple-50 px-3.5 py-2 text-xs font-medium text-purple-700 transition hover:bg-purple-100 disabled:opacity-50"
                           >
                             <Calendar className="h-4 w-4" />
                             جدولة
@@ -501,7 +501,7 @@ const ContentWorkflowPage: React.FC = () => {
                           <button
                             onClick={() => handlePublish(item.id)}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1.5 rounded-lg bg-green-600/20 px-3.5 py-2 text-xs font-medium text-green-400 transition hover:bg-green-600/30 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3.5 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:opacity-50"
                           >
                             <Send className="h-4 w-4" />
                             نشر الآن
@@ -514,7 +514,7 @@ const ContentWorkflowPage: React.FC = () => {
                         <button
                           onClick={() => handlePublish(item.id)}
                           disabled={isActionLoading}
-                          className="flex items-center gap-1.5 rounded-lg bg-green-600/20 px-3.5 py-2 text-xs font-medium text-green-400 transition hover:bg-green-600/30 disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3.5 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:opacity-50"
                         >
                           <Send className="h-4 w-4" />
                           نشر الآن
@@ -527,8 +527,8 @@ const ContentWorkflowPage: React.FC = () => {
                         disabled={isActionLoading}
                         className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition disabled:opacity-50 ${
                           item.pinned
-                            ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
-                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                            ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
                       >
                         {item.pinned ? (
@@ -546,15 +546,15 @@ const ContentWorkflowPage: React.FC = () => {
 
                       {/* Preview */}
                       <button
-                        onClick={() => window.open(`/content/preview/${item.id}`, '_blank')}
-                        className="flex items-center gap-1.5 rounded-lg bg-slate-700 px-3.5 py-2 text-xs font-medium text-slate-400 transition hover:bg-slate-600"
+                        onClick={() => window.open(`/#/content/${item.id}`, '_blank')}
+                        className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3.5 py-2 text-xs font-medium text-gray-500 transition hover:bg-gray-200"
                       >
                         <Eye className="h-4 w-4" />
                         معاينة
                       </button>
 
                       {isActionLoading && (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                       )}
                     </div>
                   </div>
@@ -570,17 +570,17 @@ const ContentWorkflowPage: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1 || loading}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
-            <span className="px-3 text-sm text-slate-400">
+            <span className="px-3 text-sm text-gray-500">
               صفحة {page.toLocaleString('ar-SA')} من {totalPages.toLocaleString('ar-SA')}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || loading}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -592,19 +592,19 @@ const ContentWorkflowPage: React.FC = () => {
       {/* Review Modal (Approve / Reject)                                     */}
       {/* ================================================================== */}
       {reviewTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div
             dir="rtl"
-            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-2xl"
+            className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
           >
-            <h2 className="mb-1 text-lg font-bold text-slate-100">
+            <h2 className="mb-1 text-lg font-bold text-gray-900">
               {reviewAction === 'approve' ? 'الموافقة على المحتوى' : 'رفض المحتوى'}
             </h2>
-            <p className="mb-4 text-sm text-slate-400">
+            <p className="mb-4 text-sm text-gray-500">
               {reviewTarget.titleAr || reviewTarget.title}
             </p>
 
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
               ملاحظة {reviewAction === 'reject' ? '(مطلوبة)' : '(اختيارية)'}
             </label>
             <textarea
@@ -618,7 +618,7 @@ const ContentWorkflowPage: React.FC = () => {
             <div className="mt-5 flex items-center justify-end gap-3">
               <button
                 onClick={closeReviewModal}
-                className="rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-600"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 إلغاء
               </button>
@@ -655,17 +655,17 @@ const ContentWorkflowPage: React.FC = () => {
       {/* Schedule Modal                                                      */}
       {/* ================================================================== */}
       {scheduleTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div
             dir="rtl"
-            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-2xl"
+            className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
           >
-            <h2 className="mb-1 text-lg font-bold text-slate-100">جدولة النشر</h2>
-            <p className="mb-4 text-sm text-slate-400">
+            <h2 className="mb-1 text-lg font-bold text-gray-900">جدولة النشر</h2>
+            <p className="mb-4 text-sm text-gray-500">
               {scheduleTarget.titleAr || scheduleTarget.title}
             </p>
 
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
               تاريخ ووقت النشر
             </label>
             <input
@@ -679,7 +679,7 @@ const ContentWorkflowPage: React.FC = () => {
             <div className="mt-5 flex items-center justify-end gap-3">
               <button
                 onClick={closeScheduleModal}
-                className="rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-600"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 إلغاء
               </button>
