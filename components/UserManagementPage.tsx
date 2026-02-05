@@ -138,13 +138,13 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-slate-800 rounded-xl p-5 shadow-lg border border-slate-700/50 flex items-center gap-4">
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6" />
+    <div className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/60 p-5">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
+        <Icon className="h-5 w-5" />
       </div>
       <div>
-        <p className="text-slate-400 text-sm">{label}</p>
-        <p className="text-2xl font-bold text-white">{value.toLocaleString('ar-EG')}</p>
+        <p className="text-sm text-slate-400">{label}</p>
+        <p className="text-2xl font-bold">{value.toLocaleString('ar-EG')}</p>
       </div>
     </div>
   );
@@ -222,15 +222,15 @@ function Modal({
         onClick={onClose}
       />
       {/* Content */}
-      <div className="relative bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-700 bg-slate-800 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white">{title}</h2>
+        <div className="flex items-center justify-between border-b border-slate-700 p-5">
+          <h2 className="text-lg font-bold">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-700 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
         {/* Body */}
@@ -260,8 +260,8 @@ function UserForm({
   isEdit: boolean;
 }) {
   const fieldClass =
-    'w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
-  const labelClass = 'block text-sm font-medium text-slate-300 mb-1.5';
+    'w-full rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500';
+  const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
 
   return (
     <div className="space-y-4">
@@ -731,38 +731,53 @@ export default function UserManagementPage() {
   // ============================================
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div dir="rtl" className="min-h-screen bg-slate-900 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
         {/* ---- Page Header ---- */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <Users className="w-7 h-7 text-blue-400" />
-              إدارة المستخدمين
-            </h1>
-            <p className="text-slate-400 mt-1">إدارة وتنظيم حسابات المستخدمين والأدوار</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
+              <Users className="h-5 w-5 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">إدارة المستخدمين</h1>
+              <p className="text-sm text-slate-400">إدارة وتنظيم حسابات المستخدمين والأدوار</p>
+            </div>
           </div>
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded-xl shadow-lg shadow-blue-600/20 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
           >
-            <UserPlus className="w-5 h-5" />
+            <UserPlus className="h-4 w-4" />
             مستخدم جديد
           </button>
         </div>
 
         {/* ---- Error Banner ---- */}
         {error && (
-          <div className="mb-6 bg-red-900/30 border border-red-700/50 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-red-300 text-sm">{error}</p>
+          <div className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-400">
+            <div className="flex items-center gap-2">
+              <X className="h-4 w-4 flex-shrink-0" />
+              {error}
+            </div>
             <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
+        {/* ---- Streaming Indicator ---- */}
+        {streaming && users.length > 0 && (
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-sm text-blue-400">
+              <Wifi className="h-4 w-4 animate-pulse" />
+              <span>جاري تحميل المستخدمين...</span>
+            </div>
+          </div>
+        )}
+
         {/* ---- Stats Bar ---- */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             label="إجمالي المستخدمين"
             value={stats.totalUsers}
@@ -784,14 +799,14 @@ export default function UserManagementPage() {
         </div>
 
         {/* ---- Search & Filters ---- */}
-        <div className="bg-slate-800 rounded-xl p-4 mb-6 shadow-lg border border-slate-700/50">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="mb-6 rounded-xl border border-slate-700 bg-slate-800/60 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg pr-10 pl-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full rounded-lg border border-slate-600 bg-slate-900 py-2.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="بحث بالاسم أو البريد الإلكتروني..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -800,7 +815,7 @@ export default function UserManagementPage() {
 
             {/* Role Filter */}
             <select
-              className="bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-w-[160px]"
+              className="min-w-[160px] rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
             >
@@ -814,7 +829,7 @@ export default function UserManagementPage() {
 
             {/* Active Filter */}
             <select
-              className="bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-w-[140px]"
+              className="min-w-[140px] rounded-lg border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value)}
             >
@@ -827,7 +842,7 @@ export default function UserManagementPage() {
 
         {/* ---- Bulk Actions Bar ---- */}
         {selectedIds.size > 0 && (
-          <div className="bg-slate-800 rounded-xl p-4 mb-4 shadow-lg border border-blue-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="mb-4 flex flex-col items-start gap-3 rounded-xl border border-blue-700/50 bg-slate-800/60 p-4 sm:flex-row sm:items-center">
             <span className="text-blue-400 text-sm font-medium">
               تم تحديد {selectedIds.size} مستخدم
             </span>
@@ -881,48 +896,37 @@ export default function UserManagementPage() {
         )}
 
         {/* ---- Users Table ---- */}
-        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700/50 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="flex flex-col items-center gap-3">
-                <span className="w-10 h-10 border-3 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-                <p className="text-slate-400 text-sm">جارٍ تحميل المستخدمين...</p>
-              </div>
+        <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-800/60">
+          {loading && users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Wifi className="mb-3 h-6 w-6 animate-pulse text-blue-400" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" />
+              <p className="mt-3 text-sm text-slate-500">جاري تحميل المستخدمين...</p>
             </div>
           ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Users className="w-12 h-12 mb-3 opacity-50" />
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+              <Users className="mb-3 h-12 w-12" />
               <p className="text-lg font-medium">لا توجد نتائج</p>
-              <p className="text-sm mt-1">حاول تغيير معايير البحث أو الفلاتر</p>
+              <p className="text-sm">حاول تغيير معايير البحث أو الفلاتر</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700 bg-slate-800/80">
+                  <tr className="border-b border-slate-700">
                     <th className="p-4 text-right">
                       <input
                         type="checkbox"
                         checked={allSelected}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-500 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                        className="h-4 w-4 cursor-pointer rounded border-slate-500 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
                       />
                     </th>
-                    <th className="p-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      المستخدم
-                    </th>
-                    <th className="p-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      الدور
-                    </th>
-                    <th className="p-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      الحالة
-                    </th>
-                    <th className="p-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      تاريخ الإنشاء
-                    </th>
-                    <th className="p-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
+                    <th className="p-4 text-right text-xs font-medium text-slate-400">المستخدم</th>
+                    <th className="p-4 text-right text-xs font-medium text-slate-400">الدور</th>
+                    <th className="p-4 text-right text-xs font-medium text-slate-400">الحالة</th>
+                    <th className="p-4 text-right text-xs font-medium text-slate-400">تاريخ الإنشاء</th>
+                    <th className="p-4 text-right text-xs font-medium text-slate-400">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/50">
@@ -1061,22 +1065,20 @@ export default function UserManagementPage() {
           )}
 
           {/* ---- Pagination ---- */}
-          {!loading && users.length > 0 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-700">
-              <p className="text-slate-400 text-sm">
-                عرض {(page - 1) * PAGE_LIMIT + 1} -{' '}
-                {Math.min(page * PAGE_LIMIT, totalUsers)} من {totalUsers} مستخدم
+          {!loading && users.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-700 p-4">
+              <p className="text-sm text-slate-400">
+                عرض {(page - 1) * PAGE_LIMIT + 1} - {Math.min(page * PAGE_LIMIT, totalUsers)} من {totalUsers}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-slate-600"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-4 w-4" />
                 </button>
 
-                {/* Page numbers */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum: number;
                   if (totalPages <= 5) {
@@ -1092,10 +1094,10 @@ export default function UserManagementPage() {
                     <button
                       key={pageNum}
                       onClick={() => setPage(pageNum)}
-                      className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                      className={`h-9 w-9 rounded-lg text-sm font-medium transition ${
                         pageNum === page
                           ? 'bg-blue-600 text-white'
-                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
                       }`}
                     >
                       {pageNum}
@@ -1106,9 +1108,9 @@ export default function UserManagementPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-slate-600"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
               </div>
             </div>

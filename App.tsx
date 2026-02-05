@@ -86,6 +86,22 @@ import MyContentPage from './components/MyContentPage';
 import ContentWorkflowPage from './components/ContentWorkflowPage';
 import UserManagementPage from './components/UserManagementPage';
 import ContentDetailPage from './components/ContentDetailPage';
+import NotificationsPage from './components/NotificationsPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
+import SearchPage from './components/SearchPage';
+import AboutPage from './components/AboutPage';
+import HowItWorksPage from './components/HowItWorksPage';
+import PricingPage from './components/PricingPage';
+import FAQPage from './components/FAQPage';
+import ContactPage from './components/ContactPage';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
+import TermsPage from './components/TermsPage';
+import VerifyEmailPage from './components/VerifyEmailPage';
+import AuditLogPage from './components/AuditLogPage';
+import DataTrustPage from './components/DataTrustPage';
+import UseCasesPage from './components/UseCasesPage';
+import DataSourcesPage from './components/DataSourcesPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -270,6 +286,9 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
               <NavItem to="/admin/users" icon={UsersRound} className="text-amber-400/70 hover:text-amber-300">
                 إدارة المستخدمين
               </NavItem>
+              <NavItem to="/admin/audit-logs" icon={ClipboardList} className="text-amber-400/70 hover:text-amber-300">
+                سجل العمليات
+              </NavItem>
               <NavItem to="/content-workflow" icon={FileCheck} className="text-amber-400/70 hover:text-amber-300">
                 مراجعة المحتوى
               </NavItem>
@@ -353,6 +372,7 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/signals')) return { title: 'إشارات السوق', section: 'الذكاء الاصطناعي' };
     if (pathname.includes('/timeline')) return { title: 'سجل التغييرات', section: 'المتابعة' };
     if (pathname.includes('/followers')) return { title: 'اكتشاف المتابعين', section: 'المجتمع' };
+    if (pathname.includes('/admin/audit-logs')) return { title: 'سجل العمليات', section: 'Admin' };
     if (pathname.includes('/admin/users')) return { title: 'إدارة المستخدمين', section: 'Admin' };
     if (pathname.includes('/admin')) return { title: 'إدارة النظام', section: 'Admin' };
     if (pathname.includes('/create-post')) return { title: 'إنشاء منشور', section: 'المحتوى' };
@@ -385,14 +405,18 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
             <span className="font-bold text-gray-900 text-sm hidden sm:block">رادار المستثمر</span>
           </div>
 
-          <div className="relative group w-full max-w-md hidden md:block">
+          <div className="relative group w-full max-w-md hidden md:block"
+            onClick={() => navigate('/search')}
+          >
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <Search className="w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
             </div>
             <input
               type="text"
-              className="block w-full py-2.5 pr-10 pl-12 text-sm text-gray-900 bg-gray-100/50 border border-gray-200/60 rounded-xl focus:ring-4 focus:ring-blue-50/10 focus:border-blue-500 focus:bg-white transition-all placeholder-gray-400 shadow-sm hover:bg-white"
+              className="block w-full py-2.5 pr-10 pl-12 text-sm text-gray-900 bg-gray-100/50 border border-gray-200/60 rounded-xl focus:ring-4 focus:ring-blue-50/10 focus:border-blue-500 focus:bg-white transition-all placeholder-gray-400 shadow-sm hover:bg-white cursor-pointer"
               placeholder="ابحث عن مؤشر، تقرير، أو خبير..."
+              readOnly
+              onFocus={() => navigate('/search')}
             />
           </div>
 
@@ -417,7 +441,10 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
             <span className="hidden lg:inline relative z-10">المستشار الذكي</span>
           </button>
 
-          <button className="relative p-2 lg:p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100 group">
+          <button
+            onClick={() => navigate('/notifications')}
+            className="relative p-2 lg:p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100 group"
+          >
             <Bell size={22} className="group-hover:animate-swing" />
           </button>
 
@@ -917,11 +944,14 @@ const AppContent = () => {
             <Route path="/verification" element={<DataAnalysisPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/admin/audit-logs" element={<AuditLogPage />} />
             <Route path="/create-post" element={<CreatePostPage />} />
             <Route path="/my-content" element={<MyContentPage />} />
             <Route path="/content-workflow" element={<ContentWorkflowPage />} />
             <Route path="/content/:id" element={<ContentDetailPage />} />
             <Route path="/datasets" element={<DatasetsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/search" element={<SearchPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
           </Routes>
@@ -1028,6 +1058,19 @@ const AppWithAuth = () => {
       <Route path="/data/:id" element={<DatasetDetailPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/faq" element={<FAQPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/data-trust" element={<DataTrustPage />} />
+      <Route path="/use-cases" element={<UseCasesPage />} />
+      <Route path="/data-sources" element={<DataSourcesPage />} />
 
       {/* Protected routes - require authentication */}
       <Route

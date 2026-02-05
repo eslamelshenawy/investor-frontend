@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../src/services/api';
 import {
@@ -484,9 +484,10 @@ const PublicHomePage: React.FC = () => {
             <div>
               <h3 className="font-bold text-[#002B5C] mb-4">نظرة عامة</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-[#002B5C]">عن المنصة</a></li>
-                <li><a href="#" className="hover:text-[#002B5C]">سياسة البيانات</a></li>
-                <li><a href="#" className="hover:text-[#002B5C]">اتفاقية الاستخدام</a></li>
+                <li><Link to="/about" className="hover:text-[#002B5C]">عن المنصة</Link></li>
+                <li><Link to="/how-it-works" className="hover:text-[#002B5C]">كيف يعمل</Link></li>
+                <li><Link to="/pricing" className="hover:text-[#002B5C]">الأسعار</Link></li>
+                <li><Link to="/use-cases" className="hover:text-[#002B5C]">حالات الاستخدام</Link></li>
               </ul>
             </div>
 
@@ -504,9 +505,10 @@ const PublicHomePage: React.FC = () => {
             <div>
               <h3 className="font-bold text-[#002B5C] mb-4">الدعم والمساعدة</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-[#002B5C]">الأسئلة الشائعة</a></li>
-                <li><a href="#" className="hover:text-[#002B5C]">تواصل معنا</a></li>
-                <li><a href="#" className="hover:text-[#002B5C]">دليل الاستخدام</a></li>
+                <li><Link to="/faq" className="hover:text-[#002B5C]">الأسئلة الشائعة</Link></li>
+                <li><Link to="/contact" className="hover:text-[#002B5C]">تواصل معنا</Link></li>
+                <li><Link to="/data-trust" className="hover:text-[#002B5C]">لماذا نثق بالبيانات</Link></li>
+                <li><Link to="/data-sources" className="hover:text-[#002B5C]">مصادر البيانات</Link></li>
               </ul>
             </div>
 
@@ -541,9 +543,9 @@ const PublicHomePage: React.FC = () => {
           <div className="border-t border-gray-100 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
             <p>© 2025 رادار المستثمر. جميع الحقوق محفوظة.</p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-gray-800">سياسة الخصوصية</a>
+              <Link to="/privacy" className="hover:text-gray-800">سياسة الخصوصية</Link>
               <span className="text-gray-300">|</span>
-              <a href="#" className="hover:text-gray-800">الشروط والأحكام</a>
+              <Link to="/terms" className="hover:text-gray-800">الشروط والأحكام</Link>
             </div>
           </div>
         </div>

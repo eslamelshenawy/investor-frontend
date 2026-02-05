@@ -21,19 +21,98 @@ interface ApiResponse<T> {
 class ApiService {
   private baseUrl: string;
   private timeout: number;
+  private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.baseUrl = API_CONFIG.baseUrl;
     this.timeout = API_CONFIG.timeout;
+    this.setupTokenRefreshTimer();
   }
 
   private getAuthToken(): string | null {
     return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   }
 
+  /** Decode JWT payload without verification (client-side only) */
+  private decodeToken(token: string): { exp?: number; userId?: string } | null {
+    try {
+      const payload = token.split('.')[1];
+      return JSON.parse(atob(payload));
+    } catch {
+      return null;
+    }
+  }
+
+  /** Setup a timer that refreshes the token before it expires */
+  private setupTokenRefreshTimer() {
+    // Check every 5 minutes
+    setInterval(() => {
+      this.checkAndRefreshToken();
+    }, 5 * 60 * 1000);
+  }
+
+  /** Check if token is close to expiry and refresh proactively */
+  private async checkAndRefreshToken() {
+    const token = this.getAuthToken();
+    if (!token) return;
+
+    const decoded = this.decodeToken(token);
+    if (!decoded?.exp) return;
+
+    const now = Math.floor(Date.now() / 1000);
+    const timeLeft = decoded.exp - now;
+
+    // Refresh if less than 1 hour remaining
+    if (timeLeft > 0 && timeLeft < 3600) {
+      await this.doRefreshToken();
+    }
+  }
+
+  /** Perform the actual token refresh */
+  private async doRefreshToken(): Promise<boolean> {
+    // Prevent concurrent refreshes
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.isRefreshing = true;
+    this.refreshPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) return false;
+
+        const url = `${this.baseUrl}/auth/refresh-token`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data?.token) {
+          localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.data.token);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    _isRetry = false
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     const token = this.getAuthToken();
@@ -57,6 +136,22 @@ class ApiService {
       clearTimeout(timeoutId);
 
       const data = await response.json();
+
+      // Auto-refresh on 401 "Token expired" (not on login/register/refresh endpoints)
+      if (
+        !_isRetry &&
+        response.status === 401 &&
+        token &&
+        !endpoint.includes('/auth/login') &&
+        !endpoint.includes('/auth/register') &&
+        !endpoint.includes('/auth/refresh-token')
+      ) {
+        const refreshed = await this.doRefreshToken();
+        if (refreshed) {
+          return this.request<T>(endpoint, options, true);
+        }
+      }
+
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
@@ -136,12 +231,73 @@ class ApiService {
   }
 
   async getMe() {
-    return this.get<User>('/auth/me');
+    return this.get<UserProfile>('/auth/me');
+  }
+
+  async updateProfile(data: {
+    name?: string; nameAr?: string; avatar?: string | null;
+    bio?: string | null; bioAr?: string | null; phone?: string | null;
+  }) {
+    return this.put<UserProfile>('/auth/me', data);
+  }
+
+  async getPublicProfile(userId: string) {
+    return this.get<PublicProfile>(`/auth/profile/${userId}`);
   }
 
   logout() {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+  }
+
+  // =====================
+  // File Upload
+  // =====================
+
+  async uploadFile(file: File): Promise<ApiResponse<{
+    filename: string; originalName: string; size: number; mimetype: string; url: string;
+  }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${this.baseUrl}/uploads`;
+    const token = this.getAuthToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        body: formData,
+      });
+      return await response.json();
+    } catch {
+      return { success: false, error: 'Upload failed', errorAr: 'فشل في رفع الملف' };
+    }
+  }
+
+  async uploadFiles(files: File[]): Promise<ApiResponse<Array<{
+    filename: string; originalName: string; size: number; mimetype: string; url: string;
+  }>>> {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+
+    const url = `${this.baseUrl}/uploads/multiple`;
+    const token = this.getAuthToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        body: formData,
+      });
+      return await response.json();
+    } catch {
+      return { success: false, error: 'Upload failed', errorAr: 'فشل في رفع الملفات' };
+    }
+  }
+
+  async deleteUpload(filename: string) {
+    return this.delete<{ deleted: boolean }>(`/uploads/${filename}`);
   }
 
   // =====================
@@ -379,6 +535,32 @@ class ApiService {
   }
 
   // =====================
+  // Dashboard Templates
+  // =====================
+
+  async getDashboardTemplates() {
+    return this.get<Array<{
+      id: string; name: string; nameAr: string;
+      description: string; descriptionAr: string;
+      category: string; icon: string; widgetCount: number;
+    }>>('/dashboard-templates');
+  }
+
+  async getDashboardTemplate(id: string) {
+    return this.get<{
+      id: string; name: string; nameAr: string;
+      description: string; descriptionAr: string;
+      category: string; icon: string;
+      widgets: Array<{ type: string; title: string; titleAr: string; dataSource: string; chartType?: string; size: string }>;
+      layout: Record<string, unknown>;
+    }>(`/dashboard-templates/${id}`);
+  }
+
+  async cloneDashboardTemplate(id: string) {
+    return this.post<UserDashboard>(`/dashboard-templates/${id}/clone`);
+  }
+
+  // =====================
   // Notifications Endpoints
   // =====================
 
@@ -404,12 +586,28 @@ class ApiService {
   // User Profile Endpoints
   // =====================
 
-  async updateProfile(data: { name?: string; nameAr?: string; avatar?: string }) {
-    return this.put<User>('/auth/me', data);
-  }
-
   async changePassword(currentPassword: string, newPassword: string) {
     return this.put<void>('/auth/change-password', { currentPassword, newPassword });
+  }
+
+  async forgotPassword(email: string) {
+    return this.post<{ message: string; messageAr: string }>('/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.post<{ message: string; messageAr: string }>('/auth/reset-password', { token, newPassword });
+  }
+
+  async refreshAuthToken() {
+    return this.post<{ token: string }>('/auth/refresh-token');
+  }
+
+  async sendVerificationEmail() {
+    return this.post<{ message: string; messageAr: string }>('/auth/send-verification');
+  }
+
+  async verifyEmail(token: string) {
+    return this.post<{ message: string; messageAr: string }>('/auth/verify-email', { token });
   }
 
   // =====================
@@ -528,6 +726,64 @@ class ApiService {
 
   async getWidgetTypes() {
     return this.get<{ id: string; label: string; labelEn: string }[]>('/widgets/types');
+  }
+
+  // =====================
+  // Recommendations
+  // =====================
+
+  async getRecommendations(limit?: number) {
+    const qs = limit ? `?limit=${limit}` : '';
+    return this.get<{
+      content: Array<{
+        id: string; type: string; title: string; titleAr: string; excerptAr?: string;
+        viewCount: number; likeCount: number; publishedAt: string; tags: string[];
+        author?: { id: string; name: string; nameAr?: string; avatar?: string };
+        _type: 'content'; _reason: string;
+      }>;
+      signals: Array<{
+        id: string; type: string; title: string; titleAr: string; summaryAr: string;
+        impactScore: number; confidence: number; trend: string; createdAt: string;
+        _type: 'signal'; _reason: string;
+      }>;
+      datasets: Array<{
+        id: string; name: string; nameAr: string; category: string; source: string;
+        recordCount: number; lastSyncAt?: string;
+        _type: 'dataset'; _reason: string;
+      }>;
+      meta: { basedOn: { favorites: number; following: number } };
+    }>(`/recommendations${qs}`);
+  }
+
+  // =====================
+  // Search
+  // =====================
+
+  async search(params: { q: string; type?: string; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    query.append('q', params.q);
+    if (params.type) query.append('type', params.type);
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    return this.get<{
+      query: string;
+      type: string;
+      results: {
+        content: SearchContentItem[];
+        datasets: SearchDatasetItem[];
+        entities: SearchEntityItem[];
+        signals: SearchSignalItem[];
+      };
+      counts: { content: number; datasets: number; entities: number; signals: number };
+      totalResults: number;
+    }>(`/search?${query.toString()}`);
+  }
+
+  async searchSuggestions(q: string) {
+    if (!q || q.length < 2) return { success: true as const, data: { suggestions: [] } };
+    return this.get<{
+      suggestions: Array<{ id: string; text: string; category: string; subCategory: string }>;
+    }>(`/search/suggestions?q=${encodeURIComponent(q)}`);
   }
 
   // =====================
@@ -705,6 +961,46 @@ class ApiService {
     const qs = query.toString();
     return this.get<AuditLog[]>(`/admin/audit-logs${qs ? `?${qs}` : ''}`);
   }
+
+  // =====================
+  // Export (Download CSV)
+  // =====================
+
+  async exportCsv(type: 'datasets' | 'signals' | 'content' | 'entities' | string) {
+    const url = `${this.baseUrl}/export/${type}`;
+    const token = this.getAuthToken();
+    const response = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error('Export failed');
+    const blob = await response.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `${type}_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(downloadUrl);
+  }
+
+  async exportDatasetCsv(datasetId: string) {
+    const url = `${this.baseUrl}/export/dataset/${datasetId}`;
+    const token = this.getAuthToken();
+    const response = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error('Export failed');
+    const blob = await response.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `dataset_${datasetId}_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(downloadUrl);
+  }
 }
 
 // Types
@@ -715,6 +1011,51 @@ interface User {
   nameAr?: string;
   avatar?: string;
   role: string;
+}
+
+interface UserProfile extends User {
+  bio?: string;
+  bioAr?: string;
+  phone?: string;
+  emailVerified: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    dashboards: number;
+    favorites: number;
+    contents: number;
+    comments: number;
+    following: number;
+    followers: number;
+  };
+}
+
+interface PublicProfile {
+  id: string;
+  name: string;
+  nameAr?: string;
+  avatar?: string;
+  role: string;
+  bio?: string;
+  bioAr?: string;
+  createdAt: string;
+  _count: {
+    contents: number;
+    comments: number;
+    following: number;
+    followers: number;
+  };
+  recentContent: Array<{
+    id: string;
+    type: string;
+    title: string;
+    titleAr: string;
+    excerptAr?: string;
+    viewCount: number;
+    likeCount: number;
+    publishedAt: string;
+  }>;
 }
 
 interface Dataset {
@@ -883,7 +1224,66 @@ interface AuditLog {
   createdAt: string;
 }
 
+interface SearchContentItem {
+  id: string;
+  type: string;
+  title: string;
+  titleAr: string;
+  excerpt?: string;
+  excerptAr?: string;
+  tags: string[];
+  viewCount: number;
+  likeCount: number;
+  publishedAt: string;
+  author?: { id: string; name: string; nameAr?: string; avatar?: string };
+  _type: 'content';
+}
+
+interface SearchDatasetItem {
+  id: string;
+  externalId: string;
+  name: string;
+  nameAr: string;
+  description?: string;
+  descriptionAr?: string;
+  category: string;
+  source: string;
+  recordCount: number;
+  lastSyncAt?: string;
+  _type: 'dataset';
+}
+
+interface SearchEntityItem {
+  id: string;
+  name: string;
+  nameEn?: string;
+  role: string;
+  type: string;
+  avatar?: string;
+  isVerified: boolean;
+  verificationLevel: string;
+  followersCount: number;
+  specialties: string[];
+  _type: 'entity';
+}
+
+interface SearchSignalItem {
+  id: string;
+  type: string;
+  title: string;
+  titleAr: string;
+  summary: string;
+  summaryAr: string;
+  impactScore: number;
+  confidence: number;
+  trend: string;
+  sector?: string;
+  region?: string;
+  createdAt: string;
+  _type: 'signal';
+}
+
 // Export singleton instance
 export const api = new ApiService();
-export type { ApiResponse, CommentItem, AdminUser, AuditLog, Content, User };
+export type { ApiResponse, CommentItem, AdminUser, AuditLog, Content, User, UserProfile, PublicProfile, SearchContentItem, SearchDatasetItem, SearchEntityItem, SearchSignalItem };
 export default api;
