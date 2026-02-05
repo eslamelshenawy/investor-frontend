@@ -329,6 +329,7 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+          )}
 
           {/* Register Link */}
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">

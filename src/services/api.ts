@@ -280,6 +280,10 @@ class ApiService {
     return this.post<{ user: User; token: string }>('/auth/2fa/validate', { userId, token, backupCode });
   }
 
+  async googleAuth(credential: string) {
+    return this.post<{ user: User; token: string; isNewUser?: boolean; requires2FA?: boolean; userId?: string }>('/auth/google', { credential });
+  }
+
   // =====================
   // File Upload
   // =====================

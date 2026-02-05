@@ -22,6 +22,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User; requires2FA?: boolean; userId?: string }>;
+  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string; user?: User; requires2FA?: boolean; userId?: string }>;
   register: (data: { email: string; password: string; name: string; nameAr?: string }) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -84,6 +85,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    try {
+      const response = await api.googleAuth(credential);
+
+      if (response.success && response.data) {
+        if ((response.data as any).requires2FA) {
+          return { success: false, requires2FA: true, userId: (response.data as any).userId };
+        }
+        setUser(response.data.user);
+        return { success: true, user: response.data.user };
+      }
+
+      return {
+        success: false,
+        error: response.errorAr || response.error || 'حدث خطأ في تسجيل الدخول بـ Google'
+      };
+    } catch {
+      return { success: false, error: 'حدث خطأ في الاتصال بالخادم' };
+    }
+  };
+
   const complete2FA = async (userId: string, token: string) => {
     try {
       const response = await api.validate2FA(userId, token);
@@ -132,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
+        loginWithGoogle,
         register,
         logout,
         updateUser,

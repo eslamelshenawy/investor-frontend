@@ -113,7 +113,7 @@ function transformSignal(apiSignal: APISignal): AISignal {
         confidenceLevel: apiSignal.confidence,
         timestamp: apiSignal.createdAt,
         dataSources: [apiSignal.dataSource === 'AI_ANALYSIS' ? 'تحليل الذكاء الاصطناعي' : 'البيانات المفتوحة السعودية'],
-        explanation: {
+        explanation: details.explanation || {
             why: `تم رصد هذه الإشارة بناءً على تحليل البيانات الاقتصادية`,
             dataUsed: details.relatedDatasets || ['بيانات السوق'],
             assumptions: ['استمرار الاتجاهات الحالية', 'استقرار السياسات الاقتصادية'],
@@ -505,6 +505,89 @@ const SignalDetailModal: React.FC<{ signal: AISignal; onClose: () => void }> = (
 // MAIN COMPONENT
 // ============================================
 
+// Economic Summary types
+interface DailySummary {
+    summary: string;
+    summaryAr: string;
+    keyPoints?: Array<{
+        title: string;
+        description: string;
+        impact: 'positive' | 'negative' | 'neutral';
+        sector?: string;
+    }>;
+    marketMood?: 'bullish' | 'bearish' | 'neutral';
+    topSectors?: string[];
+    signalStats?: { total: number; opportunities: number; risks: number; trends: number };
+}
+
+/** Economic Summary Card */
+const EconomicSummaryCard: React.FC<{ summary: DailySummary }> = ({ summary }) => {
+    const moodConfig = {
+        bullish: { label: 'إيجابي', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', icon: TrendingUp },
+        bearish: { label: 'سلبي', color: 'text-red-700 bg-red-50 border-red-200', icon: TrendingDown },
+        neutral: { label: 'محايد', color: 'text-amber-700 bg-amber-50 border-amber-200', icon: Activity },
+    };
+    const mood = moodConfig[summary.marketMood || 'neutral'];
+    const MoodIcon = mood.icon;
+
+    const impactIcons = {
+        positive: { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        negative: { icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50' },
+        neutral: { icon: Activity, color: 'text-gray-500', bg: 'bg-gray-50' },
+    };
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <Brain size={16} className="text-white" />
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900">الملخص الاقتصادي</h2>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1 ${mood.color}`}>
+                    <MoodIcon size={12} />
+                    مزاج السوق: {mood.label}
+                </span>
+            </div>
+
+            <p className="text-sm text-gray-700 leading-relaxed mb-4">{summary.summaryAr}</p>
+
+            {summary.keyPoints && summary.keyPoints.length > 0 && (
+                <div className="space-y-2">
+                    {summary.keyPoints.slice(0, 7).map((point, idx) => {
+                        const ic = impactIcons[point.impact || 'neutral'];
+                        const ImpactIcon = ic.icon;
+                        return (
+                            <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50/80">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${ic.bg}`}>
+                                    <ImpactIcon size={14} className={ic.color} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-gray-900">{point.title}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{point.description}</p>
+                                </div>
+                                {point.sector && (
+                                    <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex-shrink-0">{point.sector}</span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {summary.signalStats && (
+                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                    <span>{summary.signalStats.total} إشارة</span>
+                    <span className="text-emerald-600">{summary.signalStats.opportunities} فرصة</span>
+                    <span className="text-red-600">{summary.signalStats.risks} مخاطر</span>
+                    <span className="text-blue-600">{summary.signalStats.trends} اتجاه</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AISignalsPage: React.FC = () => {
     const [selectedSignal, setSelectedSignal] = useState<AISignal | null>(null);
     const [filter, setFilter] = useState<'all' | SignalType>('all');
@@ -515,6 +598,7 @@ const AISignalsPage: React.FC = () => {
         totalDatasets: 0, totalSignals: 0, lastUpdate: null
     });
     const [generating, setGenerating] = useState(false);
+    const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
     const signalsEventSourceRef = useRef<EventSource | null>(null);
 
     // SSE: Stream signals
@@ -619,12 +703,26 @@ const AISignalsPage: React.FC = () => {
         fetchStatsData();
     }, [streamSignals, fetchStatsData]);
 
+    // Fetch daily summary
+    const fetchDailySummary = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/signals/summary`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setDailySummary(data.data);
+                }
+            }
+        } catch {}
+    }, []);
+
     // Init
     useEffect(() => {
         streamSignals();
         fetchStatsData();
+        fetchDailySummary();
         return () => { if (signalsEventSourceRef.current) signalsEventSourceRef.current.close(); };
-    }, [streamSignals, fetchStatsData]);
+    }, [streamSignals, fetchStatsData, fetchDailySummary]);
 
     const loading = streaming && signals.length === 0;
 
@@ -693,6 +791,9 @@ const AISignalsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Economic Summary */}
+            {dailySummary && <EconomicSummaryCard summary={dailySummary} />}
 
             {/* Filters + Actions */}
             <div className="flex items-center justify-between flex-wrap gap-3 mb-8">

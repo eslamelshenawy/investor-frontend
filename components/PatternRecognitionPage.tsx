@@ -7,7 +7,7 @@
  * AI-detected patterns in economic data with timeline and predictions
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Brain,
   TrendingUp,
@@ -44,12 +44,29 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import { api } from '../src/services/api';
 
 // ============================================
 // TYPES
 // ============================================
 
 type PatternType = 'bullish' | 'bearish' | 'consolidation' | 'breakout' | 'reversal';
+
+/** Backend pattern shape from GET /api/signals/patterns */
+interface ApiPattern {
+  id: string;
+  type: 'TREND' | 'CYCLE' | 'ANOMALY' | 'CORRELATION' | 'SEASONAL';
+  title: string;
+  titleAr: string;
+  description: string;
+  descriptionAr: string;
+  confidence: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  signals: string[];
+  sectors: string[];
+  timeframe: { start: string; end: string };
+  metadata: Record<string, unknown>;
+}
 type TimeRange = 'week' | 'month' | 'quarter' | 'year';
 
 interface Pattern {
@@ -331,6 +348,48 @@ const MOCK_ACCURACY: AccuracyStat[] = [
 // HELPERS
 // ============================================
 
+/** Map backend pattern type to frontend display type */
+function mapApiType(type: ApiPattern['type']): PatternType {
+  switch (type) {
+    case 'TREND': return 'bullish'; // will refine based on metadata
+    case 'ANOMALY': return 'breakout';
+    case 'CORRELATION': return 'consolidation';
+    case 'CYCLE': return 'reversal';
+    case 'SEASONAL': return 'bearish';
+    default: return 'consolidation';
+  }
+}
+
+/** Convert API pattern to frontend Pattern */
+function apiToPattern(ap: ApiPattern, idx: number): Pattern {
+  const now = new Date();
+  const detectedDate = ap.timeframe?.end || now.toISOString();
+  const daysDiff = (now.getTime() - new Date(detectedDate).getTime()) / (1000 * 60 * 60 * 24);
+
+  // For TREND type, check metadata to determine bullish vs bearish
+  let frontType: PatternType = mapApiType(ap.type);
+  if (ap.type === 'TREND') {
+    const meta = ap.metadata as any;
+    if (meta?.avg1 !== undefined && meta?.avg3 !== undefined) {
+      frontType = meta.avg1 > meta.avg3 ? 'bullish' : 'bearish';
+    }
+    // Check title for dominance patterns
+    if (ap.id.includes('dominance')) frontType = 'breakout';
+  }
+
+  return {
+    id: ap.id || `api-${idx}`,
+    name: ap.titleAr || ap.title,
+    type: frontType,
+    confidence: Math.round(ap.confidence),
+    description: ap.descriptionAr || ap.description,
+    sectors: ap.sectors || [],
+    detectedAt: detectedDate,
+    isNew: daysDiff < 7,
+    impactScore: Math.round(ap.confidence * 0.9),
+  };
+}
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('ar-SA', {
     month: 'short',
@@ -532,16 +591,38 @@ const PatternRecognitionPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [sector, setSector] = useState('all');
   const [sectorOpen, setSectorOpen] = useState(false);
+  const [patterns, setPatterns] = useState<Pattern[]>(MOCK_PATTERNS);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch patterns from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.get<ApiPattern[]>('/signals/patterns');
+        const list = Array.isArray(res) ? res : (res as any)?.data ?? [];
+        if (!cancelled && list.length > 0) {
+          setPatterns(list.map(apiToPattern));
+        }
+      } catch {
+        // Keep mock data as fallback
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Filtered patterns
   const filteredPatterns = useMemo(() => {
-    let result = MOCK_PATTERNS;
+    let result = patterns;
     if (sector !== 'all') {
       const sectorLabel = SECTORS.find(s => s.value === sector)?.label || '';
       result = result.filter(p => p.sectors.some(s => s.includes(sectorLabel.replace('ال', ''))));
     }
     return result;
-  }, [sector]);
+  }, [sector, patterns]);
 
   // Computed stats
   const totalPatterns = filteredPatterns.length;
