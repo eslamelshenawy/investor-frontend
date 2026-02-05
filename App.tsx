@@ -75,6 +75,7 @@ import HomeFeedWrapper from './components/HomeFeedWrapper';
 import DatasetContent from './components/DatasetContent';
 import DecisionWizard from './components/DecisionWizard';
 import UserProfile from './components/UserProfile';
+import TwoFactorSettings from './components/TwoFactorSettings';
 import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
@@ -288,8 +289,8 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
 
   return (
     <aside className="w-64 bg-slate-900 text-white h-screen sticky top-0 hidden lg:flex flex-col shadow-2xl z-50 overflow-hidden border-l border-slate-800">
-      {/* Brand */}
-      <div className="p-6 border-b border-slate-800 flex items-center gap-3 bg-slate-950/20 shrink-0">
+      {/* Brand - clickable to home */}
+      <a href="#/" className="p-6 border-b border-slate-800 flex items-center gap-3 bg-slate-950/20 shrink-0 cursor-pointer hover:bg-slate-800/50 transition-colors">
         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Activity size={24} className="text-white" />
         </div>
@@ -297,7 +298,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           <h1 className="font-black text-lg tracking-tight leading-none bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">رادار المستثمر</h1>
           <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1 opacity-80 underline decoration-blue-500/30 underline-offset-4">Investor Radar</p>
         </div>
-      </div>
+      </a>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3 custom-scrollbar">
@@ -326,7 +327,6 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
         )}
 
         <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
-          <NavItem to="/" icon={Compass} end>الرئيسية</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
           <NavItem to="/heatmap" icon={Map}>خرائط الحرارة</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
@@ -983,6 +983,7 @@ const AppContent = () => {
             <Route path="/timeline" element={<TimelineWrapper />} />
             <Route path="/followers" element={<FollowersWrapper />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/settings/2fa" element={<TwoFactorSettings />} />
             <Route path="/favorites" element={<FavoritesPage />} />
 
             <Route path="/expert-studio" element={
