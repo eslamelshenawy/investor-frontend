@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { 
-  Users, 
-  UserPlus, 
-  MapPin, 
-  Facebook, 
-  Twitter, 
-  Youtube, 
+import React, { useState, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../src/services/api';
+import {
+  Users,
+  UserPlus,
+  MapPin,
+  Facebook,
+  Twitter,
+  Youtube,
   MoreVertical,
   Heart,
   Image as ImageLucide,
@@ -19,7 +21,9 @@ import {
   MessageSquare,
   TrendingUp,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  Loader2,
+  Camera
 } from 'lucide-react';
 
 // --- Types ---
@@ -59,10 +63,62 @@ const GALLERY: GalleryItem[] = [
 ];
 
 const UserProfile = () => {
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('Profile');
+  const [uploading, setUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+
+    setUploading(true);
+    try {
+      const uploadRes = await api.uploadFile(file);
+      if (uploadRes.success && uploadRes.data) {
+        const avatarUrl = uploadRes.data.url;
+        const updateRes = await api.updateProfile({ avatar: avatarUrl });
+        if (updateRes.success && updateRes.data && user) {
+          updateUser({ ...user, avatar: avatarUrl });
+        }
+      }
+    } catch { /* ignore */ }
+    setUploading(false);
+    // Reset input
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  };
+
+  const avatarSrc = user?.avatar
+    ? (user.avatar.startsWith('http') ? user.avatar : `${window.location.origin}${user.avatar}`)
+    : null;
+
+  const roleLabels: Record<string, string> = {
+    USER: 'مستخدم',
+    ANALYST: 'محلل',
+    EXPERT: 'خبير',
+    WRITER: 'كاتب',
+    DESIGNER: 'مصمم',
+    EDITOR: 'محرر',
+    CONTENT_MANAGER: 'مدير محتوى',
+    ADMIN: 'مشرف',
+    SUPER_ADMIN: 'مشرف عام',
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-8 animate-fadeIn" dir="rtl">
+      {/* Hidden file input for avatar */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleAvatarUpload}
+      />
+
       {/* Page Header */}
       <div className="mb-6 text-right">
         <h2 className="text-xl font-bold text-gray-900">الملف الشخصي</h2>
@@ -77,9 +133,9 @@ const UserProfile = () => {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         {/* Cover Image */}
         <div className="h-48 md:h-64 relative bg-gradient-to-r from-blue-100 via-indigo-100 to-emerald-50">
-           <img 
-            src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2574&auto=format&fit=crop" 
-            alt="Cover" 
+           <img
+            src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2574&auto=format&fit=crop"
+            alt="Cover"
             className="w-full h-full object-cover opacity-40"
            />
            <button className="absolute bottom-4 right-4 bg-white/80 backdrop-blur text-gray-800 p-2 rounded-xl shadow-lg hover:bg-white transition-all">
@@ -93,17 +149,30 @@ const UserProfile = () => {
             {/* Avatar */}
             <div className="relative group">
               <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
-                <img src="https://i.pravatar.cc/150?u=mike" alt="Profile" className="w-full h-full object-cover" />
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-4xl font-black">
+                    {(user?.nameAr || user?.name || 'U').charAt(0)}
+                  </div>
+                )}
               </div>
-              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                 <ImageLucide className="text-white" size={24} />
+              <div
+                onClick={() => !uploading && avatarInputRef.current?.click()}
+                className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                {uploading ? (
+                  <Loader2 className="text-white animate-spin" size={24} />
+                ) : (
+                  <Camera className="text-white" size={24} />
+                )}
               </div>
             </div>
 
             {/* Basic Info */}
             <div className="text-center md:text-right flex-1 pt-12 md:pt-16">
-              <h3 className="text-2xl font-black text-gray-900 leading-none">مايك نيلسن</h3>
-              <p className="text-blue-600 font-bold mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block text-xs uppercase tracking-widest">المشرف العام (Admin)</p>
+              <h3 className="text-2xl font-black text-gray-900 leading-none">{user?.nameAr || user?.name || 'مستخدم'}</h3>
+              <p className="text-blue-600 font-bold mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block text-xs uppercase tracking-widest">{roleLabels[user?.role || ''] || user?.role || 'مستخدم'}</p>
             </div>
 
             {/* Stats */}

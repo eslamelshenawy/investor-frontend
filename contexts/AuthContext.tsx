@@ -14,6 +14,7 @@ interface User {
   nameAr?: string;
   avatar?: string;
   role: string;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {

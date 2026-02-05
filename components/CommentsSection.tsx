@@ -340,14 +340,14 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                   <button
                     onClick={handleDelete}
                     disabled={isSubmitting}
-                    className="text-[11px] font-bold text-red-400 hover:text-red-300 bg-red-500/20 hover:bg-red-500/30 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
+                    className="text-[11px] font-bold text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200 px-2 py-0.5 rounded transition-colors flex items-center gap-1"
                   >
                     {isSubmitting && <Loader2 size={10} className="animate-spin" />}
                     نعم، احذف
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="text-[11px] font-semibold text-slate-400 hover:text-slate-300 px-2 py-0.5 rounded transition-colors"
+                    className="text-[11px] font-semibold text-gray-500 hover:text-gray-700 px-2 py-0.5 rounded transition-colors"
                   >
                     لا
                   </button>
@@ -359,7 +359,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
           {/* Reply input */}
           {isReplying && (
             <div className="mt-3 flex gap-2 items-start">
-              <CornerDownRight size={16} className="text-slate-600 mt-2.5 flex-shrink-0" />
+              <CornerDownRight size={16} className="text-gray-400 mt-2.5 flex-shrink-0" />
               <div className="flex-1 relative">
                 <textarea
                   ref={replyRef}
@@ -367,13 +367,13 @@ const SingleComment: React.FC<SingleCommentProps> = ({
                   onChange={(e) => setReplyBody(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleSubmitReply)}
                   placeholder="اكتب رداً..."
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[48px]"
+                  className="w-full bg-white border border-gray-300 rounded-xl p-3 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[48px]"
                   disabled={isSubmitting}
                 />
                 <button
                   onClick={handleSubmitReply}
                   disabled={isSubmitting || !replyBody.trim()}
-                  className="absolute left-2 bottom-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white p-1.5 rounded-lg transition-colors"
+                  className="absolute left-2 bottom-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white p-1.5 rounded-lg transition-colors"
                 >
                   {isSubmitting ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -387,7 +387,7 @@ const SingleComment: React.FC<SingleCommentProps> = ({
 
           {/* Nested replies (1 level only) */}
           {!isReply && comment.replies && comment.replies.length > 0 && (
-            <div className="mt-4 space-y-3 border-r-2 border-slate-600/50 pr-4 mr-2">
+            <div className="mt-4 space-y-3 border-r-2 border-gray-200 pr-4 mr-2">
               {comment.replies.map((reply) => (
                 <SingleComment
                   key={reply.id}
@@ -537,14 +537,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ contentId, isOpen = t
   const count = totalCommentCount(comments);
 
   return (
-    <div dir="rtl" className="bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-lg mt-6">
+    <div dir="rtl" className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm mt-6">
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 mb-6">
-        <div className="bg-blue-500/20 p-2 rounded-xl">
-          <MessageCircle size={20} className="text-blue-400" />
+        <div className="bg-blue-50 p-2 rounded-xl">
+          <MessageCircle size={20} className="text-blue-600" />
         </div>
-        <h3 className="text-base font-bold text-slate-100">التعليقات والمناقشات</h3>
-        <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-semibold">
+        <h3 className="text-base font-bold text-gray-900">التعليقات والمناقشات</h3>
+        <span className="bg-gray-100 text-gray-500 text-xs px-2.5 py-1 rounded-full font-semibold">
           {isLoading ? '...' : `${count} تعليق`}
         </span>
       </div>
@@ -557,11 +557,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ contentId, isOpen = t
               <img
                 src={user.avatar}
                 alt={user.nameAr || user.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 border-2 border-slate-600 flex items-center justify-center">
-                <UserIcon size={18} className="text-blue-400" />
+              <div className="w-10 h-10 rounded-full bg-blue-50 border-2 border-gray-200 flex items-center justify-center">
+                <UserIcon size={18} className="text-blue-600" />
               </div>
             )}
           </div>
@@ -572,17 +572,17 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ contentId, isOpen = t
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="أضف تعليقاً أو استفساراً..."
-              className="w-full bg-slate-900/60 border border-slate-600 rounded-xl p-3 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[56px]"
+              className="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all resize-none min-h-[56px]"
               disabled={isPosting}
             />
             <div className="flex items-center justify-between mt-2">
-              <span className="text-[10px] text-slate-600 font-medium">
+              <span className="text-[10px] text-gray-400 font-medium">
                 Ctrl+Enter للإرسال
               </span>
               <button
                 onClick={handlePostComment}
                 disabled={isPosting || !newComment.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-400 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
               >
                 {isPosting ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -595,31 +595,31 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ contentId, isOpen = t
           </div>
         </div>
       ) : (
-        <div className="bg-slate-900/40 border border-slate-700 rounded-xl p-4 mb-6 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-center">
+          <p className="text-sm text-gray-500">
             قم بتسجيل الدخول لإضافة تعليق
           </p>
         </div>
       )}
 
       {/* ── Divider ──────────────────────────────────────────────────────── */}
-      <div className="border-t border-slate-700/60 mb-6" />
+      <div className="border-t border-gray-200 mb-6" />
 
       {/* ── Loading state ────────────────────────────────────────────────── */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Loader2 size={28} className="animate-spin text-blue-400" />
-          <p className="text-sm text-slate-500 font-medium">جاري تحميل التعليقات...</p>
+          <Loader2 size={28} className="animate-spin text-blue-500" />
+          <p className="text-sm text-gray-500 font-medium">جاري تحميل التعليقات...</p>
         </div>
       )}
 
       {/* ── Error state ──────────────────────────────────────────────────── */}
       {!isLoading && error && (
         <div className="text-center py-8">
-          <p className="text-sm text-red-400 mb-3">{error}</p>
+          <p className="text-sm text-red-600 mb-3">{error}</p>
           <button
             onClick={fetchComments}
-            className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors"
+            className="text-sm text-blue-600 hover:text-blue-700 underline transition-colors"
           >
             إعادة المحاولة
           </button>
@@ -629,11 +629,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ contentId, isOpen = t
       {/* ── Empty state ──────────────────────────────────────────────────── */}
       {!isLoading && !error && comments.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <div className="bg-slate-700/50 p-4 rounded-full">
-            <MessageCircle size={28} className="text-slate-500" />
+          <div className="bg-gray-100 p-4 rounded-full">
+            <MessageCircle size={28} className="text-gray-400" />
           </div>
-          <p className="text-sm text-slate-500 font-medium">لا توجد تعليقات بعد</p>
-          <p className="text-xs text-slate-600">كن أول من يعلق على هذا المحتوى</p>
+          <p className="text-sm text-gray-500 font-medium">لا توجد تعليقات بعد</p>
+          <p className="text-xs text-gray-400">كن أول من يعلق على هذا المحتوى</p>
         </div>
       )}
 

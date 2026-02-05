@@ -185,7 +185,7 @@ const ContentDetailPage: React.FC = () => {
 
       {/* Comments Section */}
       {showComments && id && (
-        <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <CommentsSection contentId={id} isOpen={showComments} />
         </div>
       )}

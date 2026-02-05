@@ -499,11 +499,11 @@ class ApiService {
     return this.get<UserDashboard>(`/users/dashboards/${id}`);
   }
 
-  async createUserDashboard(data: { name: string; description?: string; config?: unknown }) {
+  async createUserDashboard(data: { name: string; nameAr?: string; description?: string; widgets?: string; layout?: string }) {
     return this.post<UserDashboard>('/users/dashboards', data);
   }
 
-  async updateUserDashboard(id: string, data: { name?: string; description?: string; config?: unknown }) {
+  async updateUserDashboard(id: string, data: { name?: string; nameAr?: string; description?: string; widgets?: string; layout?: string }) {
     return this.put<UserDashboard>(`/users/dashboards/${id}`, data);
   }
 
@@ -1119,8 +1119,10 @@ interface UserDashboard {
   id: string;
   userId: string;
   name: string;
+  nameAr?: string;
   description?: string;
-  config: unknown;
+  widgets: string; // JSON string of widget IDs e.g. '["dataset_xxx"]'
+  layout: string;  // JSON string e.g. '{}'
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;

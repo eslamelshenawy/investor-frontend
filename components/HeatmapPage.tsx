@@ -1,10 +1,6 @@
 /**
- * ======================================
  * HEATMAP PAGE - خرائط الحرارة
- * ======================================
- *
  * تصور بصري لتوزيع البيانات والإشارات عبر القطاعات والمناطق والزمن
- * Visual heatmap for datasets and signals across sectors, regions, and time
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,6 +10,11 @@ import {
   Clock,
   RefreshCw,
   Activity,
+  Database,
+  Signal,
+  Zap,
+  TrendingUp,
+  Layers,
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -54,42 +55,29 @@ type TabKey = 'sector' | 'region' | 'temporal';
 // COLOR HELPERS
 // ============================================
 
-/**
- * Returns a Tailwind background class based on a normalized intensity value (0-100).
- * low = slate, medium = blue, high = emerald, critical = red
- */
-function intensityBg(value: number, max: number): string {
-  if (max === 0) return 'bg-slate-700';
+function getIntensityStyle(value: number, max: number): { bg: string; text: string; badge: string } {
+  if (max === 0) return { bg: 'bg-gray-50 border-gray-200', text: 'text-gray-500', badge: 'bg-gray-100 text-gray-600' };
+  const ratio = value / max;
+  if (ratio >= 0.85) return { bg: 'bg-red-50 border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700' };
+  if (ratio >= 0.55) return { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' };
+  if (ratio >= 0.25) return { bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700' };
+  return { bg: 'bg-gray-50 border-gray-200', text: 'text-gray-600', badge: 'bg-gray-100 text-gray-600' };
+}
+
+function getBarColor(value: number, max: number): string {
+  if (max === 0) return 'bg-gray-300';
   const ratio = value / max;
   if (ratio >= 0.85) return 'bg-red-500';
   if (ratio >= 0.55) return 'bg-emerald-500';
-  if (ratio >= 0.25) return 'bg-blue-600';
-  return 'bg-slate-700';
+  if (ratio >= 0.25) return 'bg-blue-500';
+  return 'bg-gray-400';
 }
 
-function intensityBorder(value: number, max: number): string {
-  if (max === 0) return 'border-slate-600';
-  const ratio = value / max;
-  if (ratio >= 0.85) return 'border-red-400';
-  if (ratio >= 0.55) return 'border-emerald-400';
-  if (ratio >= 0.25) return 'border-blue-500';
-  return 'border-slate-600';
-}
-
-function intensityText(value: number, max: number): string {
-  if (max === 0) return 'text-slate-400';
-  const ratio = value / max;
-  if (ratio >= 0.85) return 'text-red-100';
-  if (ratio >= 0.55) return 'text-emerald-100';
-  if (ratio >= 0.25) return 'text-blue-100';
-  return 'text-slate-300';
-}
-
-function impactLabel(avg: number): string {
-  if (avg >= 80) return 'حرج';
-  if (avg >= 60) return 'مرتفع';
-  if (avg >= 35) return 'متوسط';
-  return 'منخفض';
+function impactLabel(avg: number): { label: string; color: string } {
+  if (avg >= 80) return { label: 'حرج', color: 'text-red-600 bg-red-50' };
+  if (avg >= 60) return { label: 'مرتفع', color: 'text-amber-600 bg-amber-50' };
+  if (avg >= 35) return { label: 'متوسط', color: 'text-blue-600 bg-blue-50' };
+  return { label: 'منخفض', color: 'text-gray-500 bg-gray-50' };
 }
 
 function formatNumber(n: number): string {
@@ -99,63 +87,81 @@ function formatNumber(n: number): string {
 
 function monthLabel(ym: string): string {
   const monthNames: Record<string, string> = {
-    '01': 'يناير',
-    '02': 'فبراير',
-    '03': 'مارس',
-    '04': 'أبريل',
-    '05': 'مايو',
-    '06': 'يونيو',
-    '07': 'يوليو',
-    '08': 'أغسطس',
-    '09': 'سبتمبر',
-    '10': 'أكتوبر',
-    '11': 'نوفمبر',
-    '12': 'ديسمبر',
+    '01': 'يناير', '02': 'فبراير', '03': 'مارس', '04': 'أبريل',
+    '05': 'مايو', '06': 'يونيو', '07': 'يوليو', '08': 'أغسطس',
+    '09': 'سبتمبر', '10': 'أكتوبر', '11': 'نوفمبر', '12': 'ديسمبر',
   };
   const [year, month] = ym.split('-');
   return `${monthNames[month] || month} ${year}`;
+}
+
+function monthShort(ym: string): string {
+  const monthNames: Record<string, string> = {
+    '01': 'ينا', '02': 'فبر', '03': 'مار', '04': 'أبر',
+    '05': 'ماي', '06': 'يون', '07': 'يول', '08': 'أغس',
+    '09': 'سبت', '10': 'أكت', '11': 'نوف', '12': 'ديس',
+  };
+  const [, month] = ym.split('-');
+  return monthNames[month] || month;
 }
 
 // ============================================
 // TAB CONFIG
 // ============================================
 
-const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: 'sector', label: 'قطاعي', icon: BarChart3 },
-  { key: 'region', label: 'جغرافي', icon: Map },
-  { key: 'temporal', label: 'زمني', icon: Clock },
+const TABS: { key: TabKey; label: string; icon: React.ElementType; desc: string }[] = [
+  { key: 'sector', label: 'قطاعي', icon: BarChart3, desc: 'توزيع البيانات حسب القطاعات' },
+  { key: 'region', label: 'جغرافي', icon: Map, desc: 'التوزيع الجغرافي للإشارات' },
+  { key: 'temporal', label: 'زمني', icon: Clock, desc: 'النشاط خلال 12 شهر' },
 ];
 
 // ============================================
 // SUB-COMPONENTS
 // ============================================
 
+function StatCard({ icon: Icon, label, value, sub, color }: {
+  icon: React.ElementType; label: string; value: string; sub?: string; color: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center shrink-0`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <p className="text-2xl font-black text-gray-900">{value}</p>
+        <p className="text-xs text-gray-500">{label}</p>
+        {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
 function Legend() {
   const items = [
-    { color: 'bg-slate-700', label: 'منخفض' },
-    { color: 'bg-blue-600', label: 'متوسط' },
-    { color: 'bg-emerald-500', label: 'مرتفع' },
-    { color: 'bg-red-500', label: 'حرج' },
+    { color: 'bg-gray-200', label: 'منخفض' },
+    { color: 'bg-blue-400', label: 'متوسط' },
+    { color: 'bg-emerald-400', label: 'مرتفع' },
+    { color: 'bg-red-400', label: 'حرج' },
   ];
   return (
-    <div className="flex items-center gap-4 justify-center mt-8 pt-6 border-t border-slate-700/60">
-      <span className="text-xs text-slate-400">مقياس الكثافة:</span>
+    <div className="flex items-center gap-4 justify-center mt-6 pt-5 border-t border-gray-100">
+      <span className="text-xs text-gray-400 font-medium">مقياس الكثافة:</span>
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
-          <span className={`w-3 h-3 rounded ${item.color}`} />
-          <span className="text-xs text-slate-400">{item.label}</span>
+          <span className={`w-3 h-3 rounded-sm ${item.color}`} />
+          <span className="text-xs text-gray-500">{item.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// ── Sector Heatmap ──────────────────────────────────────────────────────────
+// ── Sector Heatmap ──────────────────────────────
 
 function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-slate-400">
+      <div className="text-center py-16 text-gray-400">
         <BarChart3 size={40} className="mx-auto mb-3 opacity-40" />
         <p>لا توجد بيانات قطاعية متاحة</p>
       </div>
@@ -165,35 +171,48 @@ function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
   const maxDatasets = Math.max(...items.map((i) => i.datasetCount), 1);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {items.map((item) => {
-        const bg = intensityBg(item.datasetCount, maxDatasets);
-        const border = intensityBorder(item.datasetCount, maxDatasets);
-        const text = intensityText(item.datasetCount, maxDatasets);
+        const style = getIntensityStyle(item.datasetCount, maxDatasets);
+        const widthPercent = Math.max((item.datasetCount / maxDatasets) * 100, 3);
+        const impact = impactLabel(item.avgImpact);
         return (
           <div
             key={item.sector}
-            className={`${bg} ${border} border rounded-xl p-4 transition-transform hover:scale-[1.03] hover:shadow-lg cursor-default`}
+            className={`${style.bg} border rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-default group`}
           >
-            <h3 className={`text-sm font-bold truncate mb-2 ${text}`} title={item.sector}>
+            <h3 className="text-sm font-bold text-gray-800 truncate mb-3" title={item.sector}>
               {item.sector}
             </h3>
-            <div className="space-y-1">
+            {/* Mini bar */}
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-full rounded-full transition-all ${getBarColor(item.datasetCount, maxDatasets)}`}
+                style={{ width: `${widthPercent}%` }}
+              />
+            </div>
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] text-white/60">مجموعات بيانات</span>
-                <span className="text-sm font-semibold text-white">
+                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                  <Database size={10} /> مجموعات بيانات
+                </span>
+                <span className={`text-sm font-bold ${style.text}`}>
                   {formatNumber(item.datasetCount)}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] text-white/60">إشارات</span>
-                <span className="text-sm font-semibold text-white">{item.signalCount}</span>
-              </div>
-              {item.avgImpact > 0 && (
+              {item.signalCount > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] text-white/60">التأثير</span>
-                  <span className="text-xs font-medium text-white/80">
-                    {item.avgImpact}% - {impactLabel(item.avgImpact)}
+                  <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                    <Signal size={10} /> إشارات
+                  </span>
+                  <span className="text-sm font-semibold text-gray-700">{item.signalCount}</span>
+                </div>
+              )}
+              {item.avgImpact > 0 && (
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-[11px] text-gray-500">التأثير</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${impact.color}`}>
+                    {item.avgImpact}% {impact.label}
                   </span>
                 </div>
               )}
@@ -205,12 +224,12 @@ function SectorGrid({ items }: { items: SectorHeatmapItem[] }) {
   );
 }
 
-// ── Region Heatmap ──────────────────────────────────────────────────────────
+// ── Region Heatmap ──────────────────────────────
 
 function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-slate-400">
+      <div className="text-center py-16 text-gray-400">
         <Map size={40} className="mx-auto mb-3 opacity-40" />
         <p>لا توجد بيانات جغرافية متاحة</p>
       </div>
@@ -220,28 +239,28 @@ function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   const maxSignals = Math.max(...items.map((i) => i.signalCount), 1);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {items.map((item) => {
-        const bg = intensityBg(item.signalCount, maxSignals);
-        const border = intensityBorder(item.signalCount, maxSignals);
-        const text = intensityText(item.signalCount, maxSignals);
+        const style = getIntensityStyle(item.signalCount, maxSignals);
+        const impact = impactLabel(item.avgImpact);
         return (
           <div
             key={item.region}
-            className={`${bg} ${border} border rounded-xl p-4 transition-transform hover:scale-[1.03] hover:shadow-lg cursor-default`}
+            className={`${style.bg} border rounded-xl p-5 transition-all hover:shadow-md cursor-default`}
           >
-            <h3 className={`text-sm font-bold truncate mb-2 ${text}`} title={item.region}>
-              {item.region}
-            </h3>
-            <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Map size={16} className="text-gray-400" />
+              <h3 className="text-sm font-bold text-gray-800">{item.region}</h3>
+            </div>
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] text-white/60">إشارات</span>
-                <span className="text-sm font-semibold text-white">{item.signalCount}</span>
+                <span className="text-xs text-gray-500">إشارات</span>
+                <span className={`text-lg font-black ${style.text}`}>{item.signalCount}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[11px] text-white/60">التأثير</span>
-                <span className="text-xs font-medium text-white/80">
-                  {item.avgImpact}% - {impactLabel(item.avgImpact)}
+                <span className="text-xs text-gray-500">التأثير</span>
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${impact.color}`}>
+                  {item.avgImpact}% {impact.label}
                 </span>
               </div>
             </div>
@@ -252,87 +271,91 @@ function RegionGrid({ items }: { items: RegionHeatmapItem[] }) {
   );
 }
 
-// ── Temporal Heatmap ────────────────────────────────────────────────────────
+// ── Temporal Heatmap ────────────────────────────
 
 function TemporalTimeline({ items }: { items: TemporalHeatmapItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-slate-400">
+      <div className="text-center py-16 text-gray-400">
         <Clock size={40} className="mx-auto mb-3 opacity-40" />
         <p>لا توجد بيانات زمنية متاحة</p>
       </div>
     );
   }
 
-  const maxActivity = Math.max(
-    ...items.map((i) => i.signalCount + i.datasetUpdates),
-    1
-  );
-  const maxBarHeight = 120; // px
+  const maxActivity = Math.max(...items.map((i) => i.signalCount + i.datasetUpdates), 1);
+  const maxBarHeight = 140;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Bar chart */}
-      <div className="flex items-end gap-2 justify-center overflow-x-auto pb-2" style={{ minHeight: maxBarHeight + 60 }}>
-        {items.map((item) => {
-          const total = item.signalCount + item.datasetUpdates;
-          const height = Math.max((total / maxActivity) * maxBarHeight, 4);
-          const signalH = total > 0 ? (item.signalCount / total) * height : 0;
-          const datasetH = total > 0 ? (item.datasetUpdates / total) * height : 0;
-          return (
-            <div key={item.month} className="flex flex-col items-center gap-1 min-w-[52px]">
-              <span className="text-[10px] text-slate-400 font-medium">{total}</span>
-              <div className="flex flex-col-reverse" style={{ height: `${height}px` }}>
-                {datasetH > 0 && (
-                  <div
-                    className="w-8 bg-blue-600 rounded-t-sm"
-                    style={{ height: `${datasetH}px` }}
-                    title={`تحديثات بيانات: ${item.datasetUpdates}`}
-                  />
-                )}
-                {signalH > 0 && (
-                  <div
-                    className="w-8 bg-emerald-500 rounded-t-sm"
-                    style={{ height: `${signalH}px` }}
-                    title={`إشارات: ${item.signalCount}`}
-                  />
-                )}
+      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+        <div className="flex items-end gap-3 justify-center overflow-x-auto pb-2" style={{ minHeight: maxBarHeight + 50 }}>
+          {items.map((item) => {
+            const total = item.signalCount + item.datasetUpdates;
+            const height = Math.max((total / maxActivity) * maxBarHeight, 4);
+            const signalH = total > 0 ? (item.signalCount / total) * height : 0;
+            const datasetH = total > 0 ? (item.datasetUpdates / total) * height : 0;
+            const hasActivity = total > 0;
+            return (
+              <div key={item.month} className="flex flex-col items-center gap-1.5 min-w-[48px] group">
+                <span className={`text-[10px] font-bold transition-colors ${hasActivity ? 'text-gray-700' : 'text-gray-300'}`}>
+                  {hasActivity ? formatNumber(total) : '0'}
+                </span>
+                <div className="flex flex-col-reverse rounded-t-lg overflow-hidden" style={{ height: `${height}px`, width: '32px' }}>
+                  {datasetH > 0 && (
+                    <div
+                      className="w-full bg-blue-400 group-hover:bg-blue-500 transition-colors"
+                      style={{ height: `${datasetH}px` }}
+                      title={`تحديثات بيانات: ${formatNumber(item.datasetUpdates)}`}
+                    />
+                  )}
+                  {signalH > 0 && (
+                    <div
+                      className="w-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors"
+                      style={{ height: `${signalH}px` }}
+                      title={`إشارات: ${item.signalCount}`}
+                    />
+                  )}
+                  {!hasActivity && (
+                    <div className="w-full bg-gray-200 rounded-t" style={{ height: '4px' }} />
+                  )}
+                </div>
+                <span className="text-[10px] text-gray-500 font-medium text-center leading-tight">
+                  {monthShort(item.month)}
+                </span>
               </div>
-              <span className="text-[10px] text-slate-500 text-center leading-tight whitespace-nowrap">
-                {monthLabel(item.month)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Inline legend for temporal */}
-      <div className="flex items-center gap-6 justify-center">
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-emerald-500" />
-          <span className="text-xs text-slate-400">إشارات</span>
+            );
+          })}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-blue-600" />
-          <span className="text-xs text-slate-400">تحديثات بيانات</span>
+
+        {/* Inline legend */}
+        <div className="flex items-center gap-5 justify-center mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-emerald-400" />
+            <span className="text-xs text-gray-500">إشارات</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-blue-400" />
+            <span className="text-xs text-gray-500">تحديثات بيانات</span>
+          </div>
         </div>
       </div>
 
-      {/* Detail grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+      {/* Monthly detail cards */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
         {items.map((item) => {
           const total = item.signalCount + item.datasetUpdates;
-          const bg = intensityBg(total, maxActivity);
-          const border = intensityBorder(total, maxActivity);
+          const style = getIntensityStyle(total, maxActivity);
           return (
             <div
               key={item.month}
-              className={`${bg} ${border} border rounded-lg p-3 text-center cursor-default`}
+              className={`${style.bg} border rounded-xl p-3 text-center transition-all hover:shadow-sm cursor-default`}
             >
-              <p className="text-xs text-white/70 mb-1">{monthLabel(item.month)}</p>
-              <p className="text-lg font-bold text-white">{total}</p>
-              <p className="text-[10px] text-white/50">
-                {item.signalCount} إشارة | {item.datasetUpdates} تحديث
+              <p className="text-[11px] text-gray-500 font-medium mb-1">{monthLabel(item.month)}</p>
+              <p className={`text-xl font-black ${style.text}`}>{formatNumber(total)}</p>
+              <p className="text-[10px] text-gray-400 mt-1">
+                {item.signalCount} إشارة · {formatNumber(item.datasetUpdates)} تحديث
               </p>
             </div>
           );
@@ -357,13 +380,10 @@ const HeatmapPage: React.FC = () => {
     try {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
-
       setError(null);
 
       const response = await fetch(`${API_BASE}/heatmap`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const json = await response.json();
       if (json.success && json.data) {
@@ -384,31 +404,29 @@ const HeatmapPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // ── Loading State ─────────────────────────────────────────────────────
-
+  // Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center" dir="rtl">
+      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
         <div className="text-center">
-          <RefreshCw size={32} className="mx-auto mb-3 text-blue-400 animate-spin" />
-          <p className="text-slate-400 text-sm">جاري تحميل خرائط الحرارة...</p>
+          <RefreshCw size={32} className="mx-auto mb-3 text-blue-500 animate-spin" />
+          <p className="text-gray-500 text-sm">جاري تحميل خرائط الحرارة...</p>
         </div>
       </div>
     );
   }
 
-  // ── Error State ───────────────────────────────────────────────────────
-
+  // Error
   if (error && !data) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center" dir="rtl">
-        <div className="text-center max-w-md">
+      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
+        <div className="text-center max-w-md bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
           <Activity size={40} className="mx-auto mb-3 text-red-400" />
-          <p className="text-slate-200 font-medium mb-2">تعذر تحميل البيانات</p>
-          <p className="text-slate-400 text-sm mb-4">{error}</p>
+          <p className="text-gray-800 font-bold mb-2">تعذر تحميل البيانات</p>
+          <p className="text-gray-500 text-sm mb-4">{error}</p>
           <button
             onClick={() => fetchData()}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-xl transition-colors font-bold"
           >
             إعادة المحاولة
           </button>
@@ -417,47 +435,50 @@ const HeatmapPage: React.FC = () => {
     );
   }
 
-  // ── Main Render ───────────────────────────────────────────────────────
+  const totalDatasets = data?.sectorHeatmap.reduce((s, i) => s + i.datasetCount, 0) || 0;
+  const totalSignals = data?.sectorHeatmap.reduce((s, i) => s + i.signalCount, 0) || 0;
+  const totalSectors = data?.sectorHeatmap.length || 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100" dir="rtl">
+    <div className="min-h-screen bg-white" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-bl from-slate-800 to-slate-900 border-b border-slate-700/50">
-        <div className="container mx-auto px-4 py-8">
+      <div className="bg-gradient-to-bl from-blue-50 via-white to-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center">
-                  <Activity size={22} className="text-blue-400" />
+                <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <Activity size={22} className="text-blue-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-100">خرائط الحرارة</h1>
+                <div>
+                  <h1 className="text-2xl font-black text-gray-900">خرائط الحرارة</h1>
+                  <p className="text-sm text-gray-500">تصور بصري لتوزيع البيانات والإشارات</p>
+                </div>
               </div>
-              <p className="text-sm text-slate-400 mr-13">
-                تصور بصري لتوزيع البيانات والإشارات
-              </p>
             </div>
             <button
               onClick={() => fetchData(true)}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 text-sm rounded-xl transition-colors disabled:opacity-50 shadow-sm font-medium"
             >
               <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-              <span>تحديث</span>
+              تحديث
             </button>
           </div>
 
-          {/* Last updated */}
-          {data?.lastUpdated && (
-            <p className="text-[11px] text-slate-500 mt-3 mr-13">
-              آخر تحديث: {new Date(data.lastUpdated).toLocaleString('ar-SA')}
-            </p>
-          )}
+          {/* Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+            <StatCard icon={Layers} label="إجمالي القطاعات" value={String(totalSectors)} color="bg-blue-100 text-blue-600" />
+            <StatCard icon={Database} label="مجموعات البيانات" value={formatNumber(totalDatasets)} color="bg-emerald-100 text-emerald-600" />
+            <StatCard icon={Zap} label="الإشارات" value={String(totalSignals)} color="bg-amber-100 text-amber-600" />
+            <StatCard icon={TrendingUp} label="آخر تحديث" value={data?.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString('ar-SA') : '-'} color="bg-purple-100 text-purple-600" />
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="container mx-auto px-4 mt-6">
-        <div className="flex gap-2 border-b border-slate-700/50 pb-px">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
+        <div className="flex gap-2 bg-gray-100 p-1.5 rounded-xl w-fit">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -465,10 +486,10 @@ const HeatmapPage: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-lg transition-all ${
                   isActive
-                    ? 'bg-slate-800 text-blue-400 border border-slate-700 border-b-transparent -mb-px'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <Icon size={16} />
@@ -477,50 +498,51 @@ const HeatmapPage: React.FC = () => {
             );
           })}
         </div>
+        <p className="text-xs text-gray-400 mt-2 mr-2">
+          {TABS.find(t => t.key === activeTab)?.desc}
+        </p>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-          {/* Tab title */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           {activeTab === 'sector' && (
             <>
-              <div className="mb-5">
-                <h2 className="text-lg font-bold text-slate-100 mb-1">خريطة القطاعات</h2>
-                <p className="text-xs text-slate-400">
-                  توزيع مجموعات البيانات والإشارات حسب القطاع - حجم الخلية يعكس عدد مجموعات البيانات ولونها يعكس الكثافة
-                </p>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-gray-900">خريطة القطاعات</h2>
+                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+                  {totalSectors} قطاع
+                </span>
               </div>
               <SectorGrid items={data?.sectorHeatmap || []} />
+              <Legend />
             </>
           )}
 
           {activeTab === 'region' && (
             <>
-              <div className="mb-5">
-                <h2 className="text-lg font-bold text-slate-100 mb-1">خريطة المناطق</h2>
-                <p className="text-xs text-slate-400">
-                  توزيع الإشارات ومتوسط التأثير حسب المنطقة الجغرافية
-                </p>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-gray-900">خريطة المناطق</h2>
+                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+                  {data?.regionHeatmap.length || 0} منطقة
+                </span>
               </div>
               <RegionGrid items={data?.regionHeatmap || []} />
+              <Legend />
             </>
           )}
 
           {activeTab === 'temporal' && (
             <>
-              <div className="mb-5">
-                <h2 className="text-lg font-bold text-slate-100 mb-1">خريطة زمنية</h2>
-                <p className="text-xs text-slate-400">
-                  النشاط خلال آخر 12 شهر - الإشارات وتحديثات مجموعات البيانات
-                </p>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-gray-900">النشاط الزمني</h2>
+                <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+                  آخر 12 شهر
+                </span>
               </div>
               <TemporalTimeline items={data?.temporalHeatmap || []} />
             </>
           )}
-
-          {/* Color Legend */}
-          {activeTab !== 'temporal' && <Legend />}
         </div>
       </div>
     </div>

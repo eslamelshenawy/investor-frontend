@@ -6,6 +6,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../src/services/api';
 import {
   LayoutDashboard,
   LogOut,
@@ -34,7 +35,10 @@ import {
   Layout,
   LayoutTemplate,
   PieChart,
-  Bookmark
+  Bookmark,
+  Mail,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DecisionWizard from './DecisionWizard';
@@ -401,6 +405,52 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
   );
 };
 
+// --- Email Verification Banner ---
+const EmailVerificationBanner = () => {
+  const { user } = useAuth();
+  const [dismissed, setDismissed] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
+
+  if (!user || user.emailVerified !== false || dismissed) return null;
+
+  const handleSend = async () => {
+    setSending(true);
+    try {
+      await api.sendVerificationEmail();
+      setSent(true);
+    } catch { /* ignore */ }
+    setSending(false);
+  };
+
+  return (
+    <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+      <div className="flex items-center justify-between gap-3 max-w-7xl mx-auto">
+        <div className="flex items-center gap-3 text-amber-800">
+          <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+          <p className="text-sm font-medium">
+            بريدك الإلكتروني غير مؤكد.
+            {sent ? (
+              <span className="text-emerald-600 font-bold mr-1">تم إرسال رابط التأكيد إلى بريدك!</span>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="text-amber-700 font-bold underline hover:text-amber-900 mr-1 disabled:opacity-50"
+              >
+                {sending ? 'جارٍ الإرسال...' : 'أرسل رابط التأكيد'}
+              </button>
+            )}
+          </p>
+        </div>
+        <button onClick={() => setDismissed(true)} className="text-amber-400 hover:text-amber-600 shrink-0">
+          <X size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // --- Main App Layout ---
 const AppLayout = () => {
   const { user } = useAuth();
@@ -412,6 +462,7 @@ const AppLayout = () => {
 
       <main className="flex-1 transition-all duration-300 pb-24 lg:pb-0 min-w-0">
         <Topbar onOpenWizard={() => setIsWizardOpen(true)} />
+        <EmailVerificationBanner />
         <div className="animate-fadeIn">
           <Outlet />
         </div>
