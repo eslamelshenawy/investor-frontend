@@ -348,6 +348,13 @@ const DatasetDetailPage: React.FC = () => {
                   <span className="text-blue-200">
                     • {dataset?.category || 'البيانات الإحصائية والاقتصادية'}
                   </span>
+                  <button
+                    onClick={() => navigate(`/datasets/${id}/metadata`)}
+                    className="bg-white/20 hover:bg-white/30 text-white px-4 py-1 rounded-full font-medium flex items-center gap-1.5 transition-colors backdrop-blur-sm"
+                  >
+                    <ShieldCheck size={14} />
+                    البيانات الوصفية
+                  </button>
                 </div>
               </div>
               <div className="hidden md:flex bg-white/10 p-5 rounded-2xl backdrop-blur-sm">

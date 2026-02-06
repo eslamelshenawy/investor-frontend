@@ -82,6 +82,7 @@ import TwoFactorSettings from './components/TwoFactorSettings';
 import ChatPage from './components/ChatPage';
 import InfographicBuilder from './components/InfographicBuilder';
 import CampaignsPage from './components/CampaignsPage';
+import DatasetMetadataPage from './components/DatasetMetadataPage';
 import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
@@ -135,6 +136,7 @@ import CustomReportsPage from './components/CustomReportsPage';
 import WidgetLibraryPage from './components/WidgetLibraryPage';
 import AIEconomicSummaryPage from './components/AIEconomicSummaryPage';
 import PatternRecognitionPage from './components/PatternRecognitionPage';
+import PublicPageLayout from './components/PublicPageLayout';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -451,6 +453,7 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/widget-library')) return { title: 'مكتبة المؤشرات', section: 'البيانات' };
     if (pathname.includes('/admin/settings')) return { title: 'إعدادات النظام', section: 'Admin' };
     if (pathname.includes('/campaigns')) return { title: 'الحملات التفاعلية', section: 'المحتوى' };
+    if (pathname.includes('/metadata')) return { title: 'البيانات الوصفية', section: 'البيانات' };
     return { title: 'لوحة التحكم', section: 'رادار' };
   };
 
@@ -1002,6 +1005,7 @@ const AppContent = () => {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/designer/studio" element={<InfographicBuilder />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
+            <Route path="/datasets/:id/metadata" element={<DatasetMetadataPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
 
             <Route path="/expert-studio" element={
@@ -1179,19 +1183,19 @@ const AppWithAuth = () => {
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/how-it-works" element={<HowItWorksPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/faq" element={<FAQPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/privacy" element={<PrivacyPolicyPage />} />
-      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/about" element={<PublicPageLayout><AboutPage /></PublicPageLayout>} />
+      <Route path="/how-it-works" element={<PublicPageLayout><HowItWorksPage /></PublicPageLayout>} />
+      <Route path="/pricing" element={<PublicPageLayout><PricingPage /></PublicPageLayout>} />
+      <Route path="/faq" element={<PublicPageLayout><FAQPage /></PublicPageLayout>} />
+      <Route path="/contact" element={<PublicPageLayout><ContactPage /></PublicPageLayout>} />
+      <Route path="/privacy" element={<PublicPageLayout><PrivacyPolicyPage /></PublicPageLayout>} />
+      <Route path="/terms" element={<PublicPageLayout><TermsPage /></PublicPageLayout>} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/data-trust" element={<DataTrustPage />} />
-      <Route path="/use-cases" element={<UseCasesPage />} />
-      <Route path="/explore" element={<ExplorePage />} />
-      <Route path="/blog" element={<BlogPage />} />
-      <Route path="/plan-details" element={<PlanDetailsPage />} />
+      <Route path="/data-trust" element={<PublicPageLayout><DataTrustPage /></PublicPageLayout>} />
+      <Route path="/use-cases" element={<PublicPageLayout><UseCasesPage /></PublicPageLayout>} />
+      <Route path="/explore" element={<PublicPageLayout><ExplorePage /></PublicPageLayout>} />
+      <Route path="/blog" element={<PublicPageLayout><BlogPage /></PublicPageLayout>} />
+      <Route path="/plan-details" element={<PublicPageLayout><PlanDetailsPage /></PublicPageLayout>} />
 
       {/* Public content preview - accessible without login */}
       {!isAuthenticated && (
@@ -1205,9 +1209,9 @@ const AppWithAuth = () => {
           <Route path="/comparisons" element={<PublicContentLayout><SmartComparisonsPage /></PublicContentLayout>} />
           <Route path="/economic-summary" element={<PublicContentLayout><AIEconomicSummaryPage /></PublicContentLayout>} />
           <Route path="/patterns" element={<PublicContentLayout><PatternRecognitionPage /></PublicContentLayout>} />
-          <Route path="/sources" element={<PublicContentLayout><DataSourcesPage /></PublicContentLayout>} />
-          <Route path="/data-sources" element={<PublicContentLayout><DataSourcesPage /></PublicContentLayout>} />
-          <Route path="/stats" element={<PublicContentLayout><StatsPage /></PublicContentLayout>} />
+          <Route path="/sources" element={<PublicPageLayout><DataSourcesPage /></PublicPageLayout>} />
+          <Route path="/data-sources" element={<PublicPageLayout><DataSourcesPage /></PublicPageLayout>} />
+          <Route path="/stats" element={<PublicPageLayout><StatsPage /></PublicPageLayout>} />
         </>
       )}
 

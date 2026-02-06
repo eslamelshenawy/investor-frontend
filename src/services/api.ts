@@ -285,6 +285,105 @@ class ApiService {
   }
 
   // =====================
+  // Subscriptions
+  // =====================
+
+  async getPlans() {
+    return this.get<{ plans: Array<{ id: string; nameAr: string; nameEn: string; monthlyPrice: number; annualPrice: number; features: string[]; limits: Record<string, number> }> }>('/subscriptions/plans');
+  }
+
+  async getMySubscription() {
+    return this.get<{
+      plan: { id: string; nameAr: string; nameEn: string; features: string[]; limits: Record<string, number> };
+      status: string;
+      endDate: string | null;
+      trialEndsAt: string | null;
+      subscription: any;
+      payments: Array<{ id: string; amount: number; currency: string; status: string; paymentMethod: string | null; descriptionAr: string | null; paidAt: string | null; createdAt: string }>;
+    }>('/subscriptions/my');
+  }
+
+  async createSubscriptionPayment(plan: string, billingCycle: string, callbackUrl: string) {
+    return this.post<{ paymentId: string; gatewayId?: string; mode: string; paymentUrl?: string; amount: number; currency: string }>('/subscriptions/create-payment', { plan, billingCycle, callbackUrl });
+  }
+
+  async activateSubscription(paymentId: string, plan: string, billingCycle: string) {
+    return this.post<{ subscription: any }>('/subscriptions/activate', { paymentId, plan, billingCycle });
+  }
+
+  async cancelSubscription(reason?: string) {
+    return this.post<{ message: string; messageAr: string; endDate: string }>('/subscriptions/cancel', { reason });
+  }
+
+  async checkFeature(feature: string) {
+    return this.get<{ hasAccess: boolean; currentPlan: string; feature: string }>(`/subscriptions/check-feature/${feature}`);
+  }
+
+  // =====================
+  // Chat / AI Advisor
+  // =====================
+
+  async createConversation() {
+    return this.post<{ id: string; title: string; createdAt: string }>('/chat/conversations', {});
+  }
+
+  async getConversations() {
+    return this.get<Array<{ id: string; title: string; updatedAt: string; messages: Array<{ content: string; role: string }>; _count: { messages: number } }>>('/chat/conversations');
+  }
+
+  async getChatMessages(conversationId: string) {
+    return this.get<{ conversation: any; messages: Array<{ id: string; role: string; content: string; createdAt: string }> }>(`/chat/conversations/${conversationId}/messages`);
+  }
+
+  async sendChatMessage(conversationId: string, message: string) {
+    return this.post<{ message: { id: string; role: string; content: string; createdAt: string } }>(`/chat/conversations/${conversationId}/messages`, { message });
+  }
+
+  async deleteConversation(conversationId: string) {
+    return this.delete<{ deleted: boolean }>(`/chat/conversations/${conversationId}`);
+  }
+
+  async quickChat(message: string) {
+    return this.post<{ response: string }>('/chat/quick', { message });
+  }
+
+  // =====================
+  // Campaigns
+  // =====================
+
+  async getCampaigns() {
+    return this.get<any[]>('/campaigns');
+  }
+
+  async getCampaign(id: string) {
+    return this.get<any>(`/campaigns/${id}`);
+  }
+
+  async createCampaign(data: any) {
+    return this.post<any>('/campaigns', data);
+  }
+
+  async updateCampaign(id: string, data: any) {
+    return this.put<any>(`/campaigns/${id}`, data);
+  }
+
+  async updateCampaignStatus(id: string, status: string) {
+    return this.put<any>(`/campaigns/${id}/status`, { status });
+  }
+
+  async deleteCampaign(id: string) {
+    return this.delete<any>(`/campaigns/${id}`);
+  }
+
+  async submitCampaignResponse(id: string, answers: string) {
+    return this.post<any>(`/campaigns/${id}/respond`, { answers });
+  }
+
+  async getCampaignResults(id: string) {
+    return this.get<any>(`/campaigns/${id}/results`);
+  }
+
+  // =====================
   // File Upload
   // =====================
 
@@ -404,6 +503,22 @@ class ApiService {
       stats: unknown;
       note?: string;
     }>('/datasets/sync/status');
+  }
+
+  // =====================
+  // Dataset Metadata (3-Level)
+  // =====================
+
+  async getDatasetMetadata(id: string) {
+    return this.get<DatasetMetadata>(`/datasets/${id}/metadata`);
+  }
+
+  async updateDatasetMetadata(id: string, data: Record<string, any>) {
+    return this.put<any>(`/datasets/${id}/metadata`, data);
+  }
+
+  async getMetadataStats() {
+    return this.get<MetadataStats>('/datasets/metadata/stats');
   }
 
   // =====================
@@ -1130,6 +1245,66 @@ interface Dataset {
   recordCount: number;
   lastSyncAt?: string;
   syncStatus: string;
+}
+
+interface DatasetMetadata {
+  id: string;
+  name: string;
+  nameAr: string;
+  category: string;
+  source: string;
+  businessMetadata: {
+    description?: string;
+    descriptionAr?: string;
+    owner?: string;
+    ownerAr?: string;
+    steward?: string;
+    stewardAr?: string;
+    businessDomain?: string;
+    tags?: string;
+    updateFrequency?: string;
+    license?: string;
+    language?: string;
+  };
+  governanceMetadata: {
+    sensitivityLevel?: string;
+    qualityScore?: number;
+    completeness?: number;
+    accuracy?: number;
+    timeliness?: number;
+    consistency?: number;
+    riskLevel?: string;
+    complianceNotes?: string;
+    retentionPolicy?: string;
+    accessRestrictions?: string;
+    hasPII?: boolean;
+    verificationStatus?: string;
+    verifiedBy?: string;
+    verifiedAt?: string;
+  };
+  technicalMetadata: {
+    recordCount: number;
+    columnCount: number;
+    formatType?: string;
+    encoding?: string;
+    fileSize?: string;
+    dataDictionary?: any;
+    dataLineage?: string;
+    apiEndpoint?: string;
+    schemaVersion?: string;
+    syncStatus?: string;
+    lastSyncAt?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface MetadataStats {
+  total: number;
+  coverage: { businessMetadata: number; qualityAssessed: number; dataDictionary: number; dataLineage: number };
+  sensitivity: Record<string, number>;
+  risk: Record<string, number>;
+  avgQuality: { qualityScore?: number; completeness?: number; accuracy?: number; timeliness?: number; consistency?: number };
 }
 
 interface Signal {

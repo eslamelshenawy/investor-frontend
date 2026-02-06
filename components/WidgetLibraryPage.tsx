@@ -4,7 +4,7 @@
  * Designed for ANALYST role users.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Search,
   Filter,
@@ -32,6 +32,8 @@ import {
   BookmarkCheck
 } from 'lucide-react';
 import { api } from '../src/services/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -254,10 +256,14 @@ const WidgetLibraryPage: React.FC = () => {
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
 
   // -------------------------------------------------------------------------
-  // Data Fetching
+  // Data Fetching - SSE WebFlux Stream with REST fallback
   // -------------------------------------------------------------------------
 
-  const fetchWidgets = useCallback(async () => {
+  const [streaming, setStreaming] = useState(false);
+  const [streamCount, setStreamCount] = useState(0);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  const fetchWidgetsREST = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -271,6 +277,54 @@ const WidgetLibraryPage: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  const streamWidgets = useCallback(() => {
+    const url = `${API_BASE_URL}/widgets/stream`;
+    console.log('[WebFlux] Connecting to widgets stream:', url);
+
+    setLoading(true);
+    setStreaming(true);
+    setStreamCount(0);
+    setWidgets([]);
+    setError(null);
+
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener('meta', (e) => {
+      try {
+        const meta = JSON.parse(e.data);
+        console.log('[WebFlux] Widget stream meta:', meta);
+        setStreamCount(meta.total || 0);
+      } catch {}
+    });
+
+    es.addEventListener('widget', (e) => {
+      try {
+        const widget = JSON.parse(e.data) as WidgetItem;
+        setWidgets(prev => {
+          if (prev.some(w => w.id === widget.id)) return prev;
+          return [...prev, widget];
+        });
+      } catch (err) {
+        console.error('[WebFlux] Error parsing widget:', err);
+      }
+    });
+
+    es.addEventListener('complete', (e) => {
+      console.log('[WebFlux] Widget stream complete');
+      setStreaming(false);
+      setLoading(false);
+      es.close();
+    });
+
+    es.onerror = () => {
+      console.warn('[WebFlux] Widget stream error, falling back to REST');
+      es.close();
+      setStreaming(false);
+      fetchWidgetsREST();
+    };
+  }, [fetchWidgetsREST]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -298,10 +352,15 @@ const WidgetLibraryPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchWidgets();
+    streamWidgets();
     fetchCategories();
     fetchDashboards();
-  }, [fetchWidgets, fetchCategories, fetchDashboards]);
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, [streamWidgets, fetchCategories, fetchDashboards]);
 
   // -------------------------------------------------------------------------
   // Filtering & Sorting
@@ -452,12 +511,14 @@ const WidgetLibraryPage: React.FC = () => {
   // Render: Loading
   // -------------------------------------------------------------------------
 
-  if (loading) {
+  if (loading && widgets.length === 0) {
     return (
       <div className="min-h-screen bg-slate-800 flex items-center justify-center" dir="rtl">
         <div className="text-center">
           <Loader2 size={40} className="text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-gray-300 text-sm">جاري تحميل مكتبة المؤشرات...</p>
+          <p className="text-gray-300 text-sm">
+            {streaming ? 'جاري بث المؤشرات...' : 'جاري تحميل مكتبة المؤشرات...'}
+          </p>
         </div>
       </div>
     );
@@ -475,7 +536,7 @@ const WidgetLibraryPage: React.FC = () => {
           <p className="text-gray-200 mb-2 font-semibold">خطأ في التحميل</p>
           <p className="text-gray-400 text-sm mb-6">{error}</p>
           <button
-            onClick={fetchWidgets}
+            onClick={streamWidgets}
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
           >
             <RefreshCw size={16} />
@@ -507,8 +568,17 @@ const WidgetLibraryPage: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center gap-3 text-gray-400 text-sm">
-              <Database size={16} />
-              <span>{widgets.length} مؤشر متاح</span>
+              {streaming ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-blue-400" />
+                  <span className="text-blue-300">{widgets.length}{streamCount > 0 ? ` / ${streamCount}` : ''} مؤشر (جاري البث...)</span>
+                </>
+              ) : (
+                <>
+                  <Database size={16} />
+                  <span>{widgets.length} مؤشر متاح</span>
+                </>
+              )}
             </div>
           </div>
         </div>
