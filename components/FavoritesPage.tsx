@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../src/services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- TYPES ---
 type ItemType = 'dashboard' | 'content' | 'signal' | 'dataset';
