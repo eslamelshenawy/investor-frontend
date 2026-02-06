@@ -1,8 +1,8 @@
 /**
- * Notifications Page - صفحة الإشعارات
+ * Notifications Page - صفحة الإشعارات (SSE WebFlux)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Bell,
   BellOff,
@@ -18,8 +18,12 @@ import {
   Star,
   AlertCircle,
   Clock,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import api from '../src/services/api';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface Notification {
   id: string;
@@ -71,31 +75,114 @@ const NotificationsPage = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [connected, setConnected] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
-  const fetchNotifications = useCallback(async () => {
-    setIsLoading(true);
-    const response = await api.getNotifications({
-      unreadOnly: filter === 'unread',
-      page,
-      limit: 20,
+  // Connect to SSE stream
+  useEffect(() => {
+    const token = localStorage.getItem('investor_token');
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    const url = `${API_URL}/users/notifications/stream?token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener('connected', () => {
+      setConnected(true);
     });
 
+    es.addEventListener('notifications', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+        setIsLoading(false);
+      } catch {}
+    });
+
+    es.addEventListener('new_notifications', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.notifications?.length > 0) {
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(n => n.id));
+            const newOnes = data.notifications.filter((n: Notification) => !existingIds.has(n.id));
+            return [...newOnes, ...prev];
+          });
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch {}
+    });
+
+    es.addEventListener('error', () => {
+      setConnected(false);
+      // Fallback to REST
+      if (es.readyState === EventSource.CLOSED) {
+        fetchFallback();
+      }
+    });
+
+    es.onerror = () => {
+      setConnected(false);
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, []);
+
+  // Fallback REST fetch
+  const fetchFallback = useCallback(async () => {
+    setIsLoading(true);
+    const response = await api.getNotifications({ unreadOnly: false, page: 1, limit: 30 });
     if (response.success && response.data) {
       const data = response.data as any;
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
-      if (data.meta) {
-        setTotalPages(data.meta.totalPages || 1);
-      }
     }
     setIsLoading(false);
-  }, [filter, page]);
+  }, []);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  const handleRefresh = () => {
+    // Close and reconnect SSE
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+    setIsLoading(true);
+    const token = localStorage.getItem('investor_token');
+    if (!token) return;
+    const url = `${API_URL}/users/notifications/stream?token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener('connected', () => setConnected(true));
+    es.addEventListener('notifications', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+        setIsLoading(false);
+      } catch {}
+    });
+    es.addEventListener('new_notifications', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.notifications?.length > 0) {
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(n => n.id));
+            const newOnes = data.notifications.filter((n: Notification) => !existingIds.has(n.id));
+            return [...newOnes, ...prev];
+          });
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch {}
+    });
+    es.onerror = () => setConnected(false);
+  };
 
   const handleMarkRead = async (id: string) => {
     const response = await api.markNotificationRead(id);
@@ -115,8 +202,10 @@ const NotificationsPage = () => {
     }
   };
 
+  const filtered = filter === 'unread' ? notifications.filter(n => !n.isRead) : notifications;
+
   return (
-    <div className="max-w-3xl mx-auto p-4 lg:p-8">
+    <div className="max-w-3xl mx-auto p-4 lg:p-8" dir="rtl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -124,13 +213,24 @@ const NotificationsPage = () => {
             <Bell className="text-blue-600" />
             الإشعارات
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {unreadCount > 0 ? `لديك ${unreadCount} إشعار غير مقروء` : 'لا توجد إشعارات جديدة'}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-gray-500">
+              {unreadCount > 0 ? `لديك ${unreadCount} إشعار غير مقروء` : 'لا توجد إشعارات جديدة'}
+            </p>
+            {connected ? (
+              <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
+                <Wifi size={10} /> مباشر
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold">
+                <WifiOff size={10} /> غير متصل
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchNotifications}
+            onClick={handleRefresh}
             className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
             title="تحديث"
           >
@@ -151,17 +251,17 @@ const NotificationsPage = () => {
       {/* Filters */}
       <div className="flex gap-2 mb-6 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit">
         <button
-          onClick={() => { setFilter('all'); setPage(1); }}
+          onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             filter === 'all'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
-          الكل
+          الكل ({notifications.length})
         </button>
         <button
-          onClick={() => { setFilter('unread'); setPage(1); }}
+          onClick={() => setFilter('unread')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
             filter === 'unread'
               ? 'bg-slate-800 text-white shadow-md'
@@ -184,17 +284,17 @@ const NotificationsPage = () => {
         <div className="flex items-center justify-center py-20">
           <Loader2 size={32} className="animate-spin text-blue-600" />
         </div>
-      ) : notifications.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
           <BellOff size={48} className="mb-4 opacity-50" />
           <p className="text-lg font-medium">
             {filter === 'unread' ? 'لا توجد إشعارات غير مقروءة' : 'لا توجد إشعارات'}
           </p>
-          <p className="text-sm mt-1">ستظهر هنا الإشعارات عند وصولها</p>
+          <p className="text-sm mt-1">ستظهر هنا الإشعارات عند وصولها تلقائياً</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map(notification => (
+          {filtered.map(notification => (
             <div
               key={notification.id}
               className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer group ${
@@ -214,7 +314,7 @@ const NotificationsPage = () => {
                     {notification.titleAr || notification.title}
                   </h3>
                   {!notification.isRead && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0 mt-1.5 animate-pulse" />
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1 leading-relaxed line-clamp-2">
@@ -240,29 +340,6 @@ const NotificationsPage = () => {
               )}
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            السابق
-          </button>
-          <span className="px-3 py-2 text-sm text-gray-500">
-            {page} من {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            التالي
-          </button>
         </div>
       )}
     </div>

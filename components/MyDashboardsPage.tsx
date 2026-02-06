@@ -10,7 +10,14 @@ import {
   BarChart3,
   Activity,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Star,
+  Maximize2,
+  MoreVertical,
+  ChevronUp,
+  ChevronDown,
+  Copy,
+  GripVertical
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import { STORAGE_KEYS } from '../src/core/config/app.config';
@@ -93,6 +100,15 @@ const MyDashboardsPage: React.FC = () => {
   const [isWidgetLibraryOpen, setWidgetLibraryOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // Drag and drop states
+  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+  const [dragOverWidget, setDragOverWidget] = useState<string | null>(null);
+
+  // Widget control states
+  const [favoriteWidgets, setFavoriteWidgets] = useState<Set<string>>(new Set());
+  const [expandedWidget, setExpandedWidget] = useState<Widget | null>(null);
+  const [openMenuWidgetId, setOpenMenuWidgetId] = useState<string | null>(null);
 
   // Refs for EventSource cleanup
   const dashboardsEventSourceRef = useRef<EventSource | null>(null);
@@ -354,6 +370,132 @@ const MyDashboardsPage: React.FC = () => {
     streamWidgets();
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, widgetId: string) => {
+    setDraggedWidget(widgetId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', widgetId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, widgetId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedWidget && widgetId !== draggedWidget) {
+      setDragOverWidget(widgetId);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedWidget(null);
+    setDragOverWidget(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetWidgetId: string) => {
+    e.preventDefault();
+    if (!activeDashboard || !draggedWidget || draggedWidget === targetWidgetId) {
+      setDraggedWidget(null);
+      setDragOverWidget(null);
+      return;
+    }
+
+    const oldIds = [...activeDashboard.widgetIds];
+    const fromIndex = oldIds.indexOf(draggedWidget);
+    const toIndex = oldIds.indexOf(targetWidgetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const newIds = [...oldIds];
+    newIds.splice(fromIndex, 1);
+    newIds.splice(toIndex, 0, draggedWidget);
+
+    // Optimistic update
+    setDashboards(prev => prev.map(d =>
+      d.id === activeDashboard.id ? { ...d, widgetIds: newIds } : d
+    ));
+
+    setDraggedWidget(null);
+    setDragOverWidget(null);
+
+    try {
+      await api.updateUserDashboard(activeDashboard.id, {
+        widgets: JSON.stringify(newIds)
+      });
+    } catch (err) {
+      console.error('Error reordering widgets:', err);
+      // Revert on error
+      setDashboards(prev => prev.map(d =>
+        d.id === activeDashboard.id ? { ...d, widgetIds: oldIds } : d
+      ));
+    }
+  };
+
+  // Widget control handlers
+  const toggleFavorite = (widgetId: string) => {
+    setFavoriteWidgets(prev => {
+      const next = new Set(prev);
+      if (next.has(widgetId)) {
+        next.delete(widgetId);
+      } else {
+        next.add(widgetId);
+      }
+      return next;
+    });
+  };
+
+  const handleMoveWidget = async (widgetId: string, direction: 'up' | 'down') => {
+    if (!activeDashboard) return;
+    const oldIds = [...activeDashboard.widgetIds];
+    const index = oldIds.indexOf(widgetId);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === oldIds.length - 1) return;
+
+    const newIds = [...oldIds];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    [newIds[index], newIds[swapIndex]] = [newIds[swapIndex], newIds[index]];
+
+    setDashboards(prev => prev.map(d =>
+      d.id === activeDashboard.id ? { ...d, widgetIds: newIds } : d
+    ));
+    setOpenMenuWidgetId(null);
+
+    try {
+      await api.updateUserDashboard(activeDashboard.id, {
+        widgets: JSON.stringify(newIds)
+      });
+    } catch (err) {
+      console.error('Error moving widget:', err);
+      setDashboards(prev => prev.map(d =>
+        d.id === activeDashboard.id ? { ...d, widgetIds: oldIds } : d
+      ));
+    }
+  };
+
+  const handleDuplicateWidget = async (widgetId: string) => {
+    if (!activeDashboard) return;
+    const oldIds = [...activeDashboard.widgetIds];
+    const index = oldIds.indexOf(widgetId);
+    if (index === -1) return;
+
+    const newIds = [...oldIds];
+    newIds.splice(index + 1, 0, widgetId);
+
+    setDashboards(prev => prev.map(d =>
+      d.id === activeDashboard.id ? { ...d, widgetIds: newIds } : d
+    ));
+    setOpenMenuWidgetId(null);
+
+    try {
+      await api.updateUserDashboard(activeDashboard.id, {
+        widgets: JSON.stringify(newIds)
+      });
+    } catch (err) {
+      console.error('Error duplicating widget:', err);
+      setDashboards(prev => prev.map(d =>
+        d.id === activeDashboard.id ? { ...d, widgetIds: oldIds } : d
+      ));
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -467,18 +609,26 @@ const MyDashboardsPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 min-h-[300px] pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 min-h-[300px] pb-4" onClick={() => openMenuWidgetId && setOpenMenuWidgetId(null)}>
             {activeDashboard.widgetIds.length === 0 ? (
               <div className="col-span-full border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-12 text-gray-400 bg-gray-50/50">
                 <Plus size={40} className="mb-2 opacity-50" />
                 <p>هذه اللوحة فارغة. أضف بعض المؤشرات!</p>
               </div>
             ) : (
-              activeDashboard.widgetIds.map(widgetId => {
+              activeDashboard.widgetIds.map((widgetId, widgetIndex) => {
                 const widget = widgets.find(w => w.id === widgetId);
                 if (!widget) {
                   return (
-                    <div key={widgetId} className="bg-white rounded-xl border border-gray-200 p-5 relative">
+                    <div
+                      key={`${widgetId}-${widgetIndex}`}
+                      className="bg-white rounded-xl border border-gray-200 p-5 relative"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, widgetId)}
+                      onDragOver={(e) => handleDragOver(e, widgetId)}
+                      onDragEnd={handleDragEnd}
+                      onDrop={(e) => handleDrop(e, widgetId)}
+                    >
                       <button
                         onClick={() => handleRemoveWidget(widgetId)}
                         className="absolute top-3 left-3 p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100"
@@ -496,19 +646,104 @@ const MyDashboardsPage: React.FC = () => {
 
                 return (
                   <div
-                    key={widgetId}
-                    className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-all group relative"
+                    key={`${widgetId}-${widgetIndex}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, widgetId)}
+                    onDragOver={(e) => handleDragOver(e, widgetId)}
+                    onDragEnd={handleDragEnd}
+                    onDrop={(e) => handleDrop(e, widgetId)}
+                    className={`bg-white rounded-xl border p-5 hover:shadow-lg transition-all group relative cursor-grab ${
+                      draggedWidget === widgetId ? 'opacity-50 border-blue-400' : ''
+                    } ${
+                      dragOverWidget === widgetId ? 'border-blue-500 border-2 shadow-blue-100 shadow-lg' : 'border-gray-200'
+                    }`}
                   >
-                    {/* Remove button */}
-                    <button
-                      onClick={() => handleRemoveWidget(widgetId)}
-                      className="absolute top-3 left-3 p-1.5 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"
-                      title="إزالة"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {/* Drag handle */}
+                    <div className="absolute top-3 right-3 text-gray-300 group-hover:text-gray-500 transition-colors">
+                      <GripVertical size={18} />
+                    </div>
 
-                    <div className="flex items-start gap-3 mb-4">
+                    {/* Widget control buttons */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Star / Favorite */}
+                      <button
+                        onClick={() => toggleFavorite(widgetId)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          favoriteWidgets.has(widgetId)
+                            ? 'bg-yellow-50 text-yellow-500 hover:bg-yellow-100'
+                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-yellow-500'
+                        }`}
+                        title="مفضلة"
+                      >
+                        <Star size={16} fill={favoriteWidgets.has(widgetId) ? 'currentColor' : 'none'} />
+                      </button>
+
+                      {/* Expand / Fullscreen */}
+                      <button
+                        onClick={() => setExpandedWidget(widget)}
+                        className="p-1.5 bg-gray-50 text-gray-400 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-colors"
+                        title="عرض كامل"
+                      >
+                        <Maximize2 size={16} />
+                      </button>
+
+                      {/* Settings / More menu */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenuWidgetId(openMenuWidgetId === widgetId ? null : widgetId)}
+                          className="p-1.5 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                          title="خيارات"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        {openMenuWidgetId === widgetId && (
+                          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-30 w-40 py-1 animate-scaleIn">
+                            <button
+                              onClick={() => handleMoveWidget(widgetId, 'up')}
+                              disabled={widgetIndex === 0}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <ChevronUp size={14} />
+                              نقل لأعلى
+                            </button>
+                            <button
+                              onClick={() => handleMoveWidget(widgetId, 'down')}
+                              disabled={widgetIndex === activeDashboard.widgetIds.length - 1}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <ChevronDown size={14} />
+                              نقل لأسفل
+                            </button>
+                            <button
+                              onClick={() => handleDuplicateWidget(widgetId)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              <Copy size={14} />
+                              نسخ
+                            </button>
+                            <div className="border-t border-gray-100 my-1" />
+                            <button
+                              onClick={() => { handleRemoveWidget(widgetId); setOpenMenuWidgetId(null); }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 size={14} />
+                              إزالة
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => handleRemoveWidget(widgetId)}
+                        className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                        title="إزالة"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-start gap-3 mb-4 pr-6">
                       <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                         {(widget.atomicType === 'sparkline' || widget.type === 'line') ? <TrendingUp size={20} /> :
                          (widget.atomicType === 'progress' || widget.type === 'bar') ? <BarChart3 size={20} /> :
@@ -551,6 +786,53 @@ const MyDashboardsPage: React.FC = () => {
         onClose={() => setModalOpen(false)}
         onCreate={handleCreateDashboard}
       />}
+
+      {/* Expanded Widget Modal */}
+      {expandedWidget && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setExpandedWidget(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                  {(expandedWidget.atomicType === 'sparkline' || expandedWidget.type === 'line') ? <TrendingUp size={24} /> :
+                   (expandedWidget.atomicType === 'progress' || expandedWidget.type === 'bar') ? <BarChart3 size={24} /> :
+                   <Activity size={24} />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {expandedWidget.titleAr || expandedWidget.title}
+                  </h3>
+                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                    {expandedWidget.category}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setExpandedWidget(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                title="إغلاق"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              {expandedWidget.description && (
+                <p className="text-gray-600 mb-6 text-base leading-relaxed">
+                  {expandedWidget.description}
+                </p>
+              )}
+
+              {/* Expanded chart area */}
+              <div className="w-full h-[60vh] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
+                <span className="text-gray-400 text-lg">الرسم البياني - عرض كامل</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Widget Library Modal */}
       {isWidgetLibraryOpen && activeDashboard && (

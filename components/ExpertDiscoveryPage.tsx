@@ -23,6 +23,7 @@ import {
   Briefcase,
   MapPin,
   ChevronLeft,
+  Sparkles,
 } from 'lucide-react';
 import api from '../src/services/api';
 
@@ -322,6 +323,115 @@ function mapEntityToExpert(entity: any): Expert {
 }
 
 // ============================================
+// SUGGESTION SCORING & REASON HELPERS
+// ============================================
+
+/**
+ * Parse a human-readable follower count string (e.g. "45.2K") into a number.
+ */
+function parseFollowerCount(raw: string): number {
+  if (!raw) return 0;
+  const normalized = raw.replace(/,/g, '').trim();
+  const kMatch = normalized.match(/^([\d.]+)\s*[Kk]$/);
+  if (kMatch) return parseFloat(kMatch[1]) * 1_000;
+  const mMatch = normalized.match(/^([\d.]+)\s*[Mm]$/);
+  if (mMatch) return parseFloat(mMatch[1]) * 1_000_000;
+  return parseFloat(normalized) || 0;
+}
+
+/**
+ * Calculate a suggestion score for an expert based on the user's interests.
+ *
+ * Scoring weights:
+ *  - Category overlap with followed experts' categories: 40 points per match
+ *  - Follower count (popularity):  up to 20 points  (log-scaled)
+ *  - Post count (activity):        up to 20 points  (log-scaled)
+ *  - Verification status:          15 points
+ *  - Mutual followers presence:    5 points (bonus)
+ */
+function calculateSuggestionScore(
+  expert: Expert,
+  followedCategories: Set<string>,
+): number {
+  let score = 0;
+
+  // --- Category match (most important signal) ---
+  const categoryMatches = expert.categories.filter((c) =>
+    followedCategories.has(c),
+  ).length;
+  score += categoryMatches * 40;
+
+  // --- Follower popularity (log-scaled, max 20) ---
+  const followers = parseFollowerCount(expert.followerCount);
+  if (followers > 0) {
+    // log10(50000) ≈ 4.7 → 20 pts cap
+    score += Math.min(20, Math.log10(followers + 1) * 4.25);
+  }
+
+  // --- Activity / post count (log-scaled, max 20) ---
+  if (expert.postsCount > 0) {
+    score += Math.min(20, Math.log10(expert.postsCount + 1) * 6);
+  }
+
+  // --- Verified badge ---
+  if (expert.isVerified) {
+    score += 15;
+  }
+
+  // --- Mutual followers bonus ---
+  if (expert.mutualFollowers.length > 0) {
+    score += 5;
+  }
+
+  return score;
+}
+
+type SuggestionReason =
+  | 'category_match'
+  | 'verified_active'
+  | 'mutual_followers'
+  | null;
+
+/**
+ * Return the most relevant reason we are suggesting this expert.
+ * Priority order: category match > mutual followers > verified & active.
+ */
+function getSuggestionReason(
+  expert: Expert,
+  followedCategories: Set<string>,
+): SuggestionReason {
+  // 1. Category overlap
+  const hasMatchingCategory = expert.categories.some((c) =>
+    followedCategories.has(c),
+  );
+  if (hasMatchingCategory) return 'category_match';
+
+  // 2. Mutual followers
+  if (expert.mutualFollowers.length > 0) return 'mutual_followers';
+
+  // 3. Verified and active (>= 500 posts)
+  if (expert.isVerified && expert.postsCount >= 500) return 'verified_active';
+
+  return null;
+}
+
+/**
+ * Map a SuggestionReason to an Arabic label displayed under the expert card.
+ */
+function suggestionReasonLabel(reason: SuggestionReason): string {
+  switch (reason) {
+    case 'category_match':
+      return 'متخصص في مجال اهتمامك';
+    case 'mutual_followers':
+      return 'يتابعه خبراء تتابعهم';
+    case 'verified_active':
+      return 'خبير موثق ونشط';
+    default:
+      return '';
+  }
+}
+
+// ============================================
 // COMPONENT
 // ============================================
 
@@ -395,41 +505,65 @@ const ExpertDiscoveryPage: React.FC = () => {
   const uniqueCountries = Array.from(new Set(experts.map((e) => e.country)));
   const uniqueSpecialties = Array.from(new Set(experts.map((e) => e.specialty)));
 
+  // ---- Interest-based category tracking ----
+  // Derive the set of categories the user's followed experts belong to.
+  // This is used for suggestion scoring and the "why suggested" tag.
+  const followedCategories = React.useMemo<Set<string>>(() => {
+    const cats = new Set<string>();
+    experts
+      .filter((e) => e.isFollowing)
+      .forEach((e) => e.categories.forEach((c) => cats.add(c)));
+    return cats;
+  }, [experts]);
+
   // Filter experts
-  const filteredExperts = experts.filter((expert) => {
-    // Search
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !query ||
-      expert.name.toLowerCase().includes(query) ||
-      (expert.nameEn?.toLowerCase().includes(query)) ||
-      expert.title.toLowerCase().includes(query) ||
-      expert.specialty.toLowerCase().includes(query) ||
-      expert.region.toLowerCase().includes(query) ||
-      expert.country.toLowerCase().includes(query);
+  const filteredExperts = React.useMemo(() => {
+    const filtered = experts.filter((expert) => {
+      // Search
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        !query ||
+        expert.name.toLowerCase().includes(query) ||
+        (expert.nameEn?.toLowerCase().includes(query)) ||
+        expert.title.toLowerCase().includes(query) ||
+        expert.specialty.toLowerCase().includes(query) ||
+        expert.region.toLowerCase().includes(query) ||
+        expert.country.toLowerCase().includes(query);
 
-    // Tab filter
-    const matchesTab =
-      activeTab === 'all'
-        ? true
-        : activeTab === 'following'
-          ? expert.isFollowing
-          : !expert.isFollowing; // suggested = not yet following
+      // Tab filter
+      const matchesTab =
+        activeTab === 'all'
+          ? true
+          : activeTab === 'following'
+            ? expert.isFollowing
+            : !expert.isFollowing; // suggested = not yet following
 
-    // Category filter
-    const matchesCategory =
-      !selectedCategory || expert.categories.includes(selectedCategory);
+      // Category filter
+      const matchesCategory =
+        !selectedCategory || expert.categories.includes(selectedCategory);
 
-    // Country filter
-    const matchesCountry =
-      countryFilter === 'all' || expert.country === countryFilter;
+      // Country filter
+      const matchesCountry =
+        countryFilter === 'all' || expert.country === countryFilter;
 
-    // Specialty filter
-    const matchesSpecialty =
-      specialtyFilter === 'all' || expert.specialty === specialtyFilter;
+      // Specialty filter
+      const matchesSpecialty =
+        specialtyFilter === 'all' || expert.specialty === specialtyFilter;
 
-    return matchesSearch && matchesTab && matchesCategory && matchesCountry && matchesSpecialty;
-  });
+      return matchesSearch && matchesTab && matchesCategory && matchesCountry && matchesSpecialty;
+    });
+
+    // ---- Score-based ranking for the "suggested" tab ----
+    if (activeTab === 'suggested') {
+      return [...filtered].sort((a, b) => {
+        const scoreA = calculateSuggestionScore(a, followedCategories);
+        const scoreB = calculateSuggestionScore(b, followedCategories);
+        return scoreB - scoreA; // descending
+      });
+    }
+
+    return filtered;
+  }, [experts, searchQuery, activeTab, selectedCategory, countryFilter, specialtyFilter, followedCategories]);
 
   // ============================================
   // RENDER
@@ -787,6 +921,24 @@ const ExpertDiscoveryPage: React.FC = () => {
                     </span>
                   </div>
                 )}
+
+                {/* "Why Suggested" Tag — shown only on the suggested tab */}
+                {activeTab === 'suggested' && (() => {
+                  const reason = getSuggestionReason(expert, followedCategories);
+                  const label = suggestionReasonLabel(reason);
+                  if (!label) return null;
+                  return (
+                    <div className="flex items-center gap-1.5 mb-4 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                      <Sparkles size={14} className="text-purple-500 shrink-0" />
+                      <span className="text-[11px] font-bold text-purple-700">
+                        لماذا نقترحه؟
+                      </span>
+                      <span className="text-[11px] text-purple-600 font-medium">
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
