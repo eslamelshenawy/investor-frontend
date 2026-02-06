@@ -47,7 +47,8 @@ import {
   TrendingUp,
   ScanSearch,
   Globe,
-  BarChart3
+  BarChart3,
+  Megaphone
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -80,6 +81,7 @@ import UserProfile from './components/UserProfile';
 import TwoFactorSettings from './components/TwoFactorSettings';
 import ChatPage from './components/ChatPage';
 import InfographicBuilder from './components/InfographicBuilder';
+import CampaignsPage from './components/CampaignsPage';
 import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
@@ -367,12 +369,15 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           )}
         </NavGroup>
 
-        {(isWriter || isExpert || isAnalyst || isDesigner || isAdmin) && (
+        {(isWriter || isExpert || isAnalyst || isDesigner || isContentManager || isAdmin) && (
           <>
             <div className="my-2 border-t border-slate-800/40 mx-2"></div>
             <NavGroup title="صناعة المحتوى" open={sections.authoring} onToggle={() => toggle('authoring')}>
               <NavItem to="/create-post" icon={PenSquare} className="text-emerald-400 hover:text-emerald-300">إنشاء منشور</NavItem>
               <NavItem to="/my-content" icon={FileText}>منشوراتي</NavItem>
+              {(isContentManager || isAdmin) && (
+                <NavItem to="/campaigns" icon={Megaphone}>الحملات التفاعلية</NavItem>
+              )}
             </NavGroup>
           </>
         )}
@@ -445,6 +450,7 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/custom-reports')) return { title: 'التقارير المخصصة', section: 'التحليل' };
     if (pathname.includes('/widget-library')) return { title: 'مكتبة المؤشرات', section: 'البيانات' };
     if (pathname.includes('/admin/settings')) return { title: 'إعدادات النظام', section: 'Admin' };
+    if (pathname.includes('/campaigns')) return { title: 'الحملات التفاعلية', section: 'المحتوى' };
     return { title: 'لوحة التحكم', section: 'رادار' };
   };
 
@@ -995,6 +1001,7 @@ const AppContent = () => {
             <Route path="/settings/2fa" element={<TwoFactorSettings />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/designer/studio" element={<InfographicBuilder />} />
+            <Route path="/campaigns" element={<CampaignsPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
 
             <Route path="/expert-studio" element={
