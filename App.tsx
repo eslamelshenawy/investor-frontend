@@ -48,7 +48,8 @@ import {
   ScanSearch,
   Globe,
   BarChart3,
-  Megaphone
+  Megaphone,
+  Eye
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -83,6 +84,7 @@ import ChatPage from './components/ChatPage';
 import InfographicBuilder from './components/InfographicBuilder';
 import CampaignsPage from './components/CampaignsPage';
 import DatasetMetadataPage from './components/DatasetMetadataPage';
+import MetadataOverviewPage from './components/MetadataOverviewPage';
 import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
@@ -355,6 +357,7 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           <NavItem to="/sources" icon={Globe}>مصادر البيانات</NavItem>
           <NavItem to="/stats" icon={BarChart3}>إحصائيات المنصة</NavItem>
           <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
+          <NavItem to="/metadata-overview" icon={Shield}>البيانات الوصفية</NavItem>
           {isExpert && (
             <>
               <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
@@ -418,6 +421,54 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await (await import('./src/services/api')).api.getNotifications({ unreadOnly: false, page: 1, limit: 1 });
+        if (res.success && (res.data as any)?.unreadCount !== undefined) {
+          setUnreadNotifications((res.data as any).unreadCount);
+        }
+      } catch {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // --- Admin Role Switcher State ---
+  const [viewAsRole, setViewAsRole] = useState<string | null>(() => {
+    try { return localStorage.getItem('investor_view_as_role'); } catch { return null; }
+  });
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+
+  const allRoles = [
+    { key: 'STANDARD', label: 'STANDARD', value: UserRole.STANDARD },
+    { key: 'ANALYST', label: 'ANALYST', value: UserRole.ANALYST },
+    { key: 'EXPERT', label: 'EXPERT', value: UserRole.EXPERT },
+    { key: 'WRITER', label: 'WRITER', value: UserRole.WRITER },
+    { key: 'DESIGNER', label: 'DESIGNER', value: UserRole.DESIGNER },
+    { key: 'EDITOR', label: 'EDITOR', value: UserRole.EDITOR },
+    { key: 'CONTENT_MANAGER', label: 'CONTENT_MANAGER', value: UserRole.CONTENT_MANAGER },
+    { key: 'ADMIN', label: 'ADMIN', value: UserRole.ADMIN },
+    { key: 'SUPER_ADMIN', label: 'SUPER_ADMIN', value: UserRole.SUPER_ADMIN },
+  ];
+
+  const isAdminUser = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN || user?.role === UserRole.CURBTRON;
+
+  const handleSelectViewRole = (roleKey: string) => {
+    setViewAsRole(roleKey);
+    localStorage.setItem('investor_view_as_role', roleKey);
+    setRoleDropdownOpen(false);
+  };
+
+  const handleClearViewRole = () => {
+    setViewAsRole(null);
+    localStorage.removeItem('investor_view_as_role');
+    setRoleDropdownOpen(false);
+  };
 
   const getPageInfo = (pathname: string) => {
     if (pathname === '/' || pathname === '/dashboard') return { title: 'مركز الاكتشاف', section: 'الرئيسية' };
@@ -465,79 +516,162 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
   };
 
   return (
-    <header className="h-[60px] lg:h-[72px] sticky top-0 z-40 w-full backdrop-blur-xl bg-white/90 border-b border-gray-200/80 transition-all duration-300">
-      <div className="px-4 lg:px-8 h-full flex items-center justify-between gap-3 lg:gap-6">
-
-        <div className="flex items-center flex-1 gap-4 lg:gap-10">
-          <div className="lg:hidden flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
-              <Activity size={18} className="text-white" />
-            </div>
-            <span className="font-bold text-gray-900 text-sm hidden sm:block">رادار المستثمر</span>
+    <>
+      {/* Admin "View As" Banner */}
+      {isAdminUser && viewAsRole && (
+        <div className="sticky top-0 z-50 w-full bg-amber-50 border-b-2 border-amber-400 px-4 py-2 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-amber-800 text-sm font-bold">
+            <Eye size={16} className="text-amber-600" />
+            <span>أنت تشاهد المنصة كـ</span>
+            <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-wider">
+              {viewAsRole}
+            </span>
+            <span className="text-amber-500 text-xs font-medium mr-2">(عرض مرئي فقط - لا يغير الصلاحيات الفعلية)</span>
           </div>
-
-          <div className="relative group w-full max-w-md hidden md:block"
-            onClick={() => navigate('/search')}
+          <button
+            onClick={handleClearViewRole}
+            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
           >
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <Search className="w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+            <Shield size={12} />
+            العودة لوضعك الأصلي
+          </button>
+        </div>
+      )}
+
+      <header className={`h-[60px] lg:h-[72px] sticky ${isAdminUser && viewAsRole ? 'top-[44px]' : 'top-0'} z-40 w-full backdrop-blur-xl bg-white/90 border-b ${isAdminUser && viewAsRole ? 'border-amber-400' : 'border-gray-200/80'} transition-all duration-300`}>
+        <div className="px-4 lg:px-8 h-full flex items-center justify-between gap-3 lg:gap-6">
+
+          <div className="flex items-center flex-1 gap-4 lg:gap-10">
+            <div className="lg:hidden flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
+                <Activity size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-gray-900 text-sm hidden sm:block">رادار المستثمر</span>
             </div>
-            <input
-              type="text"
-              className="block w-full py-2.5 pr-10 pl-12 text-sm text-gray-900 bg-gray-100/50 border border-gray-200/60 rounded-xl focus:ring-4 focus:ring-blue-50/10 focus:border-blue-500 focus:bg-white transition-all placeholder-gray-400 shadow-sm hover:bg-white cursor-pointer"
-              placeholder="ابحث عن مؤشر، تقرير، أو خبير..."
-              readOnly
-              onFocus={() => navigate('/search')}
-            />
+
+            <div className="relative group w-full max-w-md hidden md:block"
+              onClick={() => navigate('/search')}
+            >
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <Search className="w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+              </div>
+              <input
+                type="text"
+                className="block w-full py-2.5 pr-10 pl-12 text-sm text-gray-900 bg-gray-100/50 border border-gray-200/60 rounded-xl focus:ring-4 focus:ring-blue-50/10 focus:border-blue-500 focus:bg-white transition-all placeholder-gray-400 shadow-sm hover:bg-white cursor-pointer"
+                placeholder="ابحث عن مؤشر، تقرير، أو خبير..."
+                readOnly
+                onFocus={() => navigate('/search')}
+              />
+            </div>
+
+            <div className="hidden xl:flex items-center gap-2 text-sm text-gray-400 font-medium">
+              <span className="hover:text-gray-800 cursor-pointer transition-colors flex items-center gap-1">
+                <Home size={14} className="mb-0.5" />
+                {section}
+              </span>
+              <ChevronLeft size={14} className="text-gray-300 rtl:rotate-180" />
+              <span className="text-gray-900 font-bold bg-gray-100/80 px-3 py-1 rounded-lg border border-gray-200/50 shadow-sm">
+                {title}
+              </span>
+            </div>
           </div>
 
-          <div className="hidden xl:flex items-center gap-2 text-sm text-gray-400 font-medium">
-            <span className="hover:text-gray-800 cursor-pointer transition-colors flex items-center gap-1">
-              <Home size={14} className="mb-0.5" />
-              {section}
-            </span>
-            <ChevronLeft size={14} className="text-gray-300 rtl:rotate-180" />
-            <span className="text-gray-900 font-bold bg-gray-100/80 px-3 py-1 rounded-lg border border-gray-200/50 shadow-sm">
-              {title}
-            </span>
+          <div className="flex items-center gap-2 lg:gap-5">
+            <button
+              onClick={onOpenWizard}
+              className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl lg:px-4 lg:py-2 text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 border border-blue-500 overflow-hidden group relative"
+            >
+              <Sparkles size={18} className="group-hover:animate-spin" />
+              <span className="hidden lg:inline relative z-10">المستشار الذكي</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/notifications')}
+              className="relative p-2 lg:p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100 group"
+            >
+              <Bell size={22} className="group-hover:animate-swing" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1 shadow-sm">
+                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                </span>
+              )}
+            </button>
+
+            <div className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200/60 group">
+              <div
+                onClick={() => navigate('/profile')}
+                className="hidden lg:block text-left cursor-pointer"
+              >
+                <p className="text-sm font-bold text-gray-800 leading-none mb-1 group-hover:text-blue-700 transition-colors">
+                  {user?.nameAr || user?.name || 'مستخدم'}
+                </p>
+                {/* Role display with optional admin dropdown trigger */}
+                {isAdminUser ? (
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setRoleDropdownOpen(!roleDropdownOpen); }}
+                      className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide transition-colors rounded px-1 -mx-1 hover:bg-amber-50 ${viewAsRole ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                    >
+                      <Eye size={10} className={viewAsRole ? 'text-amber-500' : 'text-gray-300'} />
+                      {viewAsRole || user?.role || 'STANDARD'}
+                      <ChevronDown size={10} className={`transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Role Dropdown */}
+                    {roleDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setRoleDropdownOpen(false)} />
+                        <div className="absolute left-0 top-full mt-2 z-50 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 animate-in fade-in slide-in-from-top-2">
+                          <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <Shield size={10} />
+                              عرض المنصة كدور آخر
+                            </p>
+                          </div>
+
+                          {/* Reset option */}
+                          <button
+                            onClick={handleClearViewRole}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold flex items-center gap-2 transition-colors ${!viewAsRole ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${!viewAsRole ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                            الوضع الأصلي ({user?.role})
+                          </button>
+
+                          <div className="border-t border-gray-100 my-1" />
+
+                          {allRoles.map((r) => (
+                            <button
+                              key={r.key}
+                              onClick={() => handleSelectViewRole(r.key)}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-medium flex items-center gap-2 transition-colors ${viewAsRole === r.key ? 'bg-amber-50 text-amber-700 font-bold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                            >
+                              <div className={`w-2 h-2 rounded-full ${viewAsRole === r.key ? 'bg-amber-500' : 'bg-gray-200'}`} />
+                              <span className="uppercase tracking-wide">{r.key}</span>
+                              <span className="text-gray-400 text-[10px] mr-auto">{r.value}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-blue-500/70">
+                    {user?.role || 'STANDARD'}
+                  </p>
+                )}
+              </div>
+              <div
+                onClick={() => navigate('/profile')}
+                className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl border border-gray-100 shadow-sm bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold group-hover:ring-2 ring-blue-500/20 transition-all cursor-pointer"
+              >
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 lg:gap-5">
-          <button
-            onClick={onOpenWizard}
-            className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl lg:px-4 lg:py-2 text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 border border-blue-500 overflow-hidden group relative"
-          >
-            <Sparkles size={18} className="group-hover:animate-spin" />
-            <span className="hidden lg:inline relative z-10">المستشار الذكي</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/notifications')}
-            className="relative p-2 lg:p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100 group"
-          >
-            <Bell size={22} className="group-hover:animate-swing" />
-          </button>
-
-          <div
-            onClick={() => navigate('/profile')}
-            className="flex items-center gap-3 cursor-pointer pl-2 pr-1 py-1 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200/60 group"
-          >
-            <div className="hidden lg:block text-left">
-              <p className="text-sm font-bold text-gray-800 leading-none mb-1 group-hover:text-blue-700 transition-colors">
-                {user?.nameAr || user?.name || 'مستخدم'}
-              </p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-blue-500/70">
-                {user?.role || 'STANDARD'}
-              </p>
-            </div>
-            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl border border-gray-100 shadow-sm bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold group-hover:ring-2 ring-blue-500/20 transition-all">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };
 
@@ -1006,6 +1140,7 @@ const AppContent = () => {
             <Route path="/designer/studio" element={<InfographicBuilder />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
             <Route path="/datasets/:id/metadata" element={<DatasetMetadataPage />} />
+            <Route path="/metadata-overview" element={<MetadataOverviewPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
 
             <Route path="/expert-studio" element={

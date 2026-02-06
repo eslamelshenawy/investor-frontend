@@ -3,7 +3,7 @@
  * WebFlux-style streaming - Real data only
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Bookmark,
     Search,
@@ -18,19 +18,14 @@ import {
     Layers,
     Loader2,
     RefreshCw,
-    AlertCircle,
     Heart,
     TrendingUp,
     TrendingDown,
     Eye,
-    Radio,
     WifiOff
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../src/services/api';
-import { useAuth } from '../contexts/AuthContext';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // --- TYPES ---
 type ItemType = 'dashboard' | 'content' | 'signal' | 'dataset';
@@ -61,87 +56,12 @@ const FavoritesPage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [items, setItems] = useState<FavoriteItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [removing, setRemoving] = useState<string | null>(null);
-    const [streamProgress, setStreamProgress] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
-    const eventSourceRef = useRef<EventSource | null>(null);
 
-    // WebFlux-style SSE streaming
-    const fetchFavoritesStream = useCallback(() => {
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close();
-        }
-
-        setLoading(true);
-        setStreaming(true);
-        setError(null);
-        setItems([]);
-        setStreamProgress(0);
-        setTotalItems(0);
-
-        const url = `${API_BASE_URL}/users/favorites/stream`;
-
-        try {
-            const eventSource = new EventSource(url, { withCredentials: true });
-            eventSourceRef.current = eventSource;
-
-            eventSource.addEventListener('meta', (e) => {
-                const meta = JSON.parse(e.data);
-                setTotalItems(meta.total || 0);
-            });
-
-            eventSource.addEventListener('favorite', (e) => {
-                const fav = JSON.parse(e.data);
-                const item = transformFavorite(fav);
-                setItems(prev => {
-                    const newItems = [...prev, item];
-                    if (totalItems > 0) {
-                        setStreamProgress(Math.round((newItems.length / totalItems) * 100));
-                    }
-                    return newItems;
-                });
-                setLoading(false);
-            });
-
-            eventSource.addEventListener('complete', () => {
-                setStreaming(false);
-                setStreamProgress(100);
-                eventSource.close();
-            });
-
-            eventSource.addEventListener('error', () => {
-                setStreaming(false);
-                eventSource.close();
-                // Fallback to regular API
-                fetchFavoritesRegular();
-            });
-
-            eventSource.onerror = () => {
-                setStreaming(false);
-                eventSource.close();
-                if (items.length === 0) {
-                    fetchFavoritesRegular();
-                }
-            };
-
-            // Timeout fallback
-            setTimeout(() => {
-                if (streaming && items.length === 0) {
-                    eventSource.close();
-                    fetchFavoritesRegular();
-                }
-            }, 5000);
-
-        } catch (err) {
-            console.error('SSE Error:', err);
-            fetchFavoritesRegular();
-        }
-    }, []);
-
-    // Regular API fallback
-    const fetchFavoritesRegular = async () => {
+    // Fetch favorites from REST API
+    const fetchFavorites = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -162,9 +82,8 @@ const FavoritesPage: React.FC = () => {
             setItems([]);
         } finally {
             setLoading(false);
-            setStreaming(false);
         }
-    };
+    }, []);
 
     // Transform API response to FavoriteItem
     const transformFavorite = (fav: any): FavoriteItem => {
@@ -227,14 +146,8 @@ const FavoritesPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchFavoritesStream();
-
-        return () => {
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-            }
-        };
-    }, []);
+        fetchFavorites();
+    }, [fetchFavorites]);
 
     // Filter Logic
     const filteredItems = items.filter(item => {
@@ -341,16 +254,12 @@ const FavoritesPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                     {/* Refresh Button */}
                     <button
-                        onClick={fetchFavoritesStream}
-                        disabled={loading || streaming}
+                        onClick={fetchFavorites}
+                        disabled={loading}
                         className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all"
                         title="تحديث"
                     >
-                        {streaming ? (
-                            <Radio size={18} className="text-green-500 animate-pulse" />
-                        ) : (
-                            <RefreshCw size={18} className={loading ? 'animate-spin text-amber-500' : 'text-gray-500'} />
-                        )}
+                        <RefreshCw size={18} className={loading ? 'animate-spin text-amber-500' : 'text-gray-500'} />
                     </button>
 
                     {/* Search */}
@@ -366,26 +275,6 @@ const FavoritesPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Streaming Progress */}
-            {streaming && (
-                <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-200">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="relative">
-                            <Radio size={20} className="text-amber-500 animate-pulse" />
-                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping"></span>
-                        </div>
-                        <span className="text-amber-700 font-bold text-sm">جاري تحميل البيانات...</span>
-                        <span className="text-amber-500 text-sm">{items.length} / {totalItems || '?'}</span>
-                    </div>
-                    <div className="w-full bg-amber-200 rounded-full h-2 overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
-                            style={{ width: `${streamProgress}%` }}
-                        ></div>
-                    </div>
-                </div>
-            )}
 
             {/* Stats Cards */}
             {!loading && items.length > 0 && (
@@ -445,7 +334,7 @@ const FavoritesPage: React.FC = () => {
             )}
 
             {/* Loading State */}
-            {loading && !streaming && (
+            {loading && (
                 <div className="flex flex-col items-center justify-center py-20">
                     <Loader2 size={48} className="text-amber-500 animate-spin mb-4" />
                     <p className="text-gray-500">جاري تحميل المفضلة...</p>
@@ -459,7 +348,7 @@ const FavoritesPage: React.FC = () => {
                     <p className="text-red-600 font-bold mb-2">تعذر الاتصال بالخادم</p>
                     <p className="text-red-500 text-sm mb-4">{error}</p>
                     <button
-                        onClick={fetchFavoritesStream}
+                        onClick={fetchFavorites}
                         className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors flex items-center gap-2"
                     >
                         <RefreshCw size={16} />
