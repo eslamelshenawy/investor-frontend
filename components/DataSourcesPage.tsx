@@ -1,69 +1,129 @@
 /**
  * Data Sources Page - مصادر البيانات
- * Dynamic page loading real source stats from API
+ * Uses WebFlux SSE stream for real-time data loading
  */
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  ArrowLeft, Globe, Building2, ExternalLink, Database, CheckCircle,
+  Globe, Building2, ExternalLink, Database, CheckCircle,
   Loader2, BarChart3, Shield, RefreshCw, TrendingUp, Server,
   Landmark, GraduationCap, HeartPulse, Scale, BookOpen, Atom,
-  CloudSun, Banknote, HardHat
+  CloudSun, Banknote, HardHat, Wifi, Users, Layers
 } from 'lucide-react';
-import { api } from '../src/services/api';
+import { API_CONFIG } from '../src/core/config/app.config';
 
 // Map source names to icons and colors
 const sourceMetadata: Record<string, { icon: React.ElementType; color: string; url?: string }> = {
-  'open.data.gov.sa': { icon: Globe, color: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400', url: 'https://open.data.gov.sa' },
-  'الهيئة العامة للإحصاء': { icon: BarChart3, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400', url: 'https://www.stats.gov.sa' },
-  'وزارة الصحة': { icon: HeartPulse, color: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400', url: 'https://www.moh.gov.sa' },
-  'وزارة العدل': { icon: Scale, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400', url: 'https://www.moj.gov.sa' },
-  'وزارة التعليم': { icon: GraduationCap, color: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400', url: 'https://www.moe.gov.sa' },
-  'هيئة السوق المالية': { icon: TrendingUp, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400', url: 'https://cma.org.sa' },
-  'هيئة الرقابة النووية والإشعاعية': { icon: Atom, color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400', url: 'https://www.nrrc.gov.sa' },
-  'المؤسسة العامة للتدريب التقني والمهني': { icon: HardHat, color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400', url: 'https://www.tvtc.gov.sa' },
-  'الهيئة العامة للأرصاد وحماية البيئة': { icon: CloudSun, color: 'bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400' },
-  'جامعة الملك سعود': { icon: BookOpen, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400', url: 'https://www.ksu.edu.sa' },
-  'وزارة المالية': { icon: Banknote, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400', url: 'https://www.mof.gov.sa' },
-  'مؤسسة النقد العربي السعودي': { icon: Landmark, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400', url: 'https://www.sama.gov.sa' },
+  'open.data.gov.sa': { icon: Globe, color: 'bg-green-100 text-green-600', url: 'https://open.data.gov.sa' },
+  'الهيئة العامة للإحصاء': { icon: BarChart3, color: 'bg-blue-100 text-blue-600', url: 'https://www.stats.gov.sa' },
+  'وزارة الصحة': { icon: HeartPulse, color: 'bg-rose-100 text-rose-600', url: 'https://www.moh.gov.sa' },
+  'وزارة العدل': { icon: Scale, color: 'bg-purple-100 text-purple-600', url: 'https://www.moj.gov.sa' },
+  'وزارة التعليم': { icon: GraduationCap, color: 'bg-cyan-100 text-cyan-600', url: 'https://www.moe.gov.sa' },
+  'هيئة السوق المالية': { icon: TrendingUp, color: 'bg-amber-100 text-amber-600', url: 'https://cma.org.sa' },
+  'هيئة الرقابة النووية والإشعاعية': { icon: Atom, color: 'bg-yellow-100 text-yellow-600', url: 'https://www.nrrc.gov.sa' },
+  'المؤسسة العامة للتدريب التقني والمهني': { icon: HardHat, color: 'bg-orange-100 text-orange-600', url: 'https://www.tvtc.gov.sa' },
+  'الهيئة العامة للأرصاد وحماية البيئة': { icon: CloudSun, color: 'bg-teal-100 text-teal-600' },
+  'جامعة الملك سعود': { icon: BookOpen, color: 'bg-indigo-100 text-indigo-600', url: 'https://www.ksu.edu.sa' },
+  'وزارة المالية': { icon: Banknote, color: 'bg-emerald-100 text-emerald-600', url: 'https://www.mof.gov.sa' },
+  'مؤسسة النقد العربي السعودي': { icon: Landmark, color: 'bg-amber-100 text-amber-600', url: 'https://www.sama.gov.sa' },
 };
 
-const defaultMeta = { icon: Building2, color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' };
+const defaultMeta = { icon: Building2, color: 'bg-gray-100 text-gray-600' };
 
 interface SourceItem {
   name: string;
   count: number;
+  percentage: number;
+}
+
+interface OverviewData {
+  totalCategories: number;
+  totalSignals: number;
+  totalUsers: number;
+  totalDatasets: number;
 }
 
 const DataSourcesPage = () => {
   const [sources, setSources] = useState<SourceItem[]>([]);
   const [totalSources, setTotalSources] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [totalDatasets, setTotalDatasets] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [streaming, setStreaming] = useState(true);
+  const [error, setError] = useState('');
+  const [streamStatus, setStreamStatus] = useState<'connecting' | 'streaming' | 'complete' | 'error'>('connecting');
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    loadSources();
+    connectStream();
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
   }, []);
 
-  const loadSources = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.getSourceStats();
-      if (res.success && res.data) {
-        setSources(res.data.sources || []);
-        setTotalSources(res.data.totalSources || 0);
-        setLastUpdated(res.data.lastUpdated || '');
-        setTotalDatasets((res.data.sources || []).reduce((sum: number, s: SourceItem) => sum + s.count, 0));
-      }
-    } catch {
-      setError('فشل في تحميل بيانات المصادر');
-    } finally {
-      setLoading(false);
+  const connectStream = () => {
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
     }
+
+    setSources([]);
+    setStreaming(true);
+    setError('');
+    setStreamStatus('connecting');
+    setOverview(null);
+
+    const url = `${API_CONFIG.baseUrl}/stats/sources/stream`;
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener('meta', (e) => {
+      const data = JSON.parse(e.data);
+      setTotalSources(data.totalSources);
+      setTotalDatasets(data.totalDatasets);
+      setLastUpdated(data.lastUpdated);
+      setStreamStatus('streaming');
+    });
+
+    es.addEventListener('source', (e) => {
+      const data = JSON.parse(e.data);
+      setSources(prev => [...prev, {
+        name: data.name,
+        count: data.count,
+        percentage: data.percentage
+      }]);
+    });
+
+    es.addEventListener('overview', (e) => {
+      const data = JSON.parse(e.data);
+      setOverview(data);
+    });
+
+    es.addEventListener('complete', () => {
+      setStreaming(false);
+      setStreamStatus('complete');
+      es.close();
+    });
+
+    es.addEventListener('error', (e) => {
+      if ((e as any).data) {
+        const data = JSON.parse((e as any).data);
+        setError(data.message || 'فشل في تحميل البيانات');
+      }
+      setStreaming(false);
+      setStreamStatus('error');
+      es.close();
+    });
+
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) return;
+      setError('فشل الاتصال بالخادم');
+      setStreaming(false);
+      setStreamStatus('error');
+      es.close();
+    };
   };
 
   const formatNumber = (n: number) => n.toLocaleString('ar-SA');
@@ -72,79 +132,102 @@ const DataSourcesPage = () => {
     return new Date(d).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  const getPercentage = (count: number) => {
-    if (!totalDatasets) return 0;
-    return Math.round((count / totalDatasets) * 100);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100" dir="rtl">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-br from-[#002B5C] via-[#003d7a] to-[#004d99] text-white py-14 relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-20 w-40 h-40 border border-white/30 rounded-full" />
-          <div className="absolute bottom-5 left-10 w-60 h-60 border border-white/20 rounded-full" />
-          <div className="absolute top-20 left-1/3 w-20 h-20 border border-white/20 rounded-full" />
+    <div className="max-w-7xl mx-auto p-4 lg:p-8" dir="rtl">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black text-gray-900 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Database size={22} className="text-blue-600" />
+              </div>
+              مصادر البيانات
+            </h1>
+            <p className="text-gray-500 text-sm mt-2">
+              جميع بياناتنا مستمدة من مصادر حكومية رسمية وموثوقة في المملكة العربية السعودية
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Stream status badge */}
+            {streamStatus === 'connecting' && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                <Loader2 size={12} className="animate-spin" /> جاري الاتصال...
+              </span>
+            )}
+            {streamStatus === 'streaming' && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-green-700 bg-green-100 px-3 py-1.5 rounded-full">
+                <Wifi size={12} className="animate-pulse" /> بث مباشر
+              </span>
+            )}
+            {streamStatus === 'complete' && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full">
+                <CheckCircle size={12} /> مكتمل
+              </span>
+            )}
+
+            <button
+              onClick={connectStream}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition"
+            >
+              <RefreshCw size={16} />
+              تحديث
+            </button>
+          </div>
         </div>
 
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-5 border border-white/20">
-            <Database size={32} className="text-white" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black mb-3">مصادر البيانات</h1>
-          <p className="text-white/70 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-            جميع بياناتنا مستمدة من مصادر حكومية رسمية وموثوقة في المملكة العربية السعودية
-          </p>
-
-          {/* Stats badges */}
-          {!loading && (
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3">
-                <div className="text-2xl font-black">{formatNumber(totalDatasets)}</div>
-                <div className="text-xs text-white/60 mt-0.5">مجموعة بيانات</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3">
-                <div className="text-2xl font-black">{totalSources}</div>
-                <div className="text-xs text-white/60 mt-0.5">مصدر بيانات</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3">
-                <div className="text-2xl font-black flex items-center gap-1">
-                  <Shield size={18} className="text-green-400" /> موثق
-                </div>
-                <div className="text-xs text-white/60 mt-0.5">بيانات حكومية رسمية</div>
+        {/* Stats badges */}
+        {totalDatasets > 0 && (
+          <div className="flex flex-wrap gap-4 mt-6">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3">
+              <div className="text-2xl font-black text-gray-900">{formatNumber(totalDatasets)}</div>
+              <div className="text-xs text-gray-400 mt-0.5">مجموعة بيانات</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3">
+              <div className="text-2xl font-black text-gray-900">{totalSources}</div>
+              <div className="text-xs text-gray-400 mt-0.5">مصدر بيانات</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3 flex items-center gap-2">
+              <Shield size={18} className="text-green-500" />
+              <div>
+                <div className="text-sm font-bold text-gray-900">بيانات موثقة</div>
+                <div className="text-xs text-gray-400">مصادر حكومية رسمية</div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
-        {/* Loading */}
-        {loading && (
+      <div>
+        {/* Initial Loading */}
+        {streaming && sources.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 size={40} className="animate-spin text-blue-600 mb-4" />
-            <p className="text-gray-500 text-sm">جاري تحميل مصادر البيانات...</p>
+            <p className="text-gray-500 text-sm">جاري تحميل مصادر البيانات عبر البث المباشر...</p>
           </div>
         )}
 
         {/* Error */}
-        {error && !loading && (
+        {error && sources.length === 0 && (
           <div className="text-center py-16">
             <Database size={48} className="mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500 mb-4">{error}</p>
-            <button onClick={loadSources} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition inline-flex items-center gap-2">
+            <button onClick={connectStream} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition inline-flex items-center gap-2">
               <RefreshCw size={16} />
               إعادة المحاولة
             </button>
           </div>
         )}
 
-        {/* Sources Grid */}
-        {!loading && !error && sources.length > 0 && (
+        {/* Sources Grid - streams in progressively */}
+        {sources.length > 0 && (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">المصادر الحكومية</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                المصادر الحكومية
+                {streaming && <Loader2 size={16} className="inline-block mr-2 animate-spin text-blue-500" />}
+              </h2>
               {lastUpdated && (
                 <span className="text-xs text-gray-400">
                   آخر تحديث: {formatDate(lastUpdated)}
@@ -156,10 +239,13 @@ const DataSourcesPage = () => {
               {sources.map((source, i) => {
                 const meta = sourceMetadata[source.name] || defaultMeta;
                 const IconComp = meta.icon;
-                const pct = getPercentage(source.count);
 
                 return (
-                  <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg hover:border-blue-100 transition-all duration-300 group">
+                  <div
+                    key={source.name}
+                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg hover:border-blue-100 transition-all duration-300 group animate-fadeIn"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
                     <div className="flex items-start gap-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${meta.color} transition-transform group-hover:scale-110`}>
                         <IconComp size={22} />
@@ -169,14 +255,14 @@ const DataSourcesPage = () => {
                         <div className="flex items-center gap-3 mb-3">
                           <span className="text-lg font-black text-blue-600">{formatNumber(source.count)}</span>
                           <span className="text-xs text-gray-400">مجموعة بيانات</span>
-                          <span className="text-xs text-gray-300 mr-auto">{pct}%</span>
+                          <span className="text-xs text-gray-300 mr-auto">{source.percentage}%</span>
                         </div>
 
                         {/* Progress bar */}
                         <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-l from-blue-500 to-blue-400 transition-all duration-1000 ease-out"
-                            style={{ width: `${Math.max(pct, 3)}%` }}
+                            style={{ width: `${Math.max(source.percentage, 3)}%` }}
                           />
                         </div>
                       </div>
@@ -200,6 +286,26 @@ const DataSourcesPage = () => {
               })}
             </div>
           </>
+        )}
+
+        {/* Overview Stats from stream */}
+        {overview && (
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'مجموعات البيانات', value: formatNumber(overview.totalDatasets), icon: Database, color: 'text-blue-600 bg-blue-50' },
+              { label: 'التصنيفات', value: formatNumber(overview.totalCategories), icon: Layers, color: 'text-purple-600 bg-purple-50' },
+              { label: 'الإشارات النشطة', value: formatNumber(overview.totalSignals), icon: TrendingUp, color: 'text-amber-600 bg-amber-50' },
+              { label: 'المستخدمين', value: formatNumber(overview.totalUsers), icon: Users, color: 'text-green-600 bg-green-50' },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
+                <div className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-2 ${stat.color}`}>
+                  <stat.icon size={20} />
+                </div>
+                <div className="text-xl font-black text-gray-900">{stat.value}</div>
+                <div className="text-xs text-gray-400 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Verification Process */}
@@ -254,12 +360,6 @@ const DataSourcesPage = () => {
           </div>
         </div>
 
-        <div className="text-center mt-10">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-600 transition font-medium">
-            <ArrowLeft size={16} />
-            العودة للصفحة الرئيسية
-          </Link>
-        </div>
       </div>
     </div>
   );

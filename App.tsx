@@ -45,7 +45,9 @@ import {
   Settings,
   Library,
   TrendingUp,
-  ScanSearch
+  ScanSearch,
+  Globe,
+  BarChart3
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -76,6 +78,8 @@ import DatasetContent from './components/DatasetContent';
 import DecisionWizard from './components/DecisionWizard';
 import UserProfile from './components/UserProfile';
 import TwoFactorSettings from './components/TwoFactorSettings';
+import ChatPage from './components/ChatPage';
+import InfographicBuilder from './components/InfographicBuilder';
 import FollowersPage from './components/FollowersPage';
 import FollowersWrapper from './components/FollowersWrapper';
 import AISignalsPage from './components/AISignalsPage';
@@ -114,6 +118,7 @@ import AuditLogPage from './components/AuditLogPage';
 import DataTrustPage from './components/DataTrustPage';
 import UseCasesPage from './components/UseCasesPage';
 import DataSourcesPage from './components/DataSourcesPage';
+import StatsPage from './components/StatsPage';
 import ExplorePage from './components/ExplorePage';
 import BlogPage from './components/BlogPage';
 import ExportPage from './components/ExportPage';
@@ -343,6 +348,8 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           <NavItem to="/comparisons" icon={ArrowLeftRight}>المقارنات الذكية</NavItem>
           <NavItem to="/economic-summary" icon={TrendingUp}>الملخص الاقتصادي</NavItem>
           <NavItem to="/patterns" icon={ScanSearch}>اكتشاف الأنماط</NavItem>
+          <NavItem to="/sources" icon={Globe}>مصادر البيانات</NavItem>
+          <NavItem to="/stats" icon={BarChart3}>إحصائيات المنصة</NavItem>
           <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
           {isExpert && (
             <>
@@ -432,6 +439,8 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/comparisons')) return { title: 'المقارنات الذكية', section: 'الذكاء الاصطناعي' };
     if (pathname.includes('/economic-summary')) return { title: 'الملخص الاقتصادي', section: 'الذكاء الاصطناعي' };
     if (pathname.includes('/patterns')) return { title: 'اكتشاف الأنماط', section: 'الذكاء الاصطناعي' };
+    if (pathname.includes('/sources') || pathname.includes('/data-sources')) return { title: 'مصادر البيانات', section: 'البيانات' };
+    if (pathname.includes('/stats')) return { title: 'إحصائيات المنصة', section: 'البيانات' };
     if (pathname.includes('/data-verification')) return { title: 'مراجعة البيانات', section: 'البيانات' };
     if (pathname.includes('/custom-reports')) return { title: 'التقارير المخصصة', section: 'التحليل' };
     if (pathname.includes('/widget-library')) return { title: 'مكتبة المؤشرات', section: 'البيانات' };
@@ -984,6 +993,8 @@ const AppContent = () => {
             <Route path="/followers" element={<FollowersWrapper />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/settings/2fa" element={<TwoFactorSettings />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/designer/studio" element={<InfographicBuilder />} />
             <Route path="/favorites" element={<FavoritesPage />} />
 
             <Route path="/expert-studio" element={
@@ -1016,6 +1027,9 @@ const AppContent = () => {
             <Route path="/data-verification" element={<DataVerificationPage />} />
             <Route path="/custom-reports" element={<CustomReportsPage />} />
             <Route path="/widget-library" element={<WidgetLibraryPage />} />
+            <Route path="/sources" element={<DataSourcesPage />} />
+            <Route path="/data-sources" element={<DataSourcesPage />} />
+            <Route path="/stats" element={<StatsPage />} />
             <Route path="/admin/settings" element={<SystemSettingsPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
@@ -1168,8 +1182,6 @@ const AppWithAuth = () => {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/data-trust" element={<DataTrustPage />} />
       <Route path="/use-cases" element={<UseCasesPage />} />
-      <Route path="/data-sources" element={<DataSourcesPage />} />
-      <Route path="/sources" element={<DataSourcesPage />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/plan-details" element={<PlanDetailsPage />} />
@@ -1186,6 +1198,9 @@ const AppWithAuth = () => {
           <Route path="/comparisons" element={<PublicContentLayout><SmartComparisonsPage /></PublicContentLayout>} />
           <Route path="/economic-summary" element={<PublicContentLayout><AIEconomicSummaryPage /></PublicContentLayout>} />
           <Route path="/patterns" element={<PublicContentLayout><PatternRecognitionPage /></PublicContentLayout>} />
+          <Route path="/sources" element={<PublicContentLayout><DataSourcesPage /></PublicContentLayout>} />
+          <Route path="/data-sources" element={<PublicContentLayout><DataSourcesPage /></PublicContentLayout>} />
+          <Route path="/stats" element={<PublicContentLayout><StatsPage /></PublicContentLayout>} />
         </>
       )}
 
