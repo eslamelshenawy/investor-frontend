@@ -645,12 +645,23 @@ export default function UserManagementPage() {
     async (userId: string) => {
       try {
         await api.toggleAdminUserStatus(userId);
-        fetchUsers();
+        // Optimistic update - toggle locally without refetching
+        setUsers(prev => prev.map(u =>
+          u.id === userId ? { ...u, isActive: !u.isActive } : u
+        ));
+        setStats(prev => {
+          const targetUser = users.find(u => u.id === userId);
+          if (!targetUser) return prev;
+          return {
+            ...prev,
+            activeUsers: targetUser.isActive ? prev.activeUsers - 1 : prev.activeUsers + 1,
+          };
+        });
       } catch (err: any) {
         setError(err?.message || 'فشل في تغيير حالة المستخدم');
       }
     },
-    [fetchUsers],
+    [users],
   );
 
   const handleChangeRole = useCallback(
@@ -658,12 +669,15 @@ export default function UserManagementPage() {
       try {
         await api.updateAdminUserRole(userId, newRole);
         setRoleChangeUserId(null);
-        fetchUsers();
+        // Optimistic update - change role locally without refetching
+        setUsers(prev => prev.map(u =>
+          u.id === userId ? { ...u, role: newRole } : u
+        ));
       } catch (err: any) {
         setError(err?.message || 'فشل في تغيير الدور');
       }
     },
-    [fetchUsers],
+    [],
   );
 
   // ----- Bulk Actions -----
