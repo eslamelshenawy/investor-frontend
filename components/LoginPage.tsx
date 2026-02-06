@@ -3,7 +3,7 @@
  * Modern split-layout design with branding
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Activity,
@@ -46,7 +46,7 @@ const FEATURES = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, complete2FA } = useAuth();
+  const { login, loginWithGoogle, complete2FA } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +59,78 @@ const LoginPage = () => {
   const [show2FA, setShow2FA] = useState(false);
   const [twoFACode, setTwoFACode] = useState('');
   const [pending2FAUserId, setPending2FAUserId] = useState('');
+
+  // Google Sign-In
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+  const handleGoogleResponse = useCallback(async (response: any) => {
+    if (!response.credential) return;
+    setError('');
+    setIsLoading(true);
+    const result = await loginWithGoogle(response.credential);
+    setIsLoading(false);
+
+    if (result.requires2FA && result.userId) {
+      setPending2FAUserId(result.userId);
+      setShow2FA(true);
+      return;
+    }
+
+    if (result.success) {
+      const role = result.user?.role?.toUpperCase();
+      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } else {
+      setError(result.error || 'حدث خطأ في تسجيل الدخول بـ Google');
+    }
+  }, [loginWithGoogle, navigate]);
+
+  useEffect(() => {
+    if (!googleClientId || show2FA) return;
+
+    const initGoogle = () => {
+      if (!(window as any).google?.accounts?.id) return;
+      (window as any).google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+        auto_select: false,
+      });
+      if (googleBtnRef.current) {
+        (window as any).google.accounts.id.renderButton(googleBtnRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          logo_alignment: 'center',
+          width: googleBtnRef.current.offsetWidth || 350,
+          locale: 'ar',
+        });
+      }
+    };
+
+    // Check if script already loaded
+    if ((window as any).google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    // Load Google GSI script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogle;
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup: don't remove script since other pages may use it
+    };
+  }, [googleClientId, show2FA, handleGoogleResponse]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,6 +401,18 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+          )}
+
+          {/* Google Sign-In */}
+          {!show2FA && googleClientId && (
+            <div className="mt-5">
+              <div className="relative flex items-center my-5">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="px-4 text-xs text-gray-400 font-medium">أو</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+              <div ref={googleBtnRef} className="flex justify-center" />
+            </div>
           )}
 
           {/* Register Link */}

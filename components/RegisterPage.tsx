@@ -3,7 +3,7 @@
  * Modern split-layout design matching login page
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Activity,
@@ -49,7 +49,7 @@ const FEATURES = [
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -61,6 +61,61 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Google Sign-In
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+  const handleGoogleResponse = useCallback(async (response: any) => {
+    if (!response.credential) return;
+    setError('');
+    setIsLoading(true);
+    const result = await loginWithGoogle(response.credential);
+    setIsLoading(false);
+
+    if (result.success) {
+      navigate('/');
+    } else {
+      setError(result.error || 'حدث خطأ في التسجيل بـ Google');
+    }
+  }, [loginWithGoogle, navigate]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (!(window as any).google?.accounts?.id) return;
+      (window as any).google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+        auto_select: false,
+      });
+      if (googleBtnRef.current) {
+        (window as any).google.accounts.id.renderButton(googleBtnRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signup_with',
+          shape: 'rectangular',
+          logo_alignment: 'center',
+          width: googleBtnRef.current.offsetWidth || 350,
+          locale: 'ar',
+        });
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogle;
+    document.head.appendChild(script);
+  }, [googleClientId, handleGoogleResponse]);
 
   const passwordRequirements = [
     { id: 'length', label: '8 أحرف على الأقل', test: (p: string) => p.length >= 8 },
@@ -357,6 +412,18 @@ const RegisterPage = () => {
               )}
             </button>
           </form>
+
+          {/* Google Sign-In */}
+          {googleClientId && (
+            <div className="mt-4">
+              <div className="relative flex items-center my-4">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="px-4 text-xs text-gray-400 font-medium">أو</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+              <div ref={googleBtnRef} className="flex justify-center" />
+            </div>
+          )}
 
           {/* Login Link */}
           <div className="mt-6 pt-5 border-t border-gray-100 text-center">

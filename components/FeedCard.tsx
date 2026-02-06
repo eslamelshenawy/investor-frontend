@@ -59,7 +59,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
     // --- RENDERERS ---
 
     const renderSignalAlert = () => {
-        const isPos = item.payload.isPositive;
+        const isPos = item.payload?.isPositive;
         return (
             <div className={`mt-3 sm:mt-4 relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 border ${isPos ? 'bg-emerald-950/5 border-emerald-100' : 'bg-rose-950/5 border-rose-100'}`}>
                 {/* Background Decor */}
@@ -78,11 +78,11 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                         </div>
                         <div className="text-2xl sm:text-4xl font-black mb-1.5 sm:mb-2 tracking-tighter text-gray-900">
                             <span className={isPos ? 'text-emerald-600' : 'text-rose-600'}>
-                                {isPos ? '+' : ''}{item.payload.delta}
+                                {isPos ? '+' : ''}{item.payload?.delta}
                             </span>
                         </div>
                         <p className="text-gray-600 text-xs sm:text-sm font-medium leading-relaxed">
-                            {item.payload.context}
+                            {item.payload?.context}
                         </p>
                     </div>
                 </div>
@@ -91,8 +91,8 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
     };
 
     const renderMarketPulse = () => {
-        const isHot = item.payload.status === 'hot';
-        const isWarm = item.payload.status === 'warm';
+        const isHot = item.payload?.status === 'hot';
+        const isWarm = item.payload?.status === 'warm';
         const color = isHot ? 'orange' : isWarm ? 'yellow' : 'blue';
 
         return (
@@ -100,7 +100,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">نبض القطاع</p>
-                        <h3 className="text-xl font-black text-gray-900">{item.payload.sector}</h3>
+                        <h3 className="text-xl font-black text-gray-900">{item.payload?.sector}</h3>
                     </div>
                     <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-${color}-50 text-${color}-600 border border-${color}-100`}>
                         <Flame size={14} className={isHot ? 'animate-pulse' : ''} />
@@ -115,11 +115,11 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     </div>
                     <div
                         className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-${color}-400 to-${color}-600`}
-                        style={{ width: `${item.payload.score}%` }}
+                        style={{ width: `${item.payload?.score}%` }}
                     ></div>
                 </div>
 
-                <p className="mt-3 text-sm text-gray-500 font-medium">{item.payload.summary}</p>
+                <p className="mt-3 text-sm text-gray-500 font-medium">{item.payload?.summary}</p>
             </div>
         );
     };
@@ -134,7 +134,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 </div>
                 <h4 className="text-amber-900/60 font-bold text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-2 sm:mb-3">حقيقة استثمارية</h4>
                 <p className="text-base sm:text-xl lg:text-2xl font-bold text-gray-900 leading-relaxed font-serif">
-                    "{item.payload.fact}"
+                    "{item.payload?.fact}"
                 </p>
             </div>
         </div>
@@ -144,8 +144,8 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
         <div className="mt-4 flex flex-col md:flex-row items-stretch gap-4">
             {/* A */}
             <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-5 text-center hover:border-blue-200 transition-colors group">
-                <div className="text-xs text-gray-400 font-bold uppercase mb-2">{item.payload.itemA.label}</div>
-                <div className="text-3xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{item.payload.itemA.value}</div>
+                <div className="text-xs text-gray-400 font-bold uppercase mb-2">{item.payload?.itemA.label}</div>
+                <div className="text-3xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{item.payload?.itemA.value}</div>
             </div>
 
             {/* VS */}
@@ -157,8 +157,8 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
 
             {/* B */}
             <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-5 text-center hover:border-purple-200 transition-colors group">
-                <div className="text-xs text-gray-400 font-bold uppercase mb-2">{item.payload.itemB.label}</div>
-                <div className="text-3xl font-black text-gray-400 group-hover:text-purple-600 transition-colors">{item.payload.itemB.value}</div>
+                <div className="text-xs text-gray-400 font-bold uppercase mb-2">{item.payload?.itemB.label}</div>
+                <div className="text-3xl font-black text-gray-400 group-hover:text-purple-600 transition-colors">{item.payload?.itemB.value}</div>
             </div>
         </div>
     );
@@ -179,7 +179,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                    {(item.payload.highlights || []).map((point: any, idx: number) => (
+                    {(item.payload?.highlights || []).map((point: any, idx: number) => (
                         <div key={idx} className="bg-white/5 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-white/5 hover:bg-white/10 transition-colors">
                             <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1">{point.label}</p>
                             <p className="text-sm sm:text-lg font-bold text-white tracking-wide">{point.value}</p>
@@ -204,10 +204,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                         <span className="text-red-100 text-[10px] sm:text-xs font-bold font-mono tracking-wider">{new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <h3 className="text-lg sm:text-2xl lg:text-3xl font-black leading-tight mb-2 sm:mb-3 tracking-tight">
-                        {item.payload.headline}
+                        {item.payload?.headline}
                     </h3>
                     <p className="text-red-50 text-xs sm:text-sm lg:text-base font-medium leading-relaxed opacity-90">
-                        {item.payload.summary}
+                        {item.payload?.summary}
                     </p>
                 </div>
             </div>
@@ -223,11 +223,11 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">قاموس المستثمر</span>
                 </div>
                 <h3 className="text-xl sm:text-3xl lg:text-4xl font-black text-indigo-900 mb-3 sm:mb-4 font-serif tracking-tight">
-                    {item.payload.term}
+                    {item.payload?.term}
                 </h3>
                 <div className="w-10 sm:w-12 h-1 bg-indigo-200 mx-auto rounded-full mb-4 sm:mb-5"></div>
                 <p className="text-indigo-900/70 leading-relaxed mb-4 sm:mb-6 text-sm sm:text-base font-medium max-w-lg mx-auto">
-                    {item.payload.definition}
+                    {item.payload?.definition}
                 </p>
                 <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                     {item.tags.map(tag => (
@@ -247,19 +247,19 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                         <HelpCircle size={16} className="sm:w-5 sm:h-5" />
                     </div>
                     <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl rounded-tr-sm p-3 sm:p-4 shadow-sm text-xs sm:text-sm lg:text-base font-bold text-gray-800 leading-relaxed max-w-[85%]">
-                        {item.payload.question}
+                        {item.payload?.question}
                     </div>
                 </div>
                 <div className="flex gap-2.5 sm:gap-4 flex-row-reverse">
                     <div className="relative shrink-0">
-                        <img src={item.payload.expertAvatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl border-2 border-white shadow-md object-cover" />
+                        <img src={item.payload?.expertAvatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl border-2 border-white shadow-md object-cover" />
                         <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-blue-600 text-white rounded-full p-0.5 border-2 border-white">
                             <Check size={6} className="sm:w-2 sm:h-2" strokeWidth={4} />
                         </div>
                     </div>
                     <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl sm:rounded-2xl rounded-tl-sm p-3 sm:p-5 shadow-lg shadow-blue-500/20 text-xs sm:text-sm lg:text-base font-medium leading-relaxed max-w-[90%] relative">
                         <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-0 hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        {item.payload.answer}
+                        {item.payload?.answer}
                     </div>
                 </div>
             </div>
@@ -273,17 +273,17 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 <div>
                     <h4 className="font-bold flex items-center gap-2 text-gray-900 text-lg">
                         <ListChecks size={22} className="text-green-600" />
-                        {item.payload.listTitle}
+                        {item.payload?.listTitle}
                     </h4>
                     <p className="text-xs text-gray-400 mt-1 mr-8">أنجز الخطوات التالية</p>
                 </div>
                 <div className="text-center bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
-                    <span className="block text-xl font-black text-gray-900">{Math.round(((item.payload.items || []).filter((i: any) => i.checked).length / (item.payload.items || []).length) * 100 || 0)}%</span>
+                    <span className="block text-xl font-black text-gray-900">{Math.round(((item.payload?.items || []).filter((i: any) => i.checked).length / (item.payload?.items || []).length) * 100 || 0)}%</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase">اكتمال</span>
                 </div>
             </div>
             <div className="space-y-3">
-                {(item.payload.items || []).map((checkItem: any, i: number) => (
+                {(item.payload?.items || []).map((checkItem: any, i: number) => (
                     <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group ${checkItem.checked ? 'bg-green-50 border-green-100' : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm'}`}>
                         <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shadow-sm ${checkItem.checked ? 'bg-green-500 border-green-500 scale-100' : 'bg-white border-gray-300 group-hover:border-green-400 scale-90 group-hover:scale-100'}`}>
                             {checkItem.checked && <Check size={14} className="text-white stroke-[4]" />}
@@ -307,10 +307,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     <Vote size={18} className="text-blue-600" />
                     تصويت الجمهور
                 </h4>
-                <span className="text-xs text-gray-500">{item.payload.totalVotes} صوت • ينتهي خلال 2 يوم</span>
+                <span className="text-xs text-gray-500">{item.payload?.totalVotes} صوت • ينتهي خلال 2 يوم</span>
             </div>
             <div className="space-y-3">
-                {(item.payload.options || []).map((opt: any, idx: number) => (
+                {(item.payload?.options || []).map((opt: any, idx: number) => (
                     <div key={idx} className="relative group cursor-pointer">
                         <div className="flex justify-between text-xs font-bold mb-1 z-10 relative px-1">
                             <span>{opt.label}</span>
@@ -334,20 +334,20 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
     const renderEvent = () => (
         <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row bg-white border border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden group hover:border-blue-300 transition-colors">
             <div className="bg-blue-50 p-4 sm:p-6 flex flex-row sm:flex-col items-center justify-center sm:text-center w-full sm:w-28 md:w-32 shrink-0 border-b sm:border-b-0 sm:border-l border-blue-100 gap-2 sm:gap-0">
-                <span className="text-[10px] sm:text-xs font-bold text-blue-600 uppercase sm:mb-1">{item.payload.month}</span>
-                <span className="text-2xl sm:text-4xl font-black text-blue-800 sm:mb-1">{item.payload.day}</span>
-                <span className="text-[10px] sm:text-xs font-medium text-blue-600/70">{item.payload.time}</span>
+                <span className="text-[10px] sm:text-xs font-bold text-blue-600 uppercase sm:mb-1">{item.payload?.month}</span>
+                <span className="text-2xl sm:text-4xl font-black text-blue-800 sm:mb-1">{item.payload?.day}</span>
+                <span className="text-[10px] sm:text-xs font-medium text-blue-600/70">{item.payload?.time}</span>
             </div>
             <div className="p-4 sm:p-5 flex-1 relative">
                 <div className="absolute top-3 sm:top-4 left-3 sm:left-4">
-                    <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md border ${item.payload.isOnline ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
-                        {item.payload.isOnline ? 'ONLINE' : 'IN-PERSON'}
+                    <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md border ${item.payload?.isOnline ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
+                        {item.payload?.isOnline ? 'ONLINE' : 'IN-PERSON'}
                     </span>
                 </div>
-                <h3 className="font-bold text-sm sm:text-lg text-gray-900 mb-1.5 sm:mb-2 mt-6 sm:mt-4 md:mt-0">{item.payload.eventName}</h3>
+                <h3 className="font-bold text-sm sm:text-lg text-gray-900 mb-1.5 sm:mb-2 mt-6 sm:mt-4 md:mt-0">{item.payload?.eventName}</h3>
                 <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
                     <MapPin size={12} className="sm:w-3.5 sm:h-3.5" />
-                    {item.payload.location}
+                    {item.payload?.location}
                 </div>
                 <button className="text-[10px] sm:text-xs font-bold bg-slate-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-slate-800 transition-colors">
                     سجل حضورك
@@ -363,13 +363,13 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 <Quote size={40} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/10 rotate-180 sm:w-[60px] sm:h-[60px]" />
                 <div className="relative z-10">
                     <p className="text-base sm:text-xl lg:text-2xl font-serif leading-relaxed mb-4 sm:mb-6 opacity-90">
-                        "{item.payload.quote}"
+                        "{item.payload?.quote}"
                     </p>
                     <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
-                        <img src={item.payload.expertImage} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-700 object-cover" />
+                        <img src={item.payload?.expertImage} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-700 object-cover" />
                         <div className="text-right">
-                            <p className="font-bold text-xs sm:text-sm text-white">{item.payload.expertName}</p>
-                            <p className="text-[10px] sm:text-xs text-slate-400">{item.payload.expertRole}</p>
+                            <p className="font-bold text-xs sm:text-sm text-white">{item.payload?.expertName}</p>
+                            <p className="text-[10px] sm:text-xs text-slate-400">{item.payload?.expertRole}</p>
                         </div>
                     </div>
                 </div>
@@ -379,9 +379,9 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
 
     const renderVideo = () => (
         <div className="mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 group cursor-pointer bg-black aspect-video">
-            {item.payload.thumbnailUrl && (
+            {item.payload?.thumbnailUrl && (
                 <img
-                    src={item.payload.thumbnailUrl}
+                    src={item.payload?.thumbnailUrl}
                     className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity"
                     alt="Video thumbnail"
                 />
@@ -399,10 +399,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Play size={12} className="text-red-400" />
-                        <span className="text-[10px] sm:text-xs font-bold">{item.payload.duration || 'فيديو'}</span>
+                        <span className="text-[10px] sm:text-xs font-bold">{item.payload?.duration || 'فيديو'}</span>
                     </div>
-                    {item.payload.views && (
-                        <span className="text-[10px] sm:text-xs text-gray-300">{item.payload.views.toLocaleString()} مشاهدة</span>
+                    {item.payload?.views && (
+                        <span className="text-[10px] sm:text-xs text-gray-300">{item.payload?.views.toLocaleString()} مشاهدة</span>
                     )}
                 </div>
             </div>
@@ -420,10 +420,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     {isPlaying ? <div className="flex gap-1"><div className="w-1 h-5 bg-white rounded-full animate-pulse"></div><div className="w-1 h-5 bg-white rounded-full animate-pulse delay-75"></div></div> : <Headphones size={22} className="sm:w-6 sm:h-6" />}
                 </button>
                 <div className="flex-1 min-w-0">
-                    <p className="text-violet-900 font-bold text-sm sm:text-base truncate">{item.payload.audioTitle || item.title}</p>
+                    <p className="text-violet-900 font-bold text-sm sm:text-base truncate">{item.payload?.audioTitle || item.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                         <Clock size={12} className="text-violet-400" />
-                        <span className="text-[10px] sm:text-xs text-violet-500 font-medium">{item.payload.duration || 'بودكاست'}</span>
+                        <span className="text-[10px] sm:text-xs text-violet-500 font-medium">{item.payload?.duration || 'بودكاست'}</span>
                     </div>
                     {/* Waveform */}
                     <div className="flex items-end gap-[2px] mt-2 h-6">
@@ -439,12 +439,12 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
 
     const renderImage = () => (
         <div className="mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100 group cursor-pointer">
-            {item.payload.imageUrl ? (
+            {item.payload?.imageUrl ? (
                 <div className="relative">
                     <img
-                        src={item.payload.imageUrl}
+                        src={item.payload?.imageUrl}
                         className="w-full max-h-[500px] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                        alt={item.payload.caption || item.title}
+                        alt={item.payload?.caption || item.title}
                     />
                     <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
                         <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-black/40 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/60 transition-colors">
@@ -457,9 +457,9 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     <FileText size={32} className="text-gray-300" />
                 </div>
             )}
-            {item.payload.caption && (
+            {item.payload?.caption && (
                 <div className="p-3 sm:p-4 bg-white border-t border-gray-100">
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{item.payload.caption}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{item.payload?.caption}</p>
                 </div>
             )}
         </div>
@@ -473,18 +473,18 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                         <BarChart2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </div>
                     <div>
-                        <p className="text-xs sm:text-sm font-bold text-gray-900">{item.payload.widgetTitle || item.title}</p>
-                        <p className="text-[10px] sm:text-xs text-gray-400">{item.payload.dataSource || 'بيانات مباشرة'}</p>
+                        <p className="text-xs sm:text-sm font-bold text-gray-900">{item.payload?.widgetTitle || item.title}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-400">{item.payload?.dataSource || 'بيانات مباشرة'}</p>
                     </div>
                 </div>
-                {item.payload.change != null && (
-                    <span className={`text-xs sm:text-sm font-bold px-2 py-1 rounded-lg ${item.payload.change >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                        {item.payload.change >= 0 ? '+' : ''}{item.payload.change}%
+                {item.payload?.change != null && (
+                    <span className={`text-xs sm:text-sm font-bold px-2 py-1 rounded-lg ${item.payload?.change >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                        {item.payload?.change >= 0 ? '+' : ''}{item.payload?.change}%
                     </span>
                 )}
             </div>
-            {item.payload.chartData ? (
-                <WidgetChart data={item.payload.chartData} type={item.payload.chartType || 'line'} />
+            {item.payload?.chartData ? (
+                <WidgetChart data={item.payload?.chartData} type={item.payload?.chartType || 'line'} />
             ) : (
                 <div className="h-32 sm:h-40 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
                     <div className="text-center">
@@ -500,7 +500,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
         <div className="mt-4 border border-gray-100 rounded-2xl p-5 shadow-sm bg-white">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-900 text-sm">توزيع المحفظة المقترح</h3>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">عائد: {item.payload.expectedReturn}%</span>
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">عائد: {item.payload?.expectedReturn}%</span>
             </div>
             <div className="flex items-center gap-4 lg:gap-8">
                 {/* CSS Pie Chart approximation */}
@@ -510,7 +510,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                 </div>
 
                 <div className="space-y-2 flex-1">
-                    {(item.payload.assets || []).map((asset: any, idx: number) => (
+                    {(item.payload?.assets || []).map((asset: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-xs">
                             <span className="flex items-center gap-2 font-bold text-gray-600">
                                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: asset.color }}></span>
@@ -525,10 +525,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
     );
 
     const renderDashboardContent = () => (
-        <div className="group cursor-pointer mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-500" onClick={() => navigate(`/dashboards?id=${item.payload.dashboardId}`)}>
+        <div className="group cursor-pointer mt-3 sm:mt-4 relative rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-500" onClick={() => navigate(`/dashboards?id=${item.payload?.dashboardId}`)}>
             <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
                 <img
-                    src={item.payload.previewImage}
+                    src={item.payload?.previewImage}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     alt="Dashboard Preview"
                 />
@@ -548,9 +548,9 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                             <p className="text-blue-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5 sm:mb-1">بيانات حية</p>
                             <h3 className="text-base sm:text-2xl font-black mb-1 sm:mb-2">{item.title}</h3>
                             <div className="flex gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300 font-medium">
-                                <span>{item.payload.widgetCount} مؤشر</span>
+                                <span>{item.payload?.widgetCount} مؤشر</span>
                                 <span>•</span>
-                                <span>{(item.payload.views || 0).toLocaleString()} مشاهدة</span>
+                                <span>{(item.payload?.views || 0).toLocaleString()} مشاهدة</span>
                             </div>
                         </div>
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 sm:translate-x-4 group-hover:translate-x-0">
@@ -564,10 +564,10 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
 
     const renderArticleContent = () => (
         <div className="mt-3 sm:mt-4 group cursor-pointer" onClick={() => navigate('/dataset/d1')}>
-            {item.payload.imageUrl && (
+            {item.payload?.imageUrl && (
                 <div className="rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 relative aspect-[16/9] sm:aspect-[2/1] lg:aspect-[2.5/1]">
                     <img
-                        src={item.payload.imageUrl}
+                        src={item.payload?.imageUrl}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         alt="Article Cover"
                     />
@@ -579,7 +579,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ item: rawItem, onAction, onLike, on
                     {item.title}
                 </h3>
                 <p className="text-gray-500 text-xs sm:text-sm lg:text-base leading-relaxed line-clamp-2 sm:line-clamp-3">
-                    {item.payload.excerpt}
+                    {item.payload?.excerpt}
                 </p>
                 <div className="mt-2 sm:mt-3 flex items-center text-blue-600 text-[10px] sm:text-xs font-bold gap-1 group-hover:gap-2 transition-all">
                     اقرأ المزيد <ArrowDownRight size={12} className="sm:w-3.5 sm:h-3.5" />
