@@ -1169,6 +1169,7 @@ const AppWithAuth = () => {
       <Route path="/data-trust" element={<DataTrustPage />} />
       <Route path="/use-cases" element={<UseCasesPage />} />
       <Route path="/data-sources" element={<DataSourcesPage />} />
+      <Route path="/sources" element={<DataSourcesPage />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/plan-details" element={<PlanDetailsPage />} />
