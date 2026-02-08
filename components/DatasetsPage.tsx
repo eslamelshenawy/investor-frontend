@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Search,
     Database,
@@ -838,8 +839,10 @@ const Pagination: React.FC<{
 // DATASET CARD COMPONENT
 // ============================================
 
-const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => (
-    <div className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-600/5 transition-all duration-300 overflow-hidden">
+const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => {
+    const navigate = useNavigate();
+    return (
+    <div onClick={() => navigate(`/data/${dataset.id}`)} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-600/5 transition-all duration-300 overflow-hidden cursor-pointer">
         {/* Header */}
         <div className="p-5 border-b border-slate-100">
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -877,20 +880,23 @@ const DatasetCard: React.FC<{ dataset: Dataset; formatDate: (d: string) => strin
         {/* Footer */}
         <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
             <span className="text-xs text-slate-400 font-mono">{dataset.id?.slice(0, 8)}...</span>
-            <button className="flex items-center gap-1.5 text-blue-600 text-sm font-semibold group-hover:gap-2.5 transition-all">
+            <span className="flex items-center gap-1.5 text-blue-600 text-sm font-semibold group-hover:gap-2.5 transition-all">
                 استعراض
                 <ArrowUpRight className="w-4 h-4" />
-            </button>
+            </span>
         </div>
     </div>
-);
+    );
+};
 
 // ============================================
 // DATASET LIST ITEM COMPONENT
 // ============================================
 
-const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => (
-    <div className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all p-5 flex gap-5">
+const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => string }> = ({ dataset, formatDate }) => {
+    const navigate = useNavigate();
+    return (
+    <div onClick={() => navigate(`/data/${dataset.id}`)} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all p-5 flex gap-5 cursor-pointer">
         <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/20">
             <Database className="w-7 h-7 text-white" />
         </div>
@@ -923,10 +929,11 @@ const DatasetListItem: React.FC<{ dataset: Dataset; formatDate: (d: string) => s
             </div>
         </div>
 
-        <button className="self-center p-3 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors">
+        <span className="self-center p-3 hover:bg-blue-50 rounded-xl text-blue-600 transition-colors">
             <ArrowUpRight className="w-5 h-5" />
-        </button>
+        </span>
     </div>
-);
+    );
+};
 
 export default DatasetsPage;
