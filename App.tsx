@@ -1387,6 +1387,7 @@ const AppWithAuth = () => {
         <>
           <Route path="/timeline" element={<PublicContentLayout><TimelineWrapper /></PublicContentLayout>} />
           <Route path="/dashboards" element={<PublicContentLayout><OfficialDashboardsWrapper /></PublicContentLayout>} />
+          <Route path="/datasets" element={<PublicContentLayout><DatasetsPage /></PublicContentLayout>} />
           <Route path="/signals" element={<PublicContentLayout><AISignalsPage /></PublicContentLayout>} />
           <Route path="/heatmap" element={<PublicContentLayout><HeatmapPage /></PublicContentLayout>} />
           <Route path="/content/:id" element={<PublicContentLayout><ContentDetailPage /></PublicContentLayout>} />
