@@ -78,12 +78,7 @@ const LoginPage = () => {
     }
 
     if (result.success) {
-      const role = result.user?.role?.toUpperCase();
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } else {
       setError(result.error || 'حدث خطأ في تسجيل الدخول بـ Google');
     }
@@ -152,12 +147,7 @@ const LoginPage = () => {
     }
 
     if (result.success) {
-      const role = result.user?.role?.toUpperCase();
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } else {
       setError(result.error || 'حدث خطأ في تسجيل الدخول');
     }
@@ -173,12 +163,7 @@ const LoginPage = () => {
     setIsLoading(false);
 
     if (result.success) {
-      const role = result.user?.role?.toUpperCase();
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } else {
       setError(result.error || 'رمز المصادقة غير صحيح');
     }
@@ -428,9 +413,9 @@ const LoginPage = () => {
           {/* Footer */}
           <p className="text-center text-gray-400 text-[11px] mt-6">
             بتسجيل الدخول، فإنك توافق على{' '}
-            <span className="underline cursor-pointer hover:text-gray-500">شروط الاستخدام</span>
+            <a href="#/terms" className="underline cursor-pointer hover:text-gray-500">شروط الاستخدام</a>
             {' '}و{' '}
-            <span className="underline cursor-pointer hover:text-gray-500">سياسة الخصوصية</span>
+            <a href="#/privacy" className="underline cursor-pointer hover:text-gray-500">سياسة الخصوصية</a>
           </p>
         </div>
       </div>

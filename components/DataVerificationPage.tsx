@@ -114,33 +114,6 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
 ];
 
 // ============================================
-// MOCK VERIFICATION DATA
-// ============================================
-
-const generateMockVerification = (datasetId: string): VerificationInfo => {
-  const hash = datasetId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const mod = hash % 10;
-
-  if (mod < 4) {
-    return { status: 'pending' };
-  } else if (mod < 8) {
-    return {
-      status: 'verified',
-      rating: 3 + (hash % 3),
-      verifiedAt: new Date(Date.now() - (hash % 30) * 86400000).toISOString(),
-      verifiedBy: 'خبير البيانات',
-    };
-  } else {
-    return {
-      status: 'issue',
-      issueType: ISSUE_TYPES[hash % ISSUE_TYPES.length].value,
-      issueDescription: 'تم رصد مشكلة في هذه البيانات تحتاج لمراجعة',
-      issueSeverity: SEVERITY_LEVELS[hash % SEVERITY_LEVELS.length].value,
-    };
-  }
-};
-
-// ============================================
 // SUB-COMPONENTS
 // ============================================
 
@@ -231,19 +204,44 @@ const DataVerificationPage: React.FC = () => {
   // ---- Data Fetching ----
 
   useEffect(() => {
-    const fetchDatasets = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await api.get('/api/datasets?limit=20');
-        const items: Dataset[] = response.data ?? [];
+        // Fetch datasets with their verification status
+        const [datasetsRes, statsRes] = await Promise.all([
+          api.get('/api/datasets?limit=50'),
+          api.get('/api/datasets/verification-stats').catch(() => null),
+        ]);
+
+        const items: Dataset[] = (datasetsRes as any)?.data ?? [];
         setDatasets(items);
 
-        // Generate mock verification statuses
-        const mockMap: Record<string, VerificationInfo> = {};
-        items.forEach((ds) => {
-          mockMap[ds.id] = generateMockVerification(ds.id);
-        });
-        setVerifications(mockMap);
+        // Build verification map from dataset data
+        // If verification-stats endpoint returns per-dataset info, use it
+        // Otherwise derive from dataset fields
+        const verMap: Record<string, VerificationInfo> = {};
+        const statsData = (statsRes as any)?.data;
+
+        if (statsData?.datasets && Array.isArray(statsData.datasets)) {
+          // Use real verification data from stats endpoint
+          for (const ds of statsData.datasets) {
+            verMap[ds.id] = {
+              status: ds.verificationStatus || 'pending',
+              rating: ds.rating,
+              verifiedAt: ds.verifiedAt,
+              verifiedBy: ds.verifiedBy,
+            };
+          }
+        }
+
+        // Fill in missing datasets as pending
+        for (const ds of items) {
+          if (!verMap[ds.id]) {
+            verMap[ds.id] = { status: 'pending' };
+          }
+        }
+
+        setVerifications(verMap);
       } catch (err) {
         console.error('Failed to fetch datasets:', err);
       } finally {
@@ -251,7 +249,7 @@ const DataVerificationPage: React.FC = () => {
       }
     };
 
-    fetchDatasets();
+    fetchData();
   }, []);
 
   // ---- Computed Values ----
@@ -286,12 +284,19 @@ const DataVerificationPage: React.FC = () => {
 
   // ---- Handlers ----
 
-  const handleVerifySubmit = () => {
+  const handleVerifySubmit = async () => {
     if (!verifyModalDataset || verifyForm.rating === 0) return;
     setSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await api.patch(`/api/datasets/${verifyModalDataset.id}/verify`, {
+        status: 'verified',
+        rating: verifyForm.rating,
+        notes: verifyForm.notes,
+        completeness: verifyForm.completeness,
+        timeliness: verifyForm.timeliness,
+      });
+
       setVerifications((prev) => ({
         ...prev,
         [verifyModalDataset.id]: {
@@ -301,18 +306,27 @@ const DataVerificationPage: React.FC = () => {
           verifiedBy: 'المستخدم الحالي',
         },
       }));
-      setSubmitting(false);
       setVerifyModalDataset(null);
       setVerifyForm({ rating: 0, completeness: false, timeliness: false, notes: '' });
-    }, 800);
+    } catch (err) {
+      console.error('Verification failed:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleIssueSubmit = () => {
+  const handleIssueSubmit = async () => {
     if (!issueModalDataset || !issueForm.type || !issueForm.severity) return;
     setSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await api.patch(`/api/datasets/${issueModalDataset.id}/verify`, {
+        status: 'issue',
+        issueType: issueForm.type,
+        issueDescription: issueForm.description,
+        issueSeverity: issueForm.severity,
+      });
+
       setVerifications((prev) => ({
         ...prev,
         [issueModalDataset.id]: {
@@ -322,10 +336,13 @@ const DataVerificationPage: React.FC = () => {
           issueSeverity: issueForm.severity,
         },
       }));
-      setSubmitting(false);
       setIssueModalDataset(null);
       setIssueForm({ type: '', description: '', severity: '' });
-    }, 800);
+    } catch (err) {
+      console.error('Report issue failed:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const formatDate = (dateStr: string) => {

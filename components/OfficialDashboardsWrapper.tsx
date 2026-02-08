@@ -18,10 +18,14 @@ import {
     Database,
     ChevronLeft,
     ChevronRight,
-    ChevronDown
+    ChevronDown,
+    Lock,
+    LogIn,
+    UserPlus
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import { UserRole } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface APIDashboard {
     id: string;
@@ -59,6 +63,7 @@ interface APICategory {
 
 const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ userRole }) => {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const [dashboards, setDashboards] = useState<APIDashboard[]>([]);
     const [categories, setCategories] = useState<APICategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -332,142 +337,275 @@ const OfficialDashboardsWrapper: React.FC<OfficialDashboardsWrapperProps> = ({ u
             {/* Dashboards Grid */}
             {!loading && !error && (
                 <>
-                    <div className={viewMode === 'grid'
-                        ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                        : 'space-y-4'
-                    }>
-                        {filteredDashboards.map(dashboard => {
-                            const colorClasses = getColorClasses(dashboard.color);
+                    {/* Determine visible dashboards for unauthenticated users */}
+                    {(() => {
+                        const MAX_VISIBLE_UNAUTH = 4;
+                        const CLEAR_CARDS_UNAUTH = 2;
+                        const visibleDashboards = !isAuthenticated
+                            ? filteredDashboards.slice(0, MAX_VISIBLE_UNAUTH)
+                            : filteredDashboards;
 
-                            return viewMode === 'grid' ? (
-                                // Grid Card
-                                <div
-                                    key={dashboard.id}
-                                    onClick={() => navigate(`/dashboards/${dashboard.id}`)}
-                                    className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
-                                >
-                                    {/* Header */}
-                                    <div className={`p-4 ${colorClasses.bg}`}>
-                                        <div className="flex items-start justify-between">
-                                            <div className={`w-12 h-12 rounded-xl ${colorClasses.bg} border ${colorClasses.border} flex items-center justify-center`}>
-                                                <Database size={24} className={colorClasses.text} />
-                                            </div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleFavorite(dashboard.id);
+                        return (
+                            <>
+                                <div className={viewMode === 'grid'
+                                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+                                    : 'space-y-4'
+                                }>
+                                    {visibleDashboards.map((dashboard, index) => {
+                                        const colorClasses = getColorClasses(dashboard.color);
+                                        const isLockedCard = !isAuthenticated && index >= CLEAR_CARDS_UNAUTH;
+
+                                        return viewMode === 'grid' ? (
+                                            // Grid Card
+                                            <div
+                                                key={dashboard.id}
+                                                onClick={() => {
+                                                    if (isLockedCard) return;
+                                                    navigate(`/dashboards/${dashboard.id}`);
                                                 }}
-                                                className="p-2 rounded-lg hover:bg-white/50"
+                                                className={`relative bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all group ${
+                                                    isLockedCard
+                                                        ? 'cursor-default'
+                                                        : 'hover:shadow-xl hover:-translate-y-1 cursor-pointer'
+                                                }`}
                                             >
-                                                <Star
-                                                    size={20}
-                                                    className={favorites.has(dashboard.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}
-                                                />
-                                            </button>
-                                        </div>
-                                    </div>
+                                                {/* Lock overlay for cards beyond the first 2 (unauthenticated) */}
+                                                {isLockedCard && (
+                                                    <div className="absolute inset-0 z-10 backdrop-blur-[6px] bg-gray-900/40 rounded-2xl flex flex-col items-center justify-center gap-3">
+                                                        <div className="w-14 h-14 rounded-full bg-gray-800/70 border border-gray-600 flex items-center justify-center">
+                                                            <Lock size={26} className="text-gray-300" />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-200">قفل التفاعل المتقدم</span>
+                                                        <span className="text-xs text-gray-400">سجّل لفتح الميزات</span>
+                                                    </div>
+                                                )}
 
-                                    {/* Content */}
-                                    <div className="p-4">
-                                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600">
-                                            {dashboard.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                                            {dashboard.description}
-                                        </p>
+                                                {/* Lock badge icon on all cards for unauth users */}
+                                                {!isAuthenticated && (
+                                                    <div className="absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-gray-800/80 border border-gray-600 flex items-center justify-center" title="سجّل دخولك أولاً">
+                                                        <Lock size={14} className="text-gray-300" />
+                                                    </div>
+                                                )}
 
-                                        {/* Columns/Metrics from real data */}
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {(dashboard.columns || []).slice(0, 3).map((col, i) => (
-                                                <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
-                                                    {col}
+                                                {/* Header */}
+                                                <div className={`p-4 ${colorClasses.bg}`}>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className={`w-12 h-12 rounded-xl ${colorClasses.bg} border ${colorClasses.border} flex items-center justify-center`}>
+                                                            <Database size={24} className={colorClasses.text} />
+                                                        </div>
+                                                        {/* Save to favorites / star button */}
+                                                        {isAuthenticated ? (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleFavorite(dashboard.id);
+                                                                }}
+                                                                className="p-2 rounded-lg hover:bg-white/50"
+                                                            >
+                                                                <Star
+                                                                    size={20}
+                                                                    className={favorites.has(dashboard.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}
+                                                                />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="p-2 rounded-lg opacity-50 cursor-not-allowed relative group/fav"
+                                                                disabled
+                                                                title="سجّل دخولك أولاً"
+                                                            >
+                                                                <Star size={20} className="text-gray-400" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="p-4">
+                                                    <h3 className={`font-bold text-gray-900 mb-2 line-clamp-2 ${!isLockedCard ? 'group-hover:text-blue-600' : ''}`}>
+                                                        {dashboard.name}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                                                        {dashboard.description}
+                                                    </p>
+
+                                                    {/* Columns/Metrics from real data */}
+                                                    <div className="flex flex-wrap gap-2 mb-4">
+                                                        {(dashboard.columns || []).slice(0, 3).map((col, i) => (
+                                                            <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
+                                                                {col}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Footer - Real data only */}
+                                                    <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-100">
+                                                        <div className="flex items-center gap-1">
+                                                            <Database size={14} />
+                                                            <span>{(dashboard.recordCount || 0).toLocaleString()} سجل</span>
+                                                        </div>
+                                                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${
+                                                            dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
+                                                            dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
+                                                            'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            <span>{dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar size={14} />
+                                                            <span>{dashboard.lastUpdated || 'غير محدث'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // List Card
+                                            <div
+                                                key={dashboard.id}
+                                                onClick={() => {
+                                                    if (isLockedCard) return;
+                                                    navigate(`/dashboards/${dashboard.id}`);
+                                                }}
+                                                className={`relative bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 transition-all ${
+                                                    isLockedCard
+                                                        ? 'cursor-default'
+                                                        : 'hover:shadow-lg cursor-pointer'
+                                                }`}
+                                            >
+                                                {/* Lock overlay for list cards beyond first 2 (unauthenticated) */}
+                                                {isLockedCard && (
+                                                    <div className="absolute inset-0 z-10 backdrop-blur-[6px] bg-gray-900/40 rounded-xl flex items-center justify-center gap-3">
+                                                        <Lock size={20} className="text-gray-300" />
+                                                        <span className="text-sm font-bold text-gray-200">قفل التفاعل المتقدم</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Lock badge icon */}
+                                                {!isAuthenticated && (
+                                                    <div className="absolute top-2 left-2 z-20 w-7 h-7 rounded-full bg-gray-800/80 border border-gray-600 flex items-center justify-center" title="سجّل دخولك أولاً">
+                                                        <Lock size={12} className="text-gray-300" />
+                                                    </div>
+                                                )}
+
+                                                <div className={`w-14 h-14 rounded-xl ${colorClasses.bg} flex items-center justify-center shrink-0`}>
+                                                    <Database size={24} className={colorClasses.text} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-gray-900 truncate">{dashboard.name}</h3>
+                                                    <p className="text-sm text-gray-500 truncate">{dashboard.description}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-gray-500 shrink-0">
+                                                    <span className="flex items-center gap-1">
+                                                        <Database size={14} />
+                                                        {(dashboard.recordCount || 0).toLocaleString()} سجل
+                                                    </span>
+                                                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                                                        dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
+                                                        dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
+                                                        'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}
+                                                    </span>
+                                                    <ArrowUpRight size={18} className="text-gray-400" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* CTA Banner for unauthenticated users */}
+                                {!isAuthenticated && filteredDashboards.length > 0 && (
+                                    <div dir="rtl" className="mt-8 relative overflow-hidden rounded-2xl bg-gradient-to-l from-blue-600 via-blue-700 to-indigo-800 p-8 md:p-12 shadow-2xl">
+                                        {/* Background decorative elements */}
+                                        <div className="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                                        <div className="absolute bottom-0 right-0 w-56 h-56 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3" />
+
+                                        <div className="relative z-10 flex flex-col items-center text-center gap-6">
+                                            {/* Lock icon */}
+                                            <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center backdrop-blur-sm">
+                                                <Lock size={36} className="text-white" />
+                                            </div>
+
+                                            {/* Title */}
+                                            <h2 className="text-2xl md:text-3xl font-black text-white">
+                                                سجّل للوصول الكامل
+                                            </h2>
+
+                                            {/* Description */}
+                                            <p className="text-blue-100 text-lg max-w-xl leading-relaxed">
+                                                اشترك في رادار المستثمر للوصول إلى جميع اللوحات والمؤشرات والتحليلات المتقدمة
+                                            </p>
+
+                                            {/* Feature hints */}
+                                            <div className="flex flex-wrap justify-center gap-4 text-sm text-blue-200">
+                                                <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
+                                                    <BarChart2 size={16} />
+                                                    {totalCount > 0 ? `${totalCount.toLocaleString()}+ لوحة بيانات` : 'لوحات بيانات متعددة'}
                                                 </span>
-                                            ))}
+                                                <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
+                                                    <Star size={16} />
+                                                    حفظ في لوحتي
+                                                </span>
+                                                <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
+                                                    <Database size={16} />
+                                                    تحليلات متقدمة
+                                                </span>
+                                            </div>
+
+                                            {/* CTA Buttons */}
+                                            <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+                                                <button
+                                                    onClick={() => navigate('/login')}
+                                                    className="flex items-center gap-2 px-8 py-3.5 bg-white text-blue-700 rounded-xl font-bold text-lg hover:bg-blue-50 transition-colors shadow-lg"
+                                                >
+                                                    <LogIn size={20} />
+                                                    تسجيل الدخول
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate('/register')}
+                                                    className="flex items-center gap-2 px-8 py-3.5 bg-white/10 border-2 border-white/30 text-white rounded-xl font-bold text-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
+                                                >
+                                                    <UserPlus size={20} />
+                                                    إنشاء حساب
+                                                </button>
+                                            </div>
                                         </div>
+                                    </div>
+                                )}
 
-                                        {/* Footer - Real data only */}
-                                        <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-100">
-                                            <div className="flex items-center gap-1">
-                                                <Database size={14} />
-                                                <span>{(dashboard.recordCount || 0).toLocaleString()} سجل</span>
-                                            </div>
-                                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${
-                                                dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
-                                                dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
-                                                'bg-gray-100 text-gray-600'
-                                            }`}>
-                                                <span>{dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Calendar size={14} />
-                                                <span>{dashboard.lastUpdated || 'غير محدث'}</span>
-                                            </div>
-                                        </div>
+                                {/* Empty State */}
+                                {filteredDashboards.length === 0 && (
+                                    <div className="text-center py-20 text-gray-400">
+                                        <Database size={48} className="mx-auto mb-4 opacity-30" />
+                                        <p>لا توجد لوحات بيانات متاحة</p>
                                     </div>
-                                </div>
-                            ) : (
-                                // List Card
-                                <div
-                                    key={dashboard.id}
-                                    onClick={() => navigate(`/dashboards/${dashboard.id}`)}
-                                    className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 hover:shadow-lg transition-all cursor-pointer"
-                                >
-                                    <div className={`w-14 h-14 rounded-xl ${colorClasses.bg} flex items-center justify-center shrink-0`}>
-                                        <Database size={24} className={colorClasses.text} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-gray-900 truncate">{dashboard.name}</h3>
-                                        <p className="text-sm text-gray-500 truncate">{dashboard.description}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 shrink-0">
-                                        <span className="flex items-center gap-1">
-                                            <Database size={14} />
-                                            {(dashboard.recordCount || 0).toLocaleString()} سجل
+                                )}
+
+                                {/* Pagination - only for authenticated users */}
+                                {isAuthenticated && totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-8">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="p-2 rounded-lg bg-gray-100 disabled:opacity-50"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                        <span className="px-4 py-2 bg-gray-100 rounded-lg font-bold">
+                                            {page} / {totalPages}
                                         </span>
-                                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-                                            dashboard.syncStatus === 'SYNCED' ? 'bg-green-100 text-green-600' :
-                                            dashboard.syncStatus === 'FAILED' ? 'bg-red-100 text-red-600' :
-                                            'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            {dashboard.syncStatus === 'SYNCED' ? 'متزامن' : dashboard.syncStatus === 'FAILED' ? 'فشل' : 'معلق'}
-                                        </span>
-                                        <ArrowUpRight size={18} className="text-gray-400" />
+                                        <button
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={page === totalPages}
+                                            className="p-2 rounded-lg bg-gray-100 disabled:opacity-50"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Empty State */}
-                    {filteredDashboards.length === 0 && (
-                        <div className="text-center py-20 text-gray-400">
-                            <Database size={48} className="mx-auto mb-4 opacity-30" />
-                            <p>لا توجد لوحات بيانات متاحة</p>
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-8">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="p-2 rounded-lg bg-gray-100 disabled:opacity-50"
-                            >
-                                <ChevronRight size={20} />
-                            </button>
-                            <span className="px-4 py-2 bg-gray-100 rounded-lg font-bold">
-                                {page} / {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="p-2 rounded-lg bg-gray-100 disabled:opacity-50"
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-                        </div>
-                    )}
+                                )}
+                            </>
+                        );
+                    })()}
                 </>
             )}
         </div>

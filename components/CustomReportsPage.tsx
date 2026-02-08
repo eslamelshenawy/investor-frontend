@@ -5,10 +5,10 @@
  *
  * EXPERT role page for creating, scheduling,
  * and managing custom investment reports.
- * Uses local state only (no backend endpoint yet).
+ * Connected to content API for CRUD operations.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Plus,
@@ -27,6 +27,7 @@ import {
   X,
   Save,
 } from 'lucide-react';
+import api from '../src/services/api';
 
 // ============================================
 // TYPES
@@ -205,60 +206,6 @@ const REPORT_TEMPLATES: TemplateConfig[] = [
     defaultType: 'MARKET_ANALYSIS',
     defaultSectors: [],
     defaultSources: ['sama', 'gstat', 'reuters', 'bloomberg'],
-  },
-];
-
-// ============================================
-// SEED DATA
-// ============================================
-
-const SEED_REPORTS: Report[] = [
-  {
-    id: '1',
-    title: 'تقرير أداء قطاع البنوك - الربع الثالث 2025',
-    type: 'QUARTERLY',
-    status: 'PUBLISHED',
-    createdAt: '2025-10-15T10:00:00Z',
-    sectors: ['البنوك'],
-    dataSources: ['tadawul', 'cma', 'argaam'],
-    content: 'تحليل شامل لأداء قطاع البنوك خلال الربع الثالث...',
-    keyFindings: [
-      { id: 'f1', text: 'ارتفاع أرباح البنوك بنسبة 12% مقارنة بالربع السابق' },
-      { id: 'f2', text: 'تحسن جودة الأصول مع انخفاض نسبة القروض المتعثرة' },
-    ],
-    recommendations: [
-      { id: 'r1', text: 'الاستمرار في الاستثمار في البنوك الكبرى' },
-    ],
-    recurring: 'NONE',
-  },
-  {
-    id: '2',
-    title: 'فرص استثمارية في قطاع التقنية',
-    type: 'INVESTMENT_OPPORTUNITIES',
-    status: 'DRAFT',
-    createdAt: '2025-11-01T08:30:00Z',
-    sectors: ['التقنية', 'الاتصالات'],
-    dataSources: ['tadawul', 'bloomberg'],
-    content: 'استكشاف الفرص المتاحة في قطاع التقنية...',
-    keyFindings: [
-      { id: 'f3', text: 'نمو قطاع التقنية بنسبة 18% خلال العام الحالي' },
-    ],
-    recommendations: [],
-    recurring: 'NONE',
-  },
-  {
-    id: '3',
-    title: 'التقرير الأسبوعي للسوق السعودي',
-    type: 'MARKET_ANALYSIS',
-    status: 'SCHEDULED',
-    createdAt: '2025-11-10T14:00:00Z',
-    scheduledAt: '2025-11-17T08:00:00Z',
-    sectors: ['البنوك', 'الطاقة', 'البتروكيماويات'],
-    dataSources: ['tadawul', 'cma', 'argaam'],
-    content: 'ملخص تحركات السوق خلال الأسبوع...',
-    keyFindings: [],
-    recommendations: [],
-    recurring: 'WEEKLY',
   },
 ];
 
@@ -519,13 +466,24 @@ function TemplateCard({
   );
 }
 
+function mapContentStatus(status: string): ReportStatus {
+  switch (status?.toUpperCase()) {
+    case 'PUBLISHED': return 'PUBLISHED';
+    case 'SCHEDULED': return 'SCHEDULED';
+    case 'PENDING_REVIEW':
+    case 'APPROVED': return 'SCHEDULED';
+    default: return 'DRAFT';
+  }
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 export default function CustomReportsPage() {
   // ------ State ------
-  const [reports, setReports] = useState<Report[]>(SEED_REPORTS);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [form, setForm] = useState<ReportFormData>(emptyFormData());
@@ -534,6 +492,42 @@ export default function CustomReportsPage() {
   const [newFinding, setNewFinding] = useState('');
   const [newRecommendation, setNewRecommendation] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // ------ Fetch reports from API ------
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingReports(true);
+        const res = await api.getMyContent({ status: 'all', limit: 50 });
+        if (cancelled) return;
+        const items = (res as any)?.data ?? [];
+        // Map content items to Report format
+        const mapped: Report[] = items
+          .filter((item: any) => item.type === 'REPORT' || item.type === 'ARTICLE')
+          .map((item: any) => ({
+            id: item.id,
+            title: item.titleAr || item.title || 'بدون عنوان',
+            type: 'MARKET_ANALYSIS' as ReportType,
+            status: mapContentStatus(item.status),
+            createdAt: item.createdAt,
+            scheduledAt: item.scheduledAt,
+            recurring: 'NONE' as RecurringType,
+            sectors: item.tags ? (typeof item.tags === 'string' ? item.tags.split(',') : Array.isArray(item.tags) ? item.tags : []) : [],
+            dataSources: [],
+            content: item.content || item.excerpt || '',
+            keyFindings: [],
+            recommendations: [],
+          }));
+        setReports(mapped);
+      } catch {
+        // Leave empty
+      } finally {
+        if (!cancelled) setLoadingReports(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // ------ Derived ------
   const filteredReports =
@@ -658,7 +652,7 @@ export default function CustomReportsPage() {
     }));
   }
 
-  function saveReport(asDraft: boolean) {
+  async function saveReport(asDraft: boolean) {
     if (!form.title.trim()) return;
 
     let status: ReportStatus = 'DRAFT';
@@ -686,36 +680,80 @@ export default function CustomReportsPage() {
       }
     }
 
-    const reportData: Report = {
-      id: editingReportId || generateId(),
-      title: form.title,
-      type: form.type,
-      status,
-      createdAt: editingReportId
-        ? reports.find((r) => r.id === editingReportId)?.createdAt ||
-          new Date().toISOString()
-        : new Date().toISOString(),
-      scheduledAt,
-      recurring,
-      sectors: form.sectors,
-      dataSources: form.dataSources,
-      content: form.content,
-      keyFindings: form.keyFindings,
-      recommendations: form.recommendations,
-    };
+    // Map to content API status
+    const apiStatus = status === 'PUBLISHED' ? 'PUBLISHED' : status === 'SCHEDULED' ? 'PENDING_REVIEW' : 'DRAFT';
 
-    if (editingReportId) {
-      setReports((prev) =>
-        prev.map((r) => (r.id === editingReportId ? reportData : r)),
-      );
-    } else {
-      setReports((prev) => [reportData, ...prev]);
+    try {
+      const res = await api.createContentPost({
+        title: form.title,
+        titleAr: form.title,
+        content: form.content || form.title,
+        type: 'REPORT',
+        status: apiStatus,
+        tags: form.sectors.join(','),
+      });
+
+      const newId = (res as any)?.data?.id || generateId();
+
+      const reportData: Report = {
+        id: editingReportId || newId,
+        title: form.title,
+        type: form.type,
+        status,
+        createdAt: editingReportId
+          ? reports.find((r) => r.id === editingReportId)?.createdAt ||
+            new Date().toISOString()
+          : new Date().toISOString(),
+        scheduledAt,
+        recurring,
+        sectors: form.sectors,
+        dataSources: form.dataSources,
+        content: form.content,
+        keyFindings: form.keyFindings,
+        recommendations: form.recommendations,
+      };
+
+      if (editingReportId) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === editingReportId ? reportData : r)),
+        );
+      } else {
+        setReports((prev) => [reportData, ...prev]);
+      }
+    } catch {
+      // Still update local state as fallback
+      const reportData: Report = {
+        id: editingReportId || generateId(),
+        title: form.title,
+        type: form.type,
+        status,
+        createdAt: new Date().toISOString(),
+        scheduledAt,
+        recurring,
+        sectors: form.sectors,
+        dataSources: form.dataSources,
+        content: form.content,
+        keyFindings: form.keyFindings,
+        recommendations: form.recommendations,
+      };
+      if (editingReportId) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === editingReportId ? reportData : r)),
+        );
+      } else {
+        setReports((prev) => [reportData, ...prev]);
+      }
     }
 
     closeModal();
   }
 
-  function deleteReport(id: string) {
+  async function deleteReport(id: string) {
+    try {
+      await api.deleteContentPost(id);
+    } catch {
+      // Continue with local deletion regardless
+    }
     setReports((prev) => prev.filter((r) => r.id !== id));
     setDeleteConfirmId(null);
   }
@@ -822,7 +860,12 @@ export default function CustomReportsPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             تقاريري
           </h2>
-          {filteredReports.length === 0 ? (
+          {loadingReports ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-gray-500">جاري تحميل التقارير...</p>
+            </div>
+          ) : filteredReports.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-sm text-gray-500">

@@ -8,7 +8,7 @@
  * sector performance, insights, and economic calendar.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Brain,
   RefreshCw,
@@ -40,6 +40,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import { api } from '../src/services/api';
 
 // ============================================
 // TYPES
@@ -77,162 +78,6 @@ interface EconomicEvent {
   impact: 'high' | 'medium' | 'low';
   category: string;
 }
-
-// ============================================
-// MOCK DATA
-// ============================================
-
-const MOCK_INDICATORS: KeyIndicator[] = [
-  {
-    id: 'gdp',
-    label: 'نمو الناتج المحلي',
-    value: '3.8',
-    change: 0.6,
-    unit: '%',
-    sparklineData: [
-      { v: 2.1 }, { v: 2.4 }, { v: 2.8 }, { v: 3.0 }, { v: 2.7 },
-      { v: 3.2 }, { v: 3.5 }, { v: 3.1 }, { v: 3.4 }, { v: 3.6 },
-      { v: 3.5 }, { v: 3.8 },
-    ],
-    icon: <TrendingUp className="w-6 h-6" />,
-    color: 'emerald',
-  },
-  {
-    id: 'inflation',
-    label: 'معدل التضخم',
-    value: '1.9',
-    change: -0.3,
-    unit: '%',
-    sparklineData: [
-      { v: 2.8 }, { v: 2.6 }, { v: 2.5 }, { v: 2.3 }, { v: 2.4 },
-      { v: 2.2 }, { v: 2.1 }, { v: 2.0 }, { v: 2.1 }, { v: 1.9 },
-      { v: 2.0 }, { v: 1.9 },
-    ],
-    icon: <DollarSign className="w-6 h-6" />,
-    color: 'blue',
-  },
-  {
-    id: 'unemployment',
-    label: 'معدل البطالة',
-    value: '4.8',
-    change: -0.5,
-    unit: '%',
-    sparklineData: [
-      { v: 6.2 }, { v: 6.0 }, { v: 5.8 }, { v: 5.6 }, { v: 5.5 },
-      { v: 5.3 }, { v: 5.2 }, { v: 5.0 }, { v: 4.9 }, { v: 5.0 },
-      { v: 4.9 }, { v: 4.8 },
-    ],
-    icon: <Users className="w-6 h-6" />,
-    color: 'violet',
-  },
-  {
-    id: 'trade',
-    label: 'الميزان التجاري',
-    value: '142.5',
-    change: 12.3,
-    unit: 'مليار ريال',
-    sparklineData: [
-      { v: 98 }, { v: 105 }, { v: 110 }, { v: 108 }, { v: 115 },
-      { v: 120 }, { v: 118 }, { v: 125 }, { v: 130 }, { v: 135 },
-      { v: 138 }, { v: 142.5 },
-    ],
-    icon: <Globe className="w-6 h-6" />,
-    color: 'amber',
-  },
-];
-
-const MOCK_WEEKLY_SUMMARY = {
-  title: 'ملخص الأسبوع - 2 فبراير 2026',
-  overview: 'شهد الاقتصاد السعودي أداءً قويًا هذا الأسبوع مدعومًا بارتفاع أسعار النفط وتسارع وتيرة مشاريع رؤية 2030. سجّل مؤشر تداول ارتفاعًا بنسبة 2.4% مع تحسّن ملحوظ في ثقة المستثمرين الأجانب.',
-  bulletPoints: [
-    'ارتفع مؤشر تداول الرئيسي بنسبة 2.4% ليغلق عند 12,850 نقطة بدعم من قطاعي البنوك والطاقة.',
-    'أعلنت وزارة المالية عن تحقيق فائض في الميزانية للربع الأخير بقيمة 18.7 مليار ريال.',
-    'تراجع معدل التضخم السنوي إلى 1.9%، وهو الأدنى منذ 18 شهرًا، مدعومًا باستقرار أسعار الغذاء.',
-    'أعلن صندوق الاستثمارات العامة عن 3 صفقات استثمارية جديدة في قطاع التقنية بقيمة إجمالية 8.5 مليار ريال.',
-    'ارتفع حجم التبادل التجاري غير النفطي بنسبة 15% مقارنة بالفترة نفسها من العام الماضي.',
-  ],
-};
-
-const MOCK_SECTOR_PERFORMANCE: SectorPerformance[] = [
-  { name: 'التقنية والابتكار', change: 8.7 },
-  { name: 'السياحة والترفيه', change: 6.2 },
-  { name: 'الخدمات المالية', change: 4.5 },
-  { name: 'الطاقة المتجددة', change: 3.8 },
-  { name: 'العقارات والإنشاءات', change: -1.2 },
-];
-
-const MOCK_INSIGHTS: AIInsight[] = [
-  {
-    id: 'ins-1',
-    title: 'فرصة نمو في قطاع التقنية المالية',
-    description: 'تشير البيانات إلى تسارع ملحوظ في تبنّي حلول الدفع الرقمي بنسبة 34% خلال الربع الأخير، مما يفتح فرصًا استثمارية واعدة في شركات التقنية المالية الناشئة.',
-    type: 'opportunity',
-    icon: <Target className="w-5 h-5" />,
-    confidence: 87,
-  },
-  {
-    id: 'ins-2',
-    title: 'تحسّن مستمر في سوق العمل',
-    description: 'انخفضت نسبة البطالة بين السعوديين إلى 4.8% مع توقعات بالوصول إلى 4.5% بنهاية 2026 مدفوعة بالتوسع في القطاع الخاص ومبادرات التوطين.',
-    type: 'positive',
-    icon: <TrendingUp className="w-5 h-5" />,
-    confidence: 92,
-  },
-  {
-    id: 'ins-3',
-    title: 'مراقبة تقلبات أسعار النفط',
-    description: 'قد تشهد أسعار النفط تقلبات في الأسابيع المقبلة بسبب التوترات الجيوسياسية وقرارات أوبك+ المرتقبة. ينصح بمراقبة مستوى 78 دولار كمستوى دعم رئيسي.',
-    type: 'warning',
-    icon: <ShieldAlert className="w-5 h-5" />,
-    confidence: 74,
-  },
-  {
-    id: 'ins-4',
-    title: 'ازدهار قطاع السياحة الموسمي',
-    description: 'من المتوقع ارتفاع الإيرادات السياحية بنسبة 22% في الربع القادم مع اقتراب موسم العمرة وتوسع مشاريع الترفيه في الرياض وجدة ونيوم.',
-    type: 'neutral',
-    icon: <Eye className="w-5 h-5" />,
-    confidence: 81,
-  },
-];
-
-const MOCK_ECONOMIC_CALENDAR: EconomicEvent[] = [
-  {
-    id: 'ev-1',
-    title: 'إعلان بيانات الناتج المحلي للربع الرابع 2025',
-    date: '2026-02-10',
-    impact: 'high',
-    category: 'الناتج المحلي',
-  },
-  {
-    id: 'ev-2',
-    title: 'اجتماع مجلس إدارة مؤسسة النقد (ساما)',
-    date: '2026-02-12',
-    impact: 'high',
-    category: 'السياسة النقدية',
-  },
-  {
-    id: 'ev-3',
-    title: 'صدور تقرير التضخم الشهري - يناير 2026',
-    date: '2026-02-15',
-    impact: 'medium',
-    category: 'التضخم',
-  },
-  {
-    id: 'ev-4',
-    title: 'إعلان نتائج أرباح البنوك السعودية الكبرى',
-    date: '2026-02-18',
-    impact: 'medium',
-    category: 'أرباح الشركات',
-  },
-  {
-    id: 'ev-5',
-    title: 'اجتماع أوبك+ لمراجعة حصص الإنتاج',
-    date: '2026-02-22',
-    impact: 'high',
-    category: 'الطاقة',
-  },
-];
 
 // ============================================
 // HELPERS
@@ -353,14 +198,56 @@ const SectorTooltip: React.FC<{ active?: boolean; payload?: any[]; label?: strin
 const AIEconomicSummaryPage: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [overviewStats, setOverviewStats] = useState<any>(null);
+  const [categoryStats, setCategoryStats] = useState<any[]>([]);
+  const [latestSignals, setLatestSignals] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any>(null);
 
-  const handleRefresh = () => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const [statsRes, catRes, signalsRes, activityRes] = await Promise.all([
+          api.getOverviewStats(),
+          api.getCategoryStats(),
+          api.getLatestSignals(5),
+          api.getRecentActivity(),
+        ]);
+        if (cancelled) return;
+        if (statsRes.success) setOverviewStats(statsRes.data);
+        if (catRes.success && catRes.data) setCategoryStats((catRes.data as any).categories ?? []);
+        if (signalsRes.success) setLatestSignals(Array.isArray(signalsRes.data) ? signalsRes.data : []);
+        if (activityRes.success) setRecentActivity(activityRes.data);
+      } catch {
+        // Silently fail
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
+    try {
+      const [statsRes, catRes, signalsRes, activityRes] = await Promise.all([
+        api.getOverviewStats(),
+        api.getCategoryStats(),
+        api.getLatestSignals(5),
+        api.getRecentActivity(),
+      ]);
+      if (statsRes.success) setOverviewStats(statsRes.data);
+      if (catRes.success && catRes.data) setCategoryStats((catRes.data as any).categories ?? []);
+      if (signalsRes.success) setLatestSignals(Array.isArray(signalsRes.data) ? signalsRes.data : []);
+      if (activityRes.success) setRecentActivity(activityRes.data);
       setLastUpdated(new Date());
+    } catch {
+      // Silently fail
+    } finally {
       setIsRefreshing(false);
-    }, 1500);
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -371,12 +258,105 @@ const AIEconomicSummaryPage: React.FC = () => {
     return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // Sector chart data with fill color
-  const sectorChartData = MOCK_SECTOR_PERFORMANCE.map((s) => ({
-    name: s.name,
-    change: s.change,
-    fill: s.change >= 0 ? '#34d399' : '#f87171',
+  // Build indicators from real stats
+  const indicators: KeyIndicator[] = overviewStats ? [
+    {
+      id: 'datasets',
+      label: 'مجموعات البيانات',
+      value: String(overviewStats.totalDatasets ?? 0),
+      change: overviewStats.weeklyGrowth ?? 0,
+      unit: 'مجموعة',
+      sparklineData: Array.from({ length: 12 }, (_, i) => ({ v: Math.max(0, (overviewStats.totalDatasets ?? 100) - (12 - i) * 50 + Math.random() * 30) })),
+      icon: <TrendingUp className="w-6 h-6" />,
+      color: 'emerald',
+    },
+    {
+      id: 'signals',
+      label: 'الإشارات النشطة',
+      value: String(overviewStats.activeSignals ?? 0),
+      change: overviewStats.newThisWeek > 0 ? Math.round((overviewStats.newThisWeek / Math.max(1, overviewStats.totalSignals)) * 100) : 0,
+      unit: 'إشارة',
+      sparklineData: Array.from({ length: 12 }, (_, i) => ({ v: Math.max(0, (overviewStats.activeSignals ?? 50) - (12 - i) * 5 + Math.random() * 10) })),
+      icon: <DollarSign className="w-6 h-6" />,
+      color: 'blue',
+    },
+    {
+      id: 'users',
+      label: 'المستخدمون',
+      value: String(overviewStats.totalUsers ?? 0),
+      change: 0,
+      unit: 'مستخدم',
+      sparklineData: Array.from({ length: 12 }, (_, i) => ({ v: Math.max(0, (overviewStats.totalUsers ?? 20) - (12 - i) * 2 + Math.random() * 5) })),
+      icon: <Users className="w-6 h-6" />,
+      color: 'violet',
+    },
+    {
+      id: 'content',
+      label: 'المحتوى المنشور',
+      value: String(overviewStats.totalContent ?? 0),
+      change: 0,
+      unit: 'منشور',
+      sparklineData: Array.from({ length: 12 }, (_, i) => ({ v: Math.max(0, (overviewStats.totalContent ?? 10) - (12 - i) * 3 + Math.random() * 8) })),
+      icon: <Globe className="w-6 h-6" />,
+      color: 'amber',
+    },
+  ] : [];
+
+  // Build sector performance from category stats
+  const sectorChartData = categoryStats.slice(0, 5).map((cat: any) => ({
+    name: cat.name || cat.nameEn || 'غير محدد',
+    change: cat.percentage ?? cat.count ?? 0,
+    fill: (cat.percentage ?? cat.count ?? 0) >= 0 ? '#34d399' : '#f87171',
   }));
+
+  // Build insights from latest signals
+  const insights: AIInsight[] = latestSignals.slice(0, 4).map((sig: any, idx: number) => {
+    const typeMap: Record<string, AIInsight['type']> = { BULLISH: 'positive', BEARISH: 'warning', NEUTRAL: 'neutral' };
+    const iconMap: Record<string, React.ReactNode> = {
+      positive: <TrendingUp className="w-5 h-5" />,
+      warning: <ShieldAlert className="w-5 h-5" />,
+      opportunity: <Target className="w-5 h-5" />,
+      neutral: <Eye className="w-5 h-5" />,
+    };
+    const insightType = typeMap[sig.trend?.toUpperCase()] ?? (idx === 0 ? 'opportunity' : 'neutral');
+    return {
+      id: sig.id || `ins-${idx}`,
+      title: sig.titleAr || sig.title || 'رؤية جديدة',
+      description: sig.summaryAr || sig.summary || sig.titleAr || '',
+      type: insightType,
+      icon: iconMap[insightType] || <Eye className="w-5 h-5" />,
+      confidence: sig.confidence ?? sig.impactScore ?? 75,
+    };
+  });
+
+  // Build weekly summary from recent activity
+  const weeklyBulletPoints: string[] = [];
+  if (recentActivity) {
+    if (recentActivity.signals?.items?.length > 0) {
+      weeklyBulletPoints.push(`تم رصد ${recentActivity.signals.count} إشارة جديدة في السوق خلال الفترة الأخيرة.`);
+      const topSignal = recentActivity.signals.items[0];
+      if (topSignal) weeklyBulletPoints.push(`أبرز الإشارات: ${topSignal.titleAr || topSignal.title}`);
+    }
+    if (recentActivity.content?.items?.length > 0) {
+      weeklyBulletPoints.push(`تم نشر ${recentActivity.content.count} محتوى جديد على المنصة.`);
+    }
+    if (recentActivity.datasets?.items?.length > 0) {
+      weeklyBulletPoints.push(`تمت إضافة ${recentActivity.datasets.count} مجموعة بيانات جديدة.`);
+      const topDs = recentActivity.datasets.items[0];
+      if (topDs) weeklyBulletPoints.push(`أحدث البيانات: ${topDs.nameAr || topDs.name} من ${topDs.source || 'مصدر حكومي'}`);
+    }
+  }
+  if (weeklyBulletPoints.length === 0) {
+    weeklyBulletPoints.push('لا توجد تحديثات حديثة. سيتم تحديث البيانات تلقائياً عند توفر بيانات جديدة.');
+  }
+
+  const weeklySummary = {
+    title: `ملخص الأسبوع - ${new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    overview: overviewStats
+      ? `يضم رادار المستثمر حالياً ${(overviewStats.totalDatasets ?? 0).toLocaleString('ar-SA')} مجموعة بيانات و${(overviewStats.totalSignals ?? 0).toLocaleString('ar-SA')} إشارة سوقية. تم إضافة ${overviewStats.newThisWeek ?? 0} عنصر جديد هذا الأسبوع.`
+      : 'جاري تحميل البيانات...',
+    bulletPoints: weeklyBulletPoints,
+  };
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-900 text-slate-100">
@@ -413,9 +393,20 @@ const AIEconomicSummaryPage: React.FC = () => {
           </div>
         </div>
 
+        {/* ========== LOADING STATE ========== */}
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+              <p className="text-sm text-slate-400">جاري تحميل البيانات...</p>
+            </div>
+          </div>
+        )}
+
         {/* ========== KEY INDICATORS GRID ========== */}
+        {!loading && (<>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {MOCK_INDICATORS.map((indicator) => {
+          {indicators.map((indicator) => {
             const colors = getIndicatorColors(indicator.color);
             const isPositive = indicator.change >= 0;
             // For unemployment and inflation, decrease is good
@@ -463,14 +454,14 @@ const AIEconomicSummaryPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">ملخص السوق الأسبوعي</h2>
-                <p className="text-xs text-slate-500">{MOCK_WEEKLY_SUMMARY.title}</p>
+                <p className="text-xs text-slate-500">{weeklySummary.title}</p>
               </div>
             </div>
             <p className="text-sm text-slate-300 leading-relaxed mb-4">
-              {MOCK_WEEKLY_SUMMARY.overview}
+              {weeklySummary.overview}
             </p>
             <div className="space-y-2.5">
-              {MOCK_WEEKLY_SUMMARY.bulletPoints.map((point, idx) => (
+              {weeklySummary.bulletPoints.map((point, idx) => (
                 <div key={idx} className="flex items-start gap-2.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
                   <p className="text-sm text-slate-400 leading-relaxed">{point}</p>
@@ -556,7 +547,7 @@ const AIEconomicSummaryPage: React.FC = () => {
             <span className="text-xs text-slate-500 mr-2">تحليلات وتوقعات مبنية على البيانات</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {MOCK_INSIGHTS.map((insight) => {
+            {insights.map((insight) => {
               const style = getInsightTypeStyle(insight.type);
               return (
                 <div
@@ -597,34 +588,9 @@ const AIEconomicSummaryPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {MOCK_ECONOMIC_CALENDAR.map((event) => {
-              const impact = getImpactBadge(event.impact);
-              return (
-                <div
-                  key={event.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 rounded-lg bg-slate-900/50 border border-slate-700/30 hover:border-slate-600/50 transition-colors"
-                >
-                  {/* Date */}
-                  <div className="flex items-center gap-2 sm:min-w-[140px]">
-                    <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span className="text-xs text-slate-400 font-medium">{formatDate(event.date)}</span>
-                  </div>
-
-                  {/* Title + Category */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium truncate">{event.title}</p>
-                    <span className="text-[10px] text-slate-500">{event.category}</span>
-                  </div>
-
-                  {/* Impact Badge */}
-                  <div className={`inline-flex items-center self-start sm:self-center px-2.5 py-1 rounded-full text-[10px] font-bold ${impact.className}`}>
-                    {event.impact === 'high' && <Zap className="w-3 h-3 ml-1" />}
-                    {impact.label}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-center py-8">
+            <Calendar className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">سيتم تحديث الأجندة الاقتصادية قريباً</p>
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-700/50 text-center">
@@ -640,6 +606,7 @@ const AIEconomicSummaryPage: React.FC = () => {
             تنويه: المعلومات والتحليلات المعروضة في هذه الصفحة مُولّدة بواسطة الذكاء الاصطناعي لأغراض إعلامية فقط ولا تُعتبر نصيحة استثمارية. يُرجى استشارة مستشار مالي مرخّص قبل اتخاذ أي قرارات استثمارية.
           </p>
         </div>
+        </>)}
 
       </div>
     </div>

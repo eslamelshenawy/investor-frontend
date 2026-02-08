@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CommentsSection from './CommentsSection';
 
 // Roles that can access comments (higher than STANDARD)
-const COMMENT_ALLOWED_ROLES = ['ANALYST', 'EXPERT', 'WRITER', 'DESIGNER', 'CONTENT_MANAGER', 'EDITOR', 'ADMIN', 'SUPER_ADMIN', 'CURBTRON'];
+const COMMENT_ALLOWED_ROLES = ['WRITER', 'DESIGNER', 'CONTENT_MANAGER', 'EDITOR', 'ADMIN', 'SUPER_ADMIN'];
 
 const ContentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

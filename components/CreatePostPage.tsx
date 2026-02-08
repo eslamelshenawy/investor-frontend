@@ -153,15 +153,25 @@ const CreatePostPage: React.FC = () => {
 
   const handleSaveDraft = useCallback(async () => {
     clearMessages();
+    if (!titleAr.trim() || !bodyAr.trim()) {
+      setErrorMsg('يرجى تعبئة العنوان والمحتوى بالعربية على الأقل');
+      return;
+    }
     setLoading(true);
     try {
-      await api.createContentPost({
-        type, title, titleAr, body, bodyAr,
+      const finalTitle = title.trim() || titleAr;
+      const finalBody = body.trim() || bodyAr;
+      const result: any = await api.createContentPost({
+        type, title: finalTitle, titleAr, body: finalBody, bodyAr,
         excerpt: excerpt || undefined,
         excerptAr: excerptAr || undefined,
         tags,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       });
+      if (result.success === false) {
+        setErrorMsg(result.errorAr || result.error || 'حدث خطأ أثناء حفظ المسودة');
+        return;
+      }
       setSuccessMsg('تم حفظ المسودة بنجاح');
     } catch (err: any) {
       setErrorMsg(err?.message ?? 'حدث خطأ أثناء حفظ المسودة');
@@ -178,14 +188,29 @@ const CreatePostPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      const post = await api.createContentPost({
-        type, title, titleAr, body, bodyAr,
+      const finalTitle = title.trim() || titleAr;
+      const finalBody = body.trim() || bodyAr;
+      const result: any = await api.createContentPost({
+        type, title: finalTitle, titleAr, body: finalBody, bodyAr,
         excerpt: excerpt || undefined,
         excerptAr: excerptAr || undefined,
         tags,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       });
-      await api.submitForReview((post as any).id);
+      if (result.success === false) {
+        setErrorMsg(result.errorAr || result.error || 'حدث خطأ أثناء الإرسال');
+        return;
+      }
+      const postId = result.data?.id || result.id;
+      if (!postId) {
+        setErrorMsg('حدث خطأ: لم يتم إرجاع معرّف المنشور');
+        return;
+      }
+      const reviewResult: any = await api.submitForReview(postId);
+      if (reviewResult.success === false) {
+        setErrorMsg(reviewResult.errorAr || reviewResult.error || 'حدث خطأ أثناء الإرسال للمراجعة');
+        return;
+      }
       setSuccessMsg('تم إرسال المحتوى للمراجعة بنجاح');
       resetForm();
     } catch (err: any) {

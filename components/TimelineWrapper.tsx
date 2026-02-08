@@ -228,6 +228,7 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
     setEvents([]);
     setStreamProgress('جاري الاتصال...');
 
+    let completed = false;
     const eventSource = new EventSource(`${apiBaseUrl}/timeline/stream?limit=${limit}`);
     const newEvents: (TimelineEvent & { itemType: string })[] = [];
 
@@ -258,6 +259,7 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
     });
 
     eventSource.addEventListener('complete', (e) => {
+      completed = true;
       const data = JSON.parse(e.data);
       setTotal(data.total);
       setStreamProgress('');
@@ -266,19 +268,19 @@ const TimelineWrapper: React.FC<TimelineWrapperProps> = ({
       eventSource.close();
     });
 
-    eventSource.addEventListener('error', (e) => {
-      console.error('Stream error:', e);
-      eventSource.close();
-      setStreaming(false);
-      // Fallback to regular fetch on stream error
-      fetchTimelineFallback(1);
-    });
-
+    // Single error handler - only fallback if stream didn't complete successfully
     eventSource.onerror = () => {
       eventSource.close();
-      setStreaming(false);
-      // Fallback to regular fetch
-      fetchTimelineFallback(1);
+      if (!completed) {
+        setStreaming(false);
+        // If we got some events already, keep them; otherwise fallback
+        if (newEvents.length > 0) {
+          setTotal(newEvents.length);
+          setLoading(false);
+        } else {
+          fetchTimelineFallback(1);
+        }
+      }
     };
   };
 

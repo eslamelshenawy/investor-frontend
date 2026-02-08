@@ -49,7 +49,10 @@ import {
   Globe,
   BarChart3,
   Megaphone,
-  Eye
+  Eye,
+  Tag,
+  MessageCircle,
+  Layers
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -138,7 +141,12 @@ import CustomReportsPage from './components/CustomReportsPage';
 import WidgetLibraryPage from './components/WidgetLibraryPage';
 import AIEconomicSummaryPage from './components/AIEconomicSummaryPage';
 import PatternRecognitionPage from './components/PatternRecognitionPage';
+import TagManagementPage from './components/TagManagementPage';
+import CommentModerationPage from './components/CommentModerationPage';
+import MediaLibraryPage from './components/MediaLibraryPage';
+import SectorDashboardsPage from './components/SectorDashboardsPage';
 import PublicPageLayout from './components/PublicPageLayout';
+import ExploreDashboardPage from './components/ExploreDashboardPage';
 
 // --- Mobile Bottom Navigation ---
 const MobileBottomNav = () => {
@@ -281,12 +289,10 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
   const [sections, setSections] = useState({
     discovery: true,
     data: true,
-    workspace: true,
-    apps: false,
-    authoring: true,
-    creative: true,
-    editorial: true,
-    admin: true
+    content: true,
+    account: true,
+    admin: true,
+    dataMore: false,
   });
 
   const toggle = (key: keyof typeof sections) => {
@@ -337,7 +343,9 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
           </>
         )}
 
-        <NavGroup title="المحور الرئيسي" open={sections.discovery} onToggle={() => toggle('discovery')}>
+        {/* ── المجموعة 1: الاكتشاف والمتابعة ── */}
+        <NavGroup title="الاكتشاف والمتابعة" open={sections.discovery} onToggle={() => toggle('discovery')}>
+          <NavItem to="/" icon={Compass} end>مركز الاكتشاف</NavItem>
           <NavItem to="/signals" icon={Zap}>إشارات السوق</NavItem>
           <NavItem to="/heatmap" icon={Map}>خرائط الحرارة</NavItem>
           <NavItem to="/timeline" icon={Clock}>سجل التغييرات</NavItem>
@@ -347,41 +355,85 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
 
         <div className="my-2 border-t border-slate-800/40 mx-2"></div>
 
-        <NavGroup title="البيانات والتحليل" open={sections.data} onToggle={() => toggle('data')}>
-          <NavItem to="/datasets" icon={Database}>مجموعات البيانات</NavItem>
-          <NavItem to="/dashboards" icon={LayoutDashboard}>كل اللوحات</NavItem>
+        {/* ── المجموعة 2: البيانات واللوحات ── */}
+        <NavGroup title="البيانات واللوحات" open={sections.data} onToggle={() => toggle('data')}>
+          <div className="relative">
+            <NavItem to="/datasets" icon={Database}>مجموعات البيانات</NavItem>
+            <span className="block px-10 -mt-1 mb-1 text-[10px] text-slate-500 leading-tight">ملفات Excel والبيانات المفتوحة</span>
+          </div>
+          <div className="relative">
+            <NavItem to="/dashboards" icon={LayoutDashboard}>اللوحات الرسمية</NavItem>
+            <span className="block px-10 -mt-1 mb-1 text-[10px] text-slate-500 leading-tight">رسوم بيانية ومؤشرات تفاعلية</span>
+          </div>
+          <NavItem to="/my-dashboards" icon={Star}>لوحاتي الخاصة</NavItem>
+          <NavItem to="/sector-dashboards" icon={Layers}>لوحات حسب القطاع</NavItem>
+          {dashboards.filter(d => d.type === 'user').map(d => (
+            <NavItem key={d.id} to={`/my-dashboards?id=${d.id}`} icon={Layout} className="pl-8 opacity-70 scale-95 border-l border-slate-700 ml-4">{d.name}</NavItem>
+          ))}
           <NavItem to="/recommendations" icon={Lightbulb}>التوصيات الذكية</NavItem>
           <NavItem to="/comparisons" icon={ArrowLeftRight}>المقارنات الذكية</NavItem>
           <NavItem to="/economic-summary" icon={TrendingUp}>الملخص الاقتصادي</NavItem>
-          <NavItem to="/patterns" icon={ScanSearch}>اكتشاف الأنماط</NavItem>
-          <NavItem to="/sources" icon={Globe}>مصادر البيانات</NavItem>
-          <NavItem to="/stats" icon={BarChart3}>إحصائيات المنصة</NavItem>
-          <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
-          <NavItem to="/metadata-overview" icon={Shield}>البيانات الوصفية</NavItem>
-          {isExpert && (
+
+          {/* أدوات متقدمة - Expert/Analyst */}
+          {(isExpert || isAnalyst) && (
             <>
-              <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300 shadow-amber-500/10 hover:shadow-amber-500/20">استوديو الخبراء</NavItem>
-              <NavItem to="/data-verification" icon={ShieldCheck} className="text-emerald-400 hover:text-emerald-300">مراجعة البيانات</NavItem>
-              <NavItem to="/custom-reports" icon={FileBarChart} className="text-purple-400 hover:text-purple-300">التقارير المخصصة</NavItem>
+              <div className="my-1 border-t border-slate-800/30 mx-4"></div>
+              {isExpert && (
+                <>
+                  <NavItem to="/expert-studio" icon={LayoutTemplate} className="text-amber-400 hover:text-amber-300">استوديو الخبراء</NavItem>
+                  <NavItem to="/data-verification" icon={ShieldCheck} className="text-emerald-400 hover:text-emerald-300">مراجعة البيانات</NavItem>
+                  <NavItem to="/custom-reports" icon={FileBarChart} className="text-purple-400 hover:text-purple-300">التقارير المخصصة</NavItem>
+                </>
+              )}
+              {isAnalyst && (
+                <>
+                  <NavItem to="/builder" icon={PieChart}>بناء اللوحات</NavItem>
+                  <NavItem to="/widget-library" icon={Library}>مكتبة المؤشرات</NavItem>
+                </>
+              )}
             </>
           )}
-          {isAnalyst && (
+
+          {/* المزيد */}
+          <button
+            onClick={() => toggle('dataMore')}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <ChevronDown size={12} className={`transition-transform duration-200 ${sections.dataMore ? 'rotate-180' : ''}`} />
+            {sections.dataMore ? 'عرض أقل' : 'المزيد...'}
+          </button>
+          {sections.dataMore && (
             <>
-              <NavItem to="/builder" icon={PieChart}>بناء اللوحات</NavItem>
-              <NavItem to="/queries" icon={Search}>المسح البياني</NavItem>
-              <NavItem to="/widget-library" icon={Library}>مكتبة المؤشرات</NavItem>
+              <NavItem to="/patterns" icon={ScanSearch}>اكتشاف الأنماط</NavItem>
+              <NavItem to="/sources" icon={Globe}>مصادر البيانات</NavItem>
+              <NavItem to="/stats" icon={BarChart3}>إحصائيات المنصة</NavItem>
+              <NavItem to="/export" icon={Download}>تصدير البيانات</NavItem>
+              <NavItem to="/metadata-overview" icon={Shield}>البيانات الوصفية</NavItem>
+              {isAnalyst && (
+                <NavItem to="/queries" icon={Search}>المسح البياني</NavItem>
+              )}
             </>
           )}
         </NavGroup>
 
+        {/* ── المجموعة 3: المحتوى ── */}
         {(isWriter || isExpert || isAnalyst || isDesigner || isContentManager || isAdmin) && (
           <>
             <div className="my-2 border-t border-slate-800/40 mx-2"></div>
-            <NavGroup title="صناعة المحتوى" open={sections.authoring} onToggle={() => toggle('authoring')}>
+            <NavGroup title="المحتوى" open={sections.content} onToggle={() => toggle('content')}>
               <NavItem to="/create-post" icon={PenSquare} className="text-emerald-400 hover:text-emerald-300">إنشاء منشور</NavItem>
               <NavItem to="/my-content" icon={FileText}>منشوراتي</NavItem>
               {(isContentManager || isAdmin) && (
-                <NavItem to="/campaigns" icon={Megaphone}>الحملات التفاعلية</NavItem>
+                <>
+                  <NavItem to="/campaigns" icon={Megaphone}>الحملات التفاعلية</NavItem>
+                  <NavItem to="/comment-moderation" icon={MessageCircle}>إشراف التعليقات</NavItem>
+                </>
+              )}
+              {(isAtLeast(UserRole.EDITOR) || isContentManager) && (
+                <NavItem to="/tag-management" icon={Tag} className="text-purple-400 hover:text-purple-300">إدارة الوسوم</NavItem>
+              )}
+              {(isDesigner || isAdmin) && (
+                <NavItem to="/media-library" icon={ImageIcon} className="text-violet-400 hover:text-violet-300">مكتبة الوسائط</NavItem>
               )}
             </NavGroup>
           </>
@@ -389,15 +441,9 @@ const Sidebar = ({ role, dashboards }: { role: string, dashboards: Dashboard[] }
 
         <div className="my-2 border-t border-slate-800/40 mx-2"></div>
 
-        <NavGroup title="مساحتي" open={sections.workspace} onToggle={() => toggle('workspace')}>
+        {/* ── المجموعة 4: حسابي ── */}
+        <NavGroup title="حسابي" open={sections.account} onToggle={() => toggle('account')}>
           <NavItem to="/favorites" icon={Bookmark}>مفضلتي</NavItem>
-          <NavItem to="/my-dashboards" icon={Star}>لوحاتي الخاصة</NavItem>
-          {dashboards.filter(d => d.type === 'user').map(d => (
-            <NavItem key={d.id} to={`/my-dashboards?id=${d.id}`} icon={Layout} className="pl-8 opacity-70 scale-95 border-l border-slate-700 ml-4">{d.name}</NavItem>
-          ))}
-        </NavGroup>
-
-        <NavGroup title="التطبيقات" open={sections.apps} onToggle={() => toggle('apps')}>
           <NavItem to="/profile" icon={UserIcon}>ملف المستخدم</NavItem>
         </NavGroup>
       </nav>
@@ -504,7 +550,11 @@ const Topbar = ({ onOpenWizard }: { onOpenWizard: () => void }) => {
     if (pathname.includes('/widget-library')) return { title: 'مكتبة المؤشرات', section: 'البيانات' };
     if (pathname.includes('/admin/settings')) return { title: 'إعدادات النظام', section: 'Admin' };
     if (pathname.includes('/campaigns')) return { title: 'الحملات التفاعلية', section: 'المحتوى' };
+    if (pathname.includes('/comment-moderation')) return { title: 'إشراف التعليقات', section: 'المحتوى' };
+    if (pathname.includes('/tag-management')) return { title: 'إدارة الوسوم والتصنيفات', section: 'المحتوى' };
     if (pathname.includes('/metadata')) return { title: 'البيانات الوصفية', section: 'البيانات' };
+    if (pathname.includes('/media-library')) return { title: 'مكتبة الوسائط', section: 'المحتوى' };
+    if (pathname.includes('/sector-dashboards')) return { title: 'لوحات حسب القطاع', section: 'مساحتي' };
     return { title: 'لوحة التحكم', section: 'رادار' };
   };
 
@@ -1127,8 +1177,9 @@ const AppContent = () => {
         <Topbar onOpenWizard={() => setIsWizardOpen(true)} />
         <div className="animate-fadeIn">
           <Routes>
-            <Route path="/" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
-            <Route path="/dashboard" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
+            <Route path="/" element={<ExploreDashboardPage user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
+            <Route path="/dashboard" element={<ExploreDashboardPage user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
+            <Route path="/feed" element={<HomeFeedWrapper user={currentUser} onOpenWizard={() => setIsWizardOpen(true)} />} />
             <Route path="/dashboards" element={<OfficialDashboardsWrapper userRole={currentUser.role} />} />
             <Route path="/dashboards/:id" element={<DashboardDetailPage />} />
             <Route path="/signals" element={<AISignalsPage />} />
@@ -1139,6 +1190,7 @@ const AppContent = () => {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/designer/studio" element={<InfographicBuilder />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
+            <Route path="/comment-moderation" element={<CommentModerationPage />} />
             <Route path="/datasets/:id/metadata" element={<DatasetMetadataPage />} />
             <Route path="/metadata-overview" element={<MetadataOverviewPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
@@ -1177,6 +1229,9 @@ const AppContent = () => {
             <Route path="/data-sources" element={<DataSourcesPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/admin/settings" element={<SystemSettingsPage />} />
+            <Route path="/tag-management" element={<TagManagementPage />} />
+            <Route path="/media-library" element={<MediaLibraryPage />} />
+            <Route path="/sector-dashboards" element={<SectorDashboardsPage />} />
 
             <Route path="*" element={<div className="p-10 text-center text-gray-400">جاري العمل على هذه الصفحة...</div>} />
           </Routes>
@@ -1299,13 +1354,8 @@ const AppWithAuth = () => {
   const publicPaths = ['/login', '/register', '/'];
   const isPublicPath = publicPaths.includes(location.pathname);
 
-  // Redirect authenticated users from login/register to dashboard
+  // Redirect authenticated users from login/register to home
   if (isAuthenticated && (location.pathname === '/login' || location.pathname === '/register')) {
-    // Admin goes to admin dashboard, others to home feed
-    const role = user?.role?.toUpperCase();
-    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-      return <Navigate to="/admin" replace />;
-    }
     return <Navigate to="/dashboard" replace />;
   }
 

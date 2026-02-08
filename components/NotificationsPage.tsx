@@ -22,6 +22,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import api from '../src/services/api';
+import { STORAGE_KEYS } from '../src/core/config/app.config';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -80,7 +81,7 @@ const NotificationsPage = () => {
 
   // Connect to SSE stream
   useEffect(() => {
-    const token = localStorage.getItem('investor_token');
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     if (!token) {
       setIsLoading(false);
       return;
@@ -153,7 +154,7 @@ const NotificationsPage = () => {
       eventSourceRef.current.close();
     }
     setIsLoading(true);
-    const token = localStorage.getItem('investor_token');
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     if (!token) return;
     const url = `${API_URL}/users/notifications/stream?token=${encodeURIComponent(token)}`;
     const es = new EventSource(url);

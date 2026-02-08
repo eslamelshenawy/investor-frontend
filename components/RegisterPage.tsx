@@ -21,6 +21,8 @@ import {
   Zap,
   ArrowLeft,
   UserPlus,
+  Briefcase,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -47,6 +49,33 @@ const FEATURES = [
   },
 ];
 
+const USER_TYPES = [
+  {
+    id: 'investor',
+    icon: TrendingUp,
+    title: 'مستثمر',
+    subtitle: 'متابعة الفرص الاستثمارية والمؤشرات',
+  },
+  {
+    id: 'analyst',
+    icon: BarChart3,
+    title: 'محلل',
+    subtitle: 'تحليل البيانات وبناء اللوحات',
+  },
+  {
+    id: 'entrepreneur',
+    icon: Briefcase,
+    title: 'رائد أعمال',
+    subtitle: 'استكشاف الفرص وتتبع القطاعات',
+  },
+  {
+    id: 'researcher',
+    icon: BookOpen,
+    title: 'باحث',
+    subtitle: 'الوصول للبيانات والتقارير الاقتصادية',
+  },
+];
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, loginWithGoogle } = useAuth();
@@ -57,6 +86,7 @@ const RegisterPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    userType: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -155,7 +185,8 @@ const RegisterPage = () => {
       nameAr: formData.nameAr || formData.name,
       email: formData.email,
       password: formData.password,
-    });
+      ...(formData.userType && { userType: formData.userType }),
+    } as any);
     setIsLoading(false);
 
     if (result.success) {
@@ -264,6 +295,73 @@ const RegisterPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* User Type Selection - اختيار نوع المستخدم */}
+            <div className="mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">ما الذي يصفك أفضل؟</label>
+              <p className="text-xs text-gray-400 mb-3">اختياري - يساعدنا في تخصيص تجربتك</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {USER_TYPES.map((ut) => {
+                  const isSelected = formData.userType === ut.id;
+                  return (
+                    <button
+                      key={ut.id}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          userType: isSelected ? '' : ut.id,
+                        })
+                      }
+                      className={`relative flex flex-col items-center text-center p-3.5 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                        isSelected
+                          ? 'bg-slate-800 border-blue-500 shadow-lg shadow-blue-500/10'
+                          : 'bg-slate-800 border-slate-700 hover:border-slate-500'
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 left-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <Check size={12} strokeWidth={3} className="text-white" />
+                        </div>
+                      )}
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 transition-colors ${
+                          isSelected
+                            ? 'bg-blue-500/20'
+                            : 'bg-slate-700 group-hover:bg-slate-600'
+                        }`}
+                      >
+                        <ut.icon
+                          size={18}
+                          className={
+                            isSelected ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-300'
+                          }
+                        />
+                      </div>
+                      <span
+                        className={`text-sm font-bold leading-tight ${
+                          isSelected ? 'text-white' : 'text-slate-300'
+                        }`}
+                      >
+                        {ut.title}
+                      </span>
+                      <span
+                        className={`text-[10px] mt-1 leading-tight ${
+                          isSelected ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        {ut.subtitle}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Section: بيانات أساسية */}
+            <div className="pt-1 pb-1">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">بيانات أساسية</p>
+            </div>
+
             {/* Name */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1.5">الاسم بالإنجليزية *</label>
@@ -438,9 +536,9 @@ const RegisterPage = () => {
           {/* Footer */}
           <p className="text-center text-gray-400 text-[11px] mt-4">
             بإنشاء الحساب، فإنك توافق على{' '}
-            <span className="underline cursor-pointer hover:text-gray-500">شروط الاستخدام</span>
+            <a href="#/terms" className="underline cursor-pointer hover:text-gray-500">شروط الاستخدام</a>
             {' '}و{' '}
-            <span className="underline cursor-pointer hover:text-gray-500">سياسة الخصوصية</span>
+            <a href="#/privacy" className="underline cursor-pointer hover:text-gray-500">سياسة الخصوصية</a>
           </p>
         </div>
       </div>

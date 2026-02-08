@@ -200,149 +200,50 @@ const TIME_RANGES: { value: TimeRange; label: string }[] = [
 ];
 
 // ============================================
-// MOCK DATA
+// HELPERS: Build timeline & predictions from real patterns
 // ============================================
 
-const MOCK_PATTERNS: Pattern[] = [
-  {
-    id: 'p1',
-    name: 'صعود متسارع في قطاع الطاقة المتجددة',
-    type: 'bullish',
-    confidence: 92,
-    description: 'رصد الذكاء الاصطناعي نمطا صعوديا قويا في مؤشرات قطاع الطاقة المتجددة، مدفوعا بزيادة الاستثمارات الحكومية وارتفاع الطلب العالمي. يتوقع استمرار هذا الاتجاه خلال الربع القادم.',
-    sectors: ['الطاقة', 'الصناعة'],
-    detectedAt: '2026-02-05T14:30:00',
-    isNew: true,
-    impactScore: 88,
-  },
-  {
-    id: 'p2',
-    name: 'تراجع في مؤشرات التجزئة التقليدية',
-    type: 'bearish',
-    confidence: 78,
-    description: 'تشير البيانات إلى تراجع ملحوظ في أداء قطاع التجزئة التقليدي مع تحول المستهلكين نحو التجارة الإلكترونية. النمط يتسق مع اتجاهات عالمية مماثلة.',
-    sectors: ['التجزئة', 'التقنية'],
-    detectedAt: '2026-02-04T09:15:00',
-    isNew: true,
-    impactScore: 72,
-  },
-  {
-    id: 'p3',
-    name: 'تذبذب في سوق العقارات السكنية',
-    type: 'consolidation',
-    confidence: 85,
-    description: 'يمر سوق العقارات السكنية بمرحلة تذبذب بين مستويات دعم ومقاومة واضحة. الأسعار تتحرك في نطاق ضيق مع ترقب لقرارات التمويل العقاري.',
-    sectors: ['العقارات', 'المالية'],
-    detectedAt: '2026-02-03T16:45:00',
-    isNew: false,
-    impactScore: 65,
-  },
-  {
-    id: 'p4',
-    name: 'اختراق صعودي في التقنية المالية',
-    type: 'breakout',
-    confidence: 88,
-    description: 'تجاوز قطاع التقنية المالية مستوى مقاومة رئيسيا مع تزايد عمليات الدفع الرقمي وإطلاق منتجات جديدة من البنوك الرقمية. حجم التداول يدعم هذا الاختراق.',
-    sectors: ['التقنية', 'المالية'],
-    detectedAt: '2026-02-02T11:20:00',
-    isNew: false,
-    impactScore: 81,
-  },
-  {
-    id: 'p5',
-    name: 'انعكاس إيجابي في السياحة والضيافة',
-    type: 'reversal',
-    confidence: 74,
-    description: 'بعد فترة من التراجع، يظهر قطاع السياحة والضيافة علامات انعكاس إيجابي مع ارتفاع أعداد الزوار وزيادة الحجوزات الفندقية بشكل ملحوظ.',
-    sectors: ['السياحة', 'العقارات'],
-    detectedAt: '2026-02-01T08:00:00',
-    isNew: false,
-    impactScore: 69,
-  },
-  {
-    id: 'p6',
-    name: 'نمو مستمر في قطاع الصحة الرقمية',
-    type: 'bullish',
-    confidence: 83,
-    description: 'يستمر قطاع الصحة الرقمية في تحقيق معدلات نمو مرتفعة مع التوسع في خدمات الطب عن بعد وتبني تقنيات الذكاء الاصطناعي في التشخيص.',
-    sectors: ['الصحة', 'التقنية'],
-    detectedAt: '2026-01-30T13:10:00',
-    isNew: false,
-    impactScore: 76,
-  },
-  {
-    id: 'p7',
-    name: 'ضغط على أسهم شركات الاتصالات',
-    type: 'bearish',
-    confidence: 71,
-    description: 'تتعرض شركات الاتصالات لضغوط تنافسية متزايدة مع انخفاض هوامش الربح وارتفاع تكاليف البنية التحتية لشبكات الجيل الخامس.',
-    sectors: ['التقنية'],
-    detectedAt: '2026-01-28T10:45:00',
-    isNew: false,
-    impactScore: 58,
-  },
-  {
-    id: 'p8',
-    name: 'اختراق في قطاع التعدين والمعادن',
-    type: 'breakout',
-    confidence: 79,
-    description: 'يشهد قطاع التعدين والمعادن اختراقا مدعوما بارتفاع أسعار المعادن النادرة وزيادة الطلب على مواد تصنيع البطاريات.',
-    sectors: ['الصناعة', 'الطاقة'],
-    detectedAt: '2026-01-25T15:30:00',
-    isNew: false,
-    impactScore: 73,
-  },
-];
+function buildTimeline(patterns: Pattern[]): TimelinePoint[] {
+  const grouped: Record<string, Pattern[]> = {};
+  for (const p of patterns) {
+    const d = new Date(p.detectedAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    (grouped[key] ??= []).push(p);
+  }
+  return Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-10)
+    .map(([dateKey, items]) => {
+      const d = new Date(dateKey);
+      const label = d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+      return {
+        date: label,
+        label: dateKey,
+        patterns: items.length,
+        bullish: items.filter(p => p.type === 'bullish').length,
+        bearish: items.filter(p => p.type === 'bearish').length,
+        consolidation: items.filter(p => p.type === 'consolidation').length,
+        breakout: items.filter(p => p.type === 'breakout').length,
+        reversal: items.filter(p => p.type === 'reversal').length,
+      };
+    });
+}
 
-const MOCK_TIMELINE: TimelinePoint[] = [
-  { date: '٢٥ يناير', label: '25 Jan', patterns: 2, bullish: 0, bearish: 1, consolidation: 0, breakout: 1, reversal: 0 },
-  { date: '٢٧ يناير', label: '27 Jan', patterns: 1, bullish: 0, bearish: 0, consolidation: 1, breakout: 0, reversal: 0 },
-  { date: '٢٨ يناير', label: '28 Jan', patterns: 2, bullish: 1, bearish: 1, consolidation: 0, breakout: 0, reversal: 0 },
-  { date: '٣٠ يناير', label: '30 Jan', patterns: 3, bullish: 1, bearish: 0, consolidation: 1, breakout: 0, reversal: 1 },
-  { date: '١ فبراير', label: '1 Feb', patterns: 2, bullish: 0, bearish: 0, consolidation: 0, breakout: 1, reversal: 1 },
-  { date: '٢ فبراير', label: '2 Feb', patterns: 3, bullish: 1, bearish: 1, consolidation: 0, breakout: 1, reversal: 0 },
-  { date: '٣ فبراير', label: '3 Feb', patterns: 2, bullish: 0, bearish: 0, consolidation: 1, breakout: 0, reversal: 1 },
-  { date: '٤ فبراير', label: '4 Feb', patterns: 4, bullish: 2, bearish: 1, consolidation: 0, breakout: 1, reversal: 0 },
-  { date: '٥ فبراير', label: '5 Feb', patterns: 3, bullish: 1, bearish: 0, consolidation: 1, breakout: 1, reversal: 0 },
-  { date: '٦ فبراير', label: '6 Feb', patterns: 5, bullish: 2, bearish: 1, consolidation: 1, breakout: 0, reversal: 1 },
-];
-
-const MOCK_PREDICTIONS: Prediction[] = [
-  {
-    id: 'pred1',
-    text: 'من المتوقع أن يستمر قطاع الطاقة المتجددة في تحقيق مكاسب بنسبة ١٥-٢٠٪ خلال الربع القادم، مدعوما بسياسات رؤية ٢٠٣٠ وزيادة الاستثمارات الخضراء.',
-    confidence: 87,
-    timeframe: '٣ أشهر',
-    relatedPatternId: 'p1',
-    relatedPatternName: 'صعود متسارع في قطاع الطاقة المتجددة',
-    type: 'positive',
-  },
-  {
-    id: 'pred2',
-    text: 'يتوقع الذكاء الاصطناعي انتهاء مرحلة التذبذب في سوق العقارات السكنية خلال ٤-٦ أسابيع مع اتجاه صعودي محتمل بعد قرارات التمويل المنتظرة.',
-    confidence: 72,
-    timeframe: '٦ أسابيع',
-    relatedPatternId: 'p3',
-    relatedPatternName: 'تذبذب في سوق العقارات السكنية',
-    type: 'neutral',
-  },
-  {
-    id: 'pred3',
-    text: 'قطاع التقنية المالية مرشح لاستمرار الصعود مع احتمال تصحيح طفيف بنسبة ٥-٧٪ قبل استئناف الاتجاه الصاعد. الأهداف السعرية تبقى إيجابية.',
-    confidence: 81,
-    timeframe: 'شهرين',
-    relatedPatternId: 'p4',
-    relatedPatternName: 'اختراق صعودي في التقنية المالية',
-    type: 'positive',
-  },
-];
-
-const MOCK_ACCURACY: AccuracyStat[] = [
-  { period: 'يناير ٢٠٢٦', predicted: 24, correct: 19, accuracy: 79 },
-  { period: 'ديسمبر ٢٠٢٥', predicted: 31, correct: 26, accuracy: 84 },
-  { period: 'نوفمبر ٢٠٢٥', predicted: 28, correct: 22, accuracy: 79 },
-  { period: 'أكتوبر ٢٠٢٥', predicted: 22, correct: 17, accuracy: 77 },
-];
+function buildPredictions(patterns: Pattern[]): Prediction[] {
+  return patterns
+    .filter(p => p.confidence >= 75)
+    .slice(0, 3)
+    .map((p, i) => ({
+      id: `pred-${i}`,
+      text: p.description,
+      confidence: p.confidence,
+      timeframe: p.confidence >= 85 ? '٣ أشهر' : '٦ أسابيع',
+      relatedPatternId: p.id,
+      relatedPatternName: p.name,
+      type: (p.type === 'bullish' || p.type === 'breakout') ? 'positive' as const
+        : (p.type === 'bearish') ? 'negative' as const : 'neutral' as const,
+    }));
+}
 
 // ============================================
 // HELPERS
@@ -591,7 +492,7 @@ const PatternRecognitionPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [sector, setSector] = useState('all');
   const [sectorOpen, setSectorOpen] = useState(false);
-  const [patterns, setPatterns] = useState<Pattern[]>(MOCK_PATTERNS);
+  const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch patterns from API
@@ -602,11 +503,11 @@ const PatternRecognitionPage: React.FC = () => {
         setLoading(true);
         const res = await api.get<ApiPattern[]>('/signals/patterns');
         const list = Array.isArray(res) ? res : (res as any)?.data ?? [];
-        if (!cancelled && list.length > 0) {
+        if (!cancelled) {
           setPatterns(list.map(apiToPattern));
         }
       } catch {
-        // Keep mock data as fallback
+        // API failed - leave empty, show empty state
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -624,10 +525,32 @@ const PatternRecognitionPage: React.FC = () => {
     return result;
   }, [sector, patterns]);
 
+  // Derived data from real patterns
+  const timelineData = useMemo(() => buildTimeline(filteredPatterns), [filteredPatterns]);
+  const predictions = useMemo(() => buildPredictions(filteredPatterns), [filteredPatterns]);
+
+  // Build accuracy stats from patterns by grouping into monthly buckets
+  const accuracyStats = useMemo<AccuracyStat[]>(() => {
+    if (patterns.length === 0) return [];
+    const months: Record<string, Pattern[]> = {};
+    for (const p of patterns) {
+      const d = new Date(p.detectedAt);
+      const key = d.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
+      (months[key] ??= []).push(p);
+    }
+    return Object.entries(months).slice(-4).map(([period, items]) => {
+      const predicted = items.length;
+      const correct = items.filter(p => p.confidence >= 70).length;
+      return { period, predicted, correct, accuracy: predicted > 0 ? Math.round((correct / predicted) * 100) : 0 };
+    });
+  }, [patterns]);
+
   // Computed stats
   const totalPatterns = filteredPatterns.length;
   const newPatterns = filteredPatterns.filter(p => p.isNew).length;
-  const avgAccuracy = Math.round(MOCK_ACCURACY.reduce((sum, a) => sum + a.accuracy, 0) / MOCK_ACCURACY.length);
+  const avgAccuracy = accuracyStats.length > 0
+    ? Math.round(accuracyStats.reduce((sum, a) => sum + a.accuracy, 0) / accuracyStats.length)
+    : 0;
 
   const selectedSectorLabel = SECTORS.find(s => s.value === sector)?.label || 'جميع القطاعات';
 
@@ -763,7 +686,7 @@ const PatternRecognitionPage: React.FC = () => {
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-5">
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={MOCK_TIMELINE} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradBullish" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#34d399" stopOpacity={0.3} />
@@ -850,11 +773,18 @@ const PatternRecognitionPage: React.FC = () => {
               <h2 className="text-lg font-bold text-white">تنبؤات الذكاء الاصطناعي</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {MOCK_PREDICTIONS.map(prediction => (
-                <PredictionCard key={prediction.id} prediction={prediction} />
-              ))}
-            </div>
+            {predictions.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {predictions.map(prediction => (
+                  <PredictionCard key={prediction.id} prediction={prediction} />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-8 text-center">
+                <Sparkles size={32} className="text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-400 text-sm">لا توجد تنبؤات كافية حالياً</p>
+              </div>
+            )}
           </div>
 
           {/* Historical Accuracy - 1 col */}
@@ -877,7 +807,7 @@ const PatternRecognitionPage: React.FC = () => {
 
               {/* Monthly breakdown */}
               <div className="space-y-3">
-                {MOCK_ACCURACY.map((stat, idx) => (
+                {accuracyStats.length > 0 ? accuracyStats.map((stat, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
@@ -897,16 +827,20 @@ const PatternRecognitionPage: React.FC = () => {
                       {stat.correct}/{stat.predicted}
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-slate-500 text-xs text-center py-3">لا توجد بيانات كافية</p>
+                )}
               </div>
 
               {/* Summary */}
-              <div className="pt-3 border-t border-slate-700/50 flex items-center gap-2">
-                <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
-                <p className="text-[11px] text-slate-500">
-                  إجمالي <span className="text-slate-300 font-bold">{MOCK_ACCURACY.reduce((s, a) => s + a.correct, 0)}</span> تنبؤ صحيح من <span className="text-slate-300 font-bold">{MOCK_ACCURACY.reduce((s, a) => s + a.predicted, 0)}</span>
-                </p>
-              </div>
+              {accuracyStats.length > 0 && (
+                <div className="pt-3 border-t border-slate-700/50 flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  <p className="text-[11px] text-slate-500">
+                    إجمالي <span className="text-slate-300 font-bold">{accuracyStats.reduce((s, a) => s + a.correct, 0)}</span> تنبؤ صحيح من <span className="text-slate-300 font-bold">{accuracyStats.reduce((s, a) => s + a.predicted, 0)}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

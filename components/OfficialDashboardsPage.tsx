@@ -7,7 +7,7 @@
  * تدعم 30+ لوحة مع تصفية، بحث، ومفضلة
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     LayoutGrid,
@@ -37,10 +37,16 @@ import {
     Landmark,
     Home,
     CheckCircle2,
-    Smartphone
+    Smartphone,
+    Plus,
+    Check,
+    Loader2,
+    X
 } from 'lucide-react';
 import { Dashboard, Widget, UserRole } from '../types';
 import WidgetCard from './WidgetCard';
+import { api } from '../src/services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 // ============================================
 // MOCK DATA - بيانات تجريبية موسعة ومثراة
@@ -162,10 +168,80 @@ interface OfficialDashboardsPageProps {
 
 const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets, userRole }) => {
     const navigate = useNavigate();
+    const { user, isAuthenticated } = useAuth();
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     const [favorites, setFavorites] = useState<string[]>(['odb1', 'odb3_mining']);
+
+    // "Save to My Dashboard" state
+    const [savingDashboard, setSavingDashboard] = useState<string | null>(null);
+    const [savedDashboards, setSavedDashboards] = useState<Set<string>>(new Set());
+    const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+    // Auto-dismiss toast after 3 seconds
+    const showToast = useCallback((text: string, type: 'success' | 'error') => {
+        setToastMessage({ text, type });
+        setTimeout(() => setToastMessage(null), 3000);
+    }, []);
+
+    /**
+     * Save an official dashboard/indicator to the user's personal dashboard.
+     * Flow:
+     *  1. Check auth - redirect to login if not authenticated
+     *  2. Fetch user dashboards - pick the first one, or create a default
+     *  3. POST the widget (dashboard ID) to the user's dashboard
+     */
+    const handleSaveToMyDashboard = useCallback(async (e: React.MouseEvent, dashId: string) => {
+        e.stopPropagation();
+
+        // Already saved
+        if (savedDashboards.has(dashId)) return;
+
+        // Auth check
+        if (!isAuthenticated) {
+            showToast('يرجى تسجيل الدخول أولاً لحفظ اللوحة', 'error');
+            setTimeout(() => navigate('/login'), 1500);
+            return;
+        }
+
+        setSavingDashboard(dashId);
+
+        try {
+            // Get or create user dashboard
+            const dashResponse = await api.getUserDashboards();
+            let targetDashboardId: string;
+
+            if (dashResponse.success && dashResponse.data && dashResponse.data.length > 0) {
+                targetDashboardId = dashResponse.data[0].id;
+            } else {
+                // Create a default personal dashboard
+                const createRes = await api.createUserDashboard({
+                    name: 'My Dashboard',
+                    nameAr: 'لوحتي الشخصية',
+                    description: 'لوحة شخصية للمؤشرات المحفوظة',
+                    widgets: '[]',
+                    layout: '{}'
+                });
+                if (!createRes.success || !createRes.data) {
+                    showToast('حدث خطأ أثناء إنشاء اللوحة الشخصية', 'error');
+                    return;
+                }
+                targetDashboardId = createRes.data.id;
+            }
+
+            // Add the official dashboard as a widget reference
+            await api.post(`/users/dashboards/${targetDashboardId}/widgets`, { widgetId: dashId });
+
+            setSavedDashboards(prev => new Set(prev).add(dashId));
+            showToast('تم الحفظ في لوحتي بنجاح', 'success');
+        } catch (err) {
+            console.error('[OfficialDashboards] Save failed:', err);
+            showToast('حدث خطأ أثناء الحفظ، حاول مجدداً', 'error');
+        } finally {
+            setSavingDashboard(null);
+        }
+    }, [isAuthenticated, savedDashboards, navigate, showToast]);
 
     // Navigate to dashboard detail page
     const handleDashboardClick = (dashId: string) => {
@@ -280,8 +356,41 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
                             </span>
                         </div>
 
-                        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-blue-500/30">
-                            <ArrowUpRight size={16} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        <div className="flex items-center gap-2">
+                            {/* Save to My Dashboard Button */}
+                            <button
+                                onClick={(e) => handleSaveToMyDashboard(e, dash.id)}
+                                disabled={savingDashboard === dash.id || savedDashboards.has(dash.id)}
+                                title="حفظ في لوحتي"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border ${
+                                    savedDashboards.has(dash.id)
+                                        ? 'bg-green-50 text-green-600 border-green-200 cursor-default'
+                                        : savingDashboard === dash.id
+                                            ? 'bg-blue-50 text-blue-400 border-blue-200 cursor-wait'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 hover:shadow-md'
+                                }`}
+                            >
+                                {savedDashboards.has(dash.id) ? (
+                                    <>
+                                        <Check size={14} />
+                                        <span>تم الحفظ</span>
+                                    </>
+                                ) : savingDashboard === dash.id ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>جارٍ الحفظ</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus size={14} />
+                                        <span>حفظ في لوحتي</span>
+                                    </>
+                                )}
+                            </button>
+
+                            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-blue-500/30">
+                                <ArrowUpRight size={16} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -334,6 +443,27 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                        {/* Save to My Dashboard - List View */}
+                        <button
+                            onClick={(e) => handleSaveToMyDashboard(e, dash.id)}
+                            disabled={savingDashboard === dash.id || savedDashboards.has(dash.id)}
+                            title="حفظ في لوحتي"
+                            className={`p-2 rounded-lg transition-all duration-300 ${
+                                savedDashboards.has(dash.id)
+                                    ? 'bg-green-50 text-green-500'
+                                    : savingDashboard === dash.id
+                                        ? 'bg-blue-50 text-blue-400'
+                                        : 'text-gray-300 hover:bg-blue-50 hover:text-blue-600'
+                            }`}
+                        >
+                            {savedDashboards.has(dash.id) ? (
+                                <Check size={18} />
+                            ) : savingDashboard === dash.id ? (
+                                <Loader2 size={18} className="animate-spin" />
+                            ) : (
+                                <Plus size={18} />
+                            )}
+                        </button>
                         <button
                             onClick={(e) => toggleFavorite(e, dash.id)}
                             className={`p-2 rounded-lg transition-colors ${favorites.includes(dash.id) ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:bg-gray-100 hover:text-gray-500'}`}
@@ -381,12 +511,43 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
                         {DASHBOARD_CATEGORIES.find(c => c.id === dash.category)?.label}
                     </p>
 
-                    <div className="flex justify-center items-center gap-2">
+                    <div className="flex justify-center items-center gap-2 mb-3">
                         <span className="text-[10px] bg-gray-50 text-gray-600 px-2 py-0.5 rounded border border-gray-100">
                             {dash.views > 1000 ? (dash.views / 1000).toFixed(1) + 'k' : dash.views}
                         </span>
                         {dash.isFavorite && <span className="w-2 h-2 rounded-full bg-amber-400"></span>}
                     </div>
+
+                    {/* Save to My Dashboard - Compact View */}
+                    <button
+                        onClick={(e) => handleSaveToMyDashboard(e, dash.id)}
+                        disabled={savingDashboard === dash.id || savedDashboards.has(dash.id)}
+                        title="حفظ في لوحتي"
+                        className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all duration-300 border ${
+                            savedDashboards.has(dash.id)
+                                ? 'bg-green-50 text-green-600 border-green-200'
+                                : savingDashboard === dash.id
+                                    ? 'bg-blue-50 text-blue-400 border-blue-200'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+                        }`}
+                    >
+                        {savedDashboards.has(dash.id) ? (
+                            <>
+                                <Check size={12} />
+                                <span>تم الحفظ</span>
+                            </>
+                        ) : savingDashboard === dash.id ? (
+                            <>
+                                <Loader2 size={12} className="animate-spin" />
+                                <span>جارٍ الحفظ</span>
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={12} />
+                                <span>حفظ في لوحتي</span>
+                            </>
+                        )}
+                    </button>
                 </div>
             ))}
         </div>
@@ -501,6 +662,30 @@ const OfficialDashboardsPage: React.FC<OfficialDashboardsPageProps> = ({ widgets
                     </div>
                 )}
             </div>
+
+            {/* Toast Notification */}
+            {toastMessage && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fadeIn">
+                    <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md text-sm font-bold ${
+                        toastMessage.type === 'success'
+                            ? 'bg-green-50/95 text-green-700 border-green-200 shadow-green-500/20'
+                            : 'bg-red-50/95 text-red-700 border-red-200 shadow-red-500/20'
+                    }`}>
+                        {toastMessage.type === 'success' ? (
+                            <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+                        ) : (
+                            <X size={18} className="text-red-500 shrink-0" />
+                        )}
+                        <span>{toastMessage.text}</span>
+                        <button
+                            onClick={() => setToastMessage(null)}
+                            className="mr-2 p-1 rounded-full hover:bg-black/5 transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

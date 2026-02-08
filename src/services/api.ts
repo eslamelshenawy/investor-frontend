@@ -849,6 +849,16 @@ class ApiService {
     }>('/stats/sources');
   }
 
+  async getHeatmapData() {
+    return this.get<{
+      sectorHeatmap: Array<{ sector: string; datasetCount: number; signalCount: number; avgImpact: number }>;
+      regionHeatmap: Array<{ region: string; signalCount: number; avgImpact: number }>;
+      temporalHeatmap: Array<{ month: string; signalCount: number; datasetUpdates: number }>;
+      lastUpdated: string;
+      isRealData: boolean;
+    }>('/heatmap');
+  }
+
   // =====================
   // Widgets Endpoints
   // =====================
@@ -1038,6 +1048,10 @@ class ApiService {
 
   async pinContent(id: string) {
     return this.request<Content>(`/content/${id}/pin`, { method: 'PATCH' });
+  }
+
+  async highlightContent(id: string) {
+    return this.request<Content>(`/content/${id}/highlight`, { method: 'PATCH' });
   }
 
   async getPendingContent(params?: { status?: string; page?: number; limit?: number }) {

@@ -37,7 +37,8 @@ import {
     Hash,
     ArrowUpRight,
     Layers,
-    X
+    X,
+    Search
 } from 'lucide-react';
 import { api } from '../src/services/api';
 
@@ -72,7 +73,9 @@ interface AISignal {
     type: SignalType;
     category: SignalCategory;
     title: string;
+    titleEn?: string;
     summary: string;
+    summaryEn?: string;
     impactScore: number;
     confidenceLevel: number;
     timestamp: string;
@@ -108,7 +111,9 @@ function transformSignal(apiSignal: APISignal): AISignal {
         type: typeMap[apiSignal.type] || 'watch',
         category: 'trend',
         title: apiSignal.titleAr || apiSignal.title,
+        titleEn: apiSignal.title,
         summary: apiSignal.summaryAr || apiSignal.summary,
+        summaryEn: apiSignal.summary,
         impactScore: apiSignal.impactScore,
         confidenceLevel: apiSignal.confidence,
         timestamp: apiSignal.createdAt,
@@ -601,6 +606,27 @@ const AISignalsPage: React.FC = () => {
     const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
     const signalsEventSourceRef = useRef<EventSource | null>(null);
 
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Debounced search handler
+    const handleSearchChange = useCallback((value: string) => {
+        setSearchQuery(value);
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            setDebouncedSearch(value);
+        }, 300);
+    }, []);
+
+    // Cleanup debounce timer
+    useEffect(() => {
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+    }, []);
+
     // SSE: Stream signals
     const streamSignals = useCallback(() => {
         const url = `${API_BASE}/signals/stream`;
@@ -726,9 +752,25 @@ const AISignalsPage: React.FC = () => {
 
     const loading = streaming && signals.length === 0;
 
-    const filteredSignals = filter === 'all'
+    // Apply type filter
+    const typeFilteredSignals = filter === 'all'
         ? signals
         : signals.filter(s => s.type === filter);
+
+    // Apply search filter
+    const filteredSignals = debouncedSearch.trim()
+        ? typeFilteredSignals.filter(s => {
+            const query = debouncedSearch.trim().toLowerCase();
+            return (
+                s.title.toLowerCase().includes(query) ||
+                (s.titleEn && s.titleEn.toLowerCase().includes(query)) ||
+                s.summary.toLowerCase().includes(query) ||
+                (s.summaryEn && s.summaryEn.toLowerCase().includes(query)) ||
+                (s.relatedSectors && s.relatedSectors.some(sec => sec.toLowerCase().includes(query))) ||
+                (s.relatedRegions && s.relatedRegions.some(reg => reg.toLowerCase().includes(query)))
+            );
+        })
+        : typeFilteredSignals;
 
     // Sort by impact score descending
     const sortedSignals = [...filteredSignals].sort((a, b) => b.impactScore - a.impactScore);
@@ -794,6 +836,41 @@ const AISignalsPage: React.FC = () => {
 
             {/* Economic Summary */}
             {dailySummary && <EconomicSummaryCard summary={dailySummary} />}
+
+            {/* Search Bar - حقل بحث */}
+            <div className="relative mb-6">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <Search size={18} className="text-slate-400" />
+                </div>
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    placeholder="ابحث عن إشارة، مؤشر، أو قطاع..."
+                    className="w-full bg-slate-800 border border-slate-600 text-white placeholder-slate-400 rounded-xl pr-11 pl-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    dir="rtl"
+                />
+                {searchQuery && (
+                    <button
+                        onClick={() => { setSearchQuery(''); setDebouncedSearch(''); }}
+                        className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 hover:text-white transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
+                )}
+            </div>
+
+            {/* Search result count */}
+            {debouncedSearch.trim() && (
+                <div className="flex items-center gap-2 mb-4 text-sm font-medium text-slate-500">
+                    <Search size={14} />
+                    <span>
+                        {sortedSignals.length === 0
+                            ? `لا توجد نتائج لـ "${debouncedSearch.trim()}"`
+                            : `${sortedSignals.length} نتيجة لـ "${debouncedSearch.trim()}"`}
+                    </span>
+                </div>
+            )}
 
             {/* Filters + Actions */}
             <div className="flex items-center justify-between flex-wrap gap-3 mb-8">

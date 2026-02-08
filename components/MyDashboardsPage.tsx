@@ -7,6 +7,7 @@ import {
   Loader2,
   Wifi,
   TrendingUp,
+  TrendingDown,
   BarChart3,
   Activity,
   Trash2,
@@ -17,7 +18,9 @@ import {
   ChevronUp,
   ChevronDown,
   Copy,
-  GripVertical
+  GripVertical,
+  Clock,
+  Bot
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import { STORAGE_KEYS } from '../src/core/config/app.config';
@@ -61,6 +64,56 @@ interface Widget {
   atomicType?: string;
   data?: any;
   config?: any;
+  value?: string; // JSON string with currentValue, previousValue, changePercent, trend
+  sourceUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Parsed value data from widget.value JSON
+interface WidgetValueData {
+  currentValue?: number | string;
+  previousValue?: number | string;
+  changePercent?: number;
+  trend?: 'up' | 'down' | 'stable';
+}
+
+// Parse widget.value JSON safely
+function parseWidgetValue(value?: string): WidgetValueData {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return {
+      currentValue: parsed.currentValue,
+      previousValue: parsed.previousValue,
+      changePercent: typeof parsed.changePercent === 'number' ? parsed.changePercent : undefined,
+      trend: parsed.trend,
+    };
+  } catch {
+    return {};
+  }
+}
+
+// Format date to Arabic-friendly relative or short date
+function formatUpdateDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'الآن';
+    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+    if (diffDays < 7) return `منذ ${diffDays} يوم`;
+    return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
 }
 
 function parseDashboard(raw: DashboardRaw): Dashboard {
@@ -743,32 +796,93 @@ const MyDashboardsPage: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-start gap-3 mb-4 pr-6">
-                      <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                        {(widget.atomicType === 'sparkline' || widget.type === 'line') ? <TrendingUp size={20} /> :
-                         (widget.atomicType === 'progress' || widget.type === 'bar') ? <BarChart3 size={20} /> :
-                         <Activity size={20} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 line-clamp-1">
-                          {widget.titleAr || widget.title}
-                        </h3>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {widget.category}
-                        </span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const valueData = parseWidgetValue(widget.value);
+                      const updateDateStr = formatUpdateDate(widget.updatedAt);
+                      const changePercent = valueData.changePercent;
+                      const isPositive = valueData.trend === 'up' || (changePercent !== undefined && changePercent > 0);
+                      const isNegative = valueData.trend === 'down' || (changePercent !== undefined && changePercent < 0);
+                      return (
+                        <>
+                          {/* Header row: icon + title + change badge */}
+                          <div className="flex items-start gap-3 mb-3 pr-6">
+                            <div className="w-10 h-10 bg-slate-700 text-blue-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                              {(widget.atomicType === 'sparkline' || widget.type === 'line' || widget.type === 'SPARKLINE') ? <TrendingUp size={20} /> :
+                               (widget.atomicType === 'progress' || widget.type === 'bar' || widget.type === 'PROGRESS') ? <BarChart3 size={20} /> :
+                               <Activity size={20} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-gray-900 line-clamp-1 text-sm">
+                                {widget.titleAr || widget.title}
+                              </h3>
+                              {/* Current value display */}
+                              {valueData.currentValue !== undefined && (
+                                <span className="text-lg font-bold text-gray-800">
+                                  {typeof valueData.currentValue === 'number'
+                                    ? valueData.currentValue.toLocaleString('ar-SA')
+                                    : valueData.currentValue}
+                                </span>
+                              )}
+                            </div>
+                            {/* Change percentage badge */}
+                            {changePercent !== undefined && (
+                              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold flex-shrink-0 ${
+                                isPositive
+                                  ? 'bg-emerald-50 text-emerald-600'
+                                  : isNegative
+                                    ? 'bg-red-50 text-red-600'
+                                    : 'bg-gray-100 text-gray-500'
+                              }`}>
+                                {isPositive && <TrendingUp size={14} />}
+                                {isNegative && <TrendingDown size={14} />}
+                                <span dir="ltr">
+                                  {isPositive ? '+' : ''}{changePercent.toFixed(1)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
 
-                    {widget.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {widget.description}
-                      </p>
-                    )}
+                          {/* Source name */}
+                          {widget.category && (
+                            <div className="flex items-center gap-1.5 mb-2 mr-13">
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                المصدر: {widget.category}
+                              </span>
+                            </div>
+                          )}
 
-                    {/* Placeholder chart area */}
-                    <div className="mt-4 h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">الرسم البياني</span>
-                    </div>
+                          {/* Description */}
+                          {widget.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                              {widget.description}
+                            </p>
+                          )}
+
+                          {/* Placeholder chart area */}
+                          <div className="mt-3 h-28 bg-gradient-to-br from-slate-800 to-slate-700 rounded-lg flex items-center justify-center">
+                            <span className="text-slate-400 text-sm">الرسم البياني</span>
+                          </div>
+
+                          {/* AI Analysis placeholder */}
+                          <div className="mt-3 flex items-start gap-2 bg-slate-800/5 border border-slate-200 rounded-lg px-3 py-2">
+                            <Bot size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-slate-400 italic leading-relaxed">
+                              لا يوجد تحليل AI حالياً
+                            </p>
+                          </div>
+
+                          {/* Last update date */}
+                          {updateDateStr && (
+                            <div className="mt-2 flex items-center gap-1.5 justify-end">
+                              <Clock size={12} className="text-gray-400" />
+                              <span className="text-[11px] text-gray-400">
+                                آخر تحديث: {updateDateStr}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 );
               })

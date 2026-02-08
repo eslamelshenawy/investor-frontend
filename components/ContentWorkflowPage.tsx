@@ -8,6 +8,7 @@ import {
   Send,
   Pin,
   PinOff,
+  Sparkles,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -37,6 +38,7 @@ interface ContentItem {
   submittedAt: string;
   scheduledAt?: string;
   pinned?: boolean;
+  metadata?: string | Record<string, any>;
   author?: {
     id: string;
     name: string;
@@ -327,6 +329,33 @@ const ContentWorkflowPage: React.FC = () => {
     }
   };
 
+  // ---- Highlight toggle ----
+
+  const parseHighlighted = (item: ContentItem): boolean => {
+    try {
+      if (!item.metadata) return false;
+      const meta = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+      return !!meta.highlighted;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleToggleHighlight = async (item: ContentItem) => {
+    setActionLoading(item.id);
+    clearMessages();
+    try {
+      await api.highlightContent(item.id);
+      const wasHighlighted = parseHighlighted(item);
+      setSuccessMsg(wasHighlighted ? 'تم إلغاء الإبراز' : 'تم إبراز المحتوى');
+      fetchContent();
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? 'حدث خطأ');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // ---- UI helpers ----
 
   const inputClass =
@@ -400,12 +429,17 @@ const ContentWorkflowPage: React.FC = () => {
               const isPending = item.status === 'PENDING_REVIEW';
               const isApproved = item.status === 'APPROVED';
               const isScheduled = item.status === 'SCHEDULED';
+              const isHighlighted = parseHighlighted(item);
 
               return (
                 <div
                   key={item.id}
                   className={`rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
-                    item.pinned ? 'border-blue-300' : 'border-gray-200'
+                    isHighlighted
+                      ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-300/50'
+                      : item.pinned
+                        ? 'border-blue-300'
+                        : 'border-gray-200'
                   }`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -425,6 +459,12 @@ const ContentWorkflowPage: React.FC = () => {
                           <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
                             <Pin className="h-3 w-3" />
                             مثبّت
+                          </span>
+                        )}
+                        {isHighlighted && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-600">
+                            <Sparkles className="h-3 w-3" />
+                            مُبرَز
                           </span>
                         )}
                       </div>
@@ -540,6 +580,29 @@ const ContentWorkflowPage: React.FC = () => {
                           <>
                             <Pin className="h-4 w-4" />
                             تثبيت
+                          </>
+                        )}
+                      </button>
+
+                      {/* Highlight / Un-highlight (available for all statuses) */}
+                      <button
+                        onClick={() => handleToggleHighlight(item)}
+                        disabled={isActionLoading}
+                        className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition disabled:opacity-50 ${
+                          isHighlighted
+                            ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isHighlighted ? (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            إلغاء الإبراز
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            إبراز
                           </>
                         )}
                       </button>
